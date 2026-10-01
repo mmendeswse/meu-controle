@@ -27,9 +27,9 @@ https://<seu-usuario>.github.io/<nome-do-repositorio>/
 No celular ou iPad, abra esse endereço e use **Compartilhar → Adicionar à
 Tela de Início**: ele vira um app, abre em tela cheia e funciona offline.
 
-Na primeira vez que você abrir, o sistema carrega dois perfis de
-demonstração (**Ana (exemplo)** e **João (exemplo)**) com compras,
-refeições, treinos e pesagens fictícias, só para você ver tudo
+Na primeira vez que você abrir, o sistema carrega um perfil de
+demonstração (**Você (exemplo)**) com compras, refeições, treinos e
+pesagens fictícias, só para você ver tudo
 funcionando. Use **Apagar exemplo e começar do zero** (no aviso amarelo do
 topo ou em **Ajustes**) quando quiser usar com os seus dados.
 
@@ -47,12 +47,11 @@ Tudo é salvo no armazenamento local do seu próprio navegador
 
 ## O que o sistema faz
 
-- **Vários usuários** — cada compra, refeição, treino e pesagem pertence a
-  uma pessoa. O seletor no topo filtra todas as telas para uma pessoa ou
-  mostra **Todos**, separado por pessoa. Os dados nunca se misturam.
-- **Dashboard** — cartão por pessoa (peso atual, diferença, IMC, treino de
-  hoje, treinos da semana, próxima refeição, itens a comprar, gasto do
-  mês), refeições de hoje em linha do tempo, próximos treinos, avisos
+- **Uso pessoal** — como o sistema de finanças, é de uma pessoa só: sem
+  cadastro de usuários nem seletor de pessoa. Seu perfil (nome, altura,
+  peso inicial, objetivo) fica em **Ajustes → Meu perfil**.
+- **Dashboard** — KPIs de treinos, refeições, gastos, compras e peso,
+  refeições de hoje em linha do tempo, próximos treinos, avisos
   automáticos, lista de compras, gráfico de peso e últimas pesagens.
 - **Compras** — lista em cards com emoji do produto, preço total
   (quantidade × preço unitário), local, prioridade e status
@@ -61,7 +60,7 @@ Tudo é salvo no armazenamento local do seu próprio navegador
   último preço pago e total gasto por produto.
 - **Gastos** — gasto do mês x mês anterior, diferença, média mensal, maior
   compra, gráfico real x previsto dos últimos 6 meses, rosca por
-  categoria, barras por local, produto e pessoa, e extrato do mês.
+  categoria, barras por local e produto, e extrato do mês.
   Só entra como gasto o que estiver **Comprado**.
 - **Refeições** — cronograma do dia por horário (café da manhã, lanches,
   almoço, jantar, ceia), navegação entre dias, clique no alimento para
@@ -70,15 +69,15 @@ Tudo é salvo no armazenamento local do seu próprio navegador
   de cada treino com exercícios (séries, repetições, carga, descanso),
   volume total, progresso, **Repetir treino** e gráfico de evolução da
   carga por exercício.
-- **Semana** — plano semanal Seg → Dom por pessoa, com destaque no dia de
+- **Semana** — plano semanal Seg → Dom, com destaque no dia de
   hoje; **Gerar treinos da semana** cria os treinos planejados de uma vez.
 - **Evolução** — peso inicial, atual, diferença, variação no mês, peso
   médio, IMC com classificação, dias de acompanhamento, gráfico e
   histórico de pesagens.
-- **Relatório** — fechamento do mês por pessoa: gasto, comparação com o
+- **Relatório** — fechamento do mês: gasto, comparação com o
   mês anterior, compras, refeições, treinos feitos/planejados e peso do
   início ao fim do mês.
-- **Ajustes** — backup, restauração, dados de exemplo e privacidade.
+- **Ajustes** — meu perfil, backup, restauração, dados de exemplo e privacidade.
 
 ## Limitações desta versão (de propósito)
 
@@ -120,7 +119,7 @@ Uma única chave no `localStorage` (`meuControle:v1`) guarda um objeto com:
 
 | Coleção        | O que guarda                                                  |
 | -------------- | ------------------------------------------------------------- |
-| `usuarios`     | nome, altura, peso inicial, objetivo, data de início, cor     |
+| `usuarios`     | o perfil único: nome, altura, peso inicial, objetivo, início  |
 | `produtos`     | catálogo: nome, emoji, categoria, unidade, preço de referência |
 | `compras`      | item, quantidade, unidade, preço unitário, local, status      |
 | `refeicoes`    | data, horário, tipo de refeição, alimento, porção, status     |
