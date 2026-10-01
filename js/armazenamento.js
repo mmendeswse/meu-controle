@@ -15,6 +15,7 @@
  *   exportarDados()      -> dispara o download de um backup .json
  *   importarDados(file)  -> Promise<void>, lê um backup e substitui os dados
  *   limparDados()        -> apaga tudo e recomeça do zero (sem exemplo)
+ *   perfil(dados)        -> o perfil único (nome, altura, peso inicial…)
  *   carregarExemplo()    -> repõe os dados de demonstração
  *   novoId()             -> gera um identificador único simples
  *   hoje(offsetDias)     -> "AAAA-MM-DD" de hoje (ou N dias antes/depois)
@@ -61,13 +62,25 @@
   }
 
   // ---------------------------------------------------------------------
+  // perfil único — o sistema é de uma pessoa só (como o de finanças).
+  // Fica em `usuarios[0]`; os registros guardam `usuarioId` apontando
+  // para ele, o que mantém compatíveis os backups antigos.
+  // ---------------------------------------------------------------------
+  function perfilPadrao() {
+    return { id: novoId(), nome: "Eu", altura: null, pesoInicial: null, objetivo: "Saúde e bem-estar", dataInicio: hoje(0), cor: "#00E5FF", ativo: true, obs: "" };
+  }
+  function perfil(d) {
+    return d.usuarios[0];
+  }
+
+  // ---------------------------------------------------------------------
   // esquema vazio (usuário que zera tudo cai aqui)
   // ---------------------------------------------------------------------
   function esquemaVazio() {
     return {
       versao: 1,
       demo: false,
-      usuarios: [],        // pessoas que usam o sistema (cada registro pertence a uma)
+      usuarios: [perfilPadrao()], // sempre exatamente um: o perfil de quem usa
       produtos: [],        // catálogo de produtos (nome, categoria, preço de referência)
       compras: [],         // itens da lista de compras / compras feitas
       refeicoes: [],       // um alimento de uma refeição, com horário
@@ -77,7 +90,7 @@
       pesagens: [],        // registros de peso
       notificacoesLidas: [],
       atualizadoEm: null,
-      config: { ultimoBackup: null, usuarioAtivo: "" }
+      config: { ultimoBackup: null }
     };
   }
 
@@ -90,10 +103,9 @@
     var d = esquemaVazio();
     d.demo = true;
 
-    var ana = novoId(), joao = novoId();
+    var eu = novoId();
     d.usuarios = [
-      { id: ana, nome: "Ana (exemplo)", altura: 1.65, pesoInicial: 68, objetivo: "Emagrecer", dataInicio: hoje(-57), cor: "#FF5C6A", ativo: true, obs: "Perfil de exemplo — pode editar ou apagar." },
-      { id: joao, nome: "João (exemplo)", altura: 1.78, pesoInicial: 82.5, objetivo: "Ganhar massa", dataInicio: hoje(-26), cor: "#38B6FF", ativo: true, obs: "Perfil de exemplo — pode editar ou apagar." }
+      { id: eu, nome: "Você (exemplo)", altura: 1.75, pesoInicial: 82.5, objetivo: "Ganhar massa", dataInicio: hoje(-57), cor: "#00E5FF", ativo: true, obs: "Perfil de exemplo — edite em Ajustes." }
     ];
 
     var pBanana = novoId(), pMaca = novoId(), pBrocolis = novoId(), pArroz = novoId(), pOvos = novoId(), pLeite = novoId(), pFrango = novoId(), pCarne = novoId();
@@ -115,22 +127,22 @@
     }
     d.compras = [
       // mês anterior (comprados)
-      compra(ana, pArroz, 5, 5.8, "Comprado", mesRelativo(-1, 5)),
-      compra(ana, pFrango, 2, 21, "Comprado", mesRelativo(-1, 10)),
-      compra(joao, pCarne, 1, 40, "Comprado", mesRelativo(-1, 12)),
-      compra(ana, pLeite, 12, 4.9, "Comprado", mesRelativo(-1, 15)),
+      compra(eu, pArroz, 5, 5.8, "Comprado", mesRelativo(-1, 5)),
+      compra(eu, pFrango, 2, 21, "Comprado", mesRelativo(-1, 10)),
+      compra(eu, pCarne, 1, 40, "Comprado", mesRelativo(-1, 12)),
+      compra(eu, pLeite, 12, 4.9, "Comprado", mesRelativo(-1, 15)),
       // mês atual (comprados)
-      compra(ana, pOvos, 2.5, 10, "Comprado", mesRelativo(0, 5)),
-      compra(ana, pArroz, 5, 6, "Comprado", mesRelativo(0, 5)),
-      compra(ana, pMaca, 1, 9, "Comprado", mesRelativo(0, 6)),
-      compra(ana, pBanana, 2, 6, "Comprado", mesRelativo(0, 6)),
-      compra(joao, pCarne, 1.5, 42, "Comprado", mesRelativo(0, 12)),
-      compra(joao, pOvos, 5, 10, "Comprado", mesRelativo(0, 12)),
-      compra(ana, pFrango, 2, 22, "Comprado", mesRelativo(0, 13)),
+      compra(eu, pOvos, 2.5, 10, "Comprado", mesRelativo(0, 5)),
+      compra(eu, pArroz, 5, 6, "Comprado", mesRelativo(0, 5)),
+      compra(eu, pMaca, 1, 9, "Comprado", mesRelativo(0, 6)),
+      compra(eu, pBanana, 2, 6, "Comprado", mesRelativo(0, 6)),
+      compra(eu, pCarne, 1.5, 42, "Comprado", mesRelativo(0, 12)),
+      compra(eu, pOvos, 5, 10, "Comprado", mesRelativo(0, 12)),
+      compra(eu, pFrango, 2, 22, "Comprado", mesRelativo(0, 13)),
       // para comprar
-      compra(ana, pBrocolis, 3, 5, "Comprar", hoje(1), "Alta"),
-      compra(joao, pBanana, 3, 6, "Comprar", hoje(2), "Média"),
-      compra(ana, pLeite, 12, 5, "Planejado", hoje(2), "Média")
+      compra(eu, pBrocolis, 3, 5, "Comprar", hoje(1), "Alta"),
+      compra(eu, pBanana, 3, 6, "Comprar", hoje(2), "Média"),
+      compra(eu, pLeite, 12, 5, "Planejado", hoje(2), "Média")
     ];
 
     function ref(u, data, horario, tipo, alimento, emoji, qtd, un, status) {
@@ -138,60 +150,50 @@
     }
     var H = hoje(0), AM = hoje(1);
     d.refeicoes = [
-      ref(ana, H, "07:30", "Café da manhã", "Café", "☕", 200, "ml", "Realizada"),
-      ref(ana, H, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un", "Realizada"),
-      ref(ana, H, "07:30", "Café da manhã", "Banana", "🍌", 1, "un", "Realizada"),
-      ref(ana, H, "12:30", "Almoço", "Arroz", "🍚", 150, "g", "Realizada"),
-      ref(ana, H, "12:30", "Almoço", "Frango", "🍗", 200, "g", "Realizada"),
-      ref(ana, H, "12:30", "Almoço", "Brócolis", "🥦", 100, "g", "Realizada"),
-      ref(ana, H, "16:00", "Lanche da tarde", "Maçã", "🍎", 1, "un"),
-      ref(ana, H, "20:00", "Jantar", "Arroz", "🍚", 100, "g"),
-      ref(ana, H, "20:00", "Jantar", "Carne", "🥩", 150, "g"),
-      ref(ana, H, "20:00", "Jantar", "Salada", "🥗", 150, "g"),
-      ref(joao, H, "12:00", "Almoço", "Carne", "🥩", 200, "g", "Realizada"),
-      ref(joao, H, "12:00", "Almoço", "Arroz", "🍚", 250, "g", "Realizada"),
-      ref(joao, H, "21:00", "Jantar", "Ovos", "🥚", 4, "un"),
-      ref(joao, H, "22:30", "Ceia", "Leite", "🥛", 300, "ml"),
-      ref(ana, AM, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un"),
-      ref(ana, AM, "12:30", "Almoço", "Arroz", "🍚", 150, "g")
+      ref(eu, H, "07:30", "Café da manhã", "Café", "☕", 200, "ml", "Realizada"),
+      ref(eu, H, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un", "Realizada"),
+      ref(eu, H, "07:30", "Café da manhã", "Banana", "🍌", 1, "un", "Realizada"),
+      ref(eu, H, "12:30", "Almoço", "Arroz", "🍚", 150, "g", "Realizada"),
+      ref(eu, H, "12:30", "Almoço", "Frango", "🍗", 200, "g", "Realizada"),
+      ref(eu, H, "12:30", "Almoço", "Brócolis", "🥦", 100, "g", "Realizada"),
+      ref(eu, H, "16:00", "Lanche da tarde", "Maçã", "🍎", 1, "un"),
+      ref(eu, H, "20:00", "Jantar", "Arroz", "🍚", 100, "g"),
+      ref(eu, H, "20:00", "Jantar", "Carne", "🥩", 150, "g"),
+      ref(eu, H, "20:00", "Jantar", "Salada", "🥗", 150, "g"),
+      ref(eu, H, "22:30", "Ceia", "Leite", "🥛", 300, "ml"),
+      ref(eu, AM, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un"),
+      ref(eu, AM, "12:30", "Almoço", "Arroz", "🍚", 150, "g")
     ];
 
     function plano(u, dia, treino, grupos, horario) {
       return { id: novoId(), usuarioId: u, diaSemana: dia, treino: treino, grupos: grupos, horario: horario || "", obs: "" };
     }
     d.planoSemanal = [
-      plano(joao, 1, "Treino de Peito", ["Peito", "Tríceps"], "18:00"),
-      plano(joao, 2, "Treino de Costas", ["Costas", "Bíceps"], "18:00"),
-      plano(joao, 3, "Treino de Pernas", ["Pernas", "Glúteos"], "18:00"),
-      plano(joao, 4, "Ombros + Abdômen", ["Ombros", "Abdômen"], "18:00"),
-      plano(joao, 5, "Corpo inteiro", ["Corpo inteiro"], "18:00"),
-      plano(joao, 6, "Cardio", ["Cardio"], "09:00"),
-      plano(joao, 7, "Descanso", [], ""),
-      plano(ana, 1, "Cardio", ["Cardio"], "07:00"),
-      plano(ana, 3, "Pernas + Glúteos", ["Pernas", "Glúteos"], "07:00"),
-      plano(ana, 5, "Corpo inteiro", ["Corpo inteiro"], "07:00"),
-      plano(ana, 7, "Caminhada leve", ["Cardio"], "08:00")
+      plano(eu, 1, "Treino de Peito", ["Peito", "Tríceps"], "18:00"),
+      plano(eu, 2, "Treino de Costas", ["Costas", "Bíceps"], "18:00"),
+      plano(eu, 3, "Treino de Pernas", ["Pernas", "Glúteos"], "18:00"),
+      plano(eu, 4, "Ombros + Abdômen", ["Ombros", "Abdômen"], "18:00"),
+      plano(eu, 5, "Corpo inteiro", ["Corpo inteiro"], "18:00"),
+      plano(eu, 6, "Cardio", ["Cardio"], "09:00"),
+      plano(eu, 7, "Descanso", [], "")
     ];
 
     function treino(u, nome, data, grupos, status, duracao) {
       return { id: novoId(), usuarioId: u, nome: nome, data: data, grupos: grupos, status: status, duracao: duracao || 60, obs: "" };
     }
-    var tPeito = treino(joao, "Treino de Peito", hoje(-6), ["Peito", "Tríceps"], "Realizado", 65);
-    var tPernas = treino(joao, "Treino de Pernas", hoje(-4), ["Pernas", "Glúteos"], "Realizado", 70);
-    var tCostas = treino(joao, "Treino de Costas", hoje(-5), ["Costas", "Bíceps"], "Realizado", 60);
+    var tPeito = treino(eu, "Treino de Peito", hoje(-6), ["Peito", "Tríceps"], "Realizado", 65);
+    var tPernas = treino(eu, "Treino de Pernas", hoje(-4), ["Pernas", "Glúteos"], "Realizado", 70);
+    var tCostas = treino(eu, "Treino de Costas", hoje(-5), ["Costas", "Bíceps"], "Realizado", 60);
     d.treinos = [
-      treino(joao, "Cardio (bike)", hoje(-20), ["Cardio"], "Realizado", 40),
-      treino(joao, "Treino de Peito", hoje(-13), ["Peito", "Tríceps"], "Realizado", 60),
-      treino(joao, "Treino de Pernas", hoje(-11), ["Pernas", "Glúteos"], "Realizado", 70),
+      treino(eu, "Cardio (bike)", hoje(-20), ["Cardio"], "Realizado", 40),
+      treino(eu, "Treino de Peito", hoje(-13), ["Peito", "Tríceps"], "Realizado", 60),
+      treino(eu, "Treino de Pernas", hoje(-11), ["Pernas", "Glúteos"], "Realizado", 70),
       tPeito, tCostas, tPernas,
-      treino(joao, "Ombros + Abdômen", hoje(-3), ["Ombros", "Abdômen"], "Realizado", 55),
-      treino(joao, "Treino de Peito", hoje(1), ["Peito", "Tríceps"], "Planejado", 60),
-      treino(joao, "Treino de Costas", hoje(3), ["Costas", "Bíceps"], "Planejado", 60),
-      treino(ana, "Cardio", hoje(-7), ["Cardio"], "Realizado", 35),
-      treino(ana, "Pernas + Glúteos", hoje(-5), ["Pernas", "Glúteos"], "Realizado", 50),
-      treino(ana, "Cardio", hoje(-1), ["Cardio"], "Realizado", 30),
-      treino(ana, "Caminhada leve", hoje(0), ["Cardio"], "Planejado", 40),
-      treino(ana, "Pernas + Glúteos", hoje(1), ["Pernas", "Glúteos"], "Planejado", 50)
+      treino(eu, "Ombros + Abdômen", hoje(-3), ["Ombros", "Abdômen"], "Realizado", 55),
+      treino(eu, "Treino de Peito", hoje(1), ["Peito", "Tríceps"], "Planejado", 60),
+      treino(eu, "Treino de Costas", hoje(3), ["Costas", "Bíceps"], "Planejado", 60),
+      treino(eu, "Cardio", hoje(-1), ["Cardio"], "Realizado", 30),
+      treino(eu, "Caminhada leve", hoje(0), ["Cardio"], "Planejado", 40)
     ];
 
     function ex(t, nome, grupo, series, reps, carga, descanso, status) {
@@ -213,8 +215,8 @@
 
     function peso(u, data, kg) { return { id: novoId(), usuarioId: u, data: data, peso: kg, altura: null, obs: "" }; }
     d.pesagens = [
-      peso(joao, hoje(-26), 82.5), peso(joao, hoje(-19), 82.0), peso(joao, hoje(-12), 81.4), peso(joao, hoje(-5), 80.7),
-      peso(ana, hoje(-57), 68.0), peso(ana, hoje(-43), 67.4), peso(ana, hoje(-29), 66.8), peso(ana, hoje(-15), 66.3), peso(ana, hoje(-1), 65.9)
+      peso(eu, hoje(-57), 82.5), peso(eu, hoje(-43), 82.1), peso(eu, hoje(-29), 81.6), peso(eu, hoje(-19), 81.2),
+      peso(eu, hoje(-12), 80.9), peso(eu, hoje(-5), 80.4), peso(eu, hoje(-1), 80.1)
     ];
 
     return d;
@@ -238,7 +240,14 @@
       if (d[k] === undefined) d[k] = base[k];
     });
     if (!d.config) d.config = base.config;
-    if (d.config.usuarioAtivo === undefined) d.config.usuarioAtivo = "";
+    delete d.config.usuarioAtivo;
+    // versões antigas eram multiusuário: tudo passa a pertencer ao perfil único
+    if (!d.usuarios.length) d.usuarios = [perfilPadrao()];
+    if (d.usuarios.length > 1) d.usuarios = [d.usuarios[0]];
+    var id = d.usuarios[0].id;
+    ["compras", "refeicoes", "planoSemanal", "treinos", "pesagens"].forEach(function (k) {
+      d[k].forEach(function (x) { x.usuarioId = id; });
+    });
     return d;
   }
 
@@ -326,6 +335,7 @@
     carregarDados: carregarDados,
     salvarDados: salvarDados,
     limparDados: limparDados,
+    perfil: perfil,
     carregarExemplo: carregarExemplo,
     exportarDados: exportarDados,
     importarDados: importarDados,
