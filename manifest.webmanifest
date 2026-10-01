@@ -1,0 +1,18 @@
+{
+  "name": "Meu Controle — Vida & Fitness",
+  "short_name": "Meu Controle",
+  "description": "Alimentação, compras, gastos, treinos e peso — funciona offline, dados ficam no aparelho",
+  "lang": "pt-BR",
+  "start_url": "./index.html?v=1",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070D14",
+  "theme_color": "#070D14",
+  "icons": [
+    { "src": "assets/icons/icon-192.png?v=1", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png?v=1", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-maskable-512.png?v=1", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "apple-touch-icon-180.png?v=1", "sizes": "180x180", "type": "image/png" }
+  ]
+}

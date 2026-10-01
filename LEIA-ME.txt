@@ -1,0 +1,4 @@
+Meu Controle — Vida & Fitness
+Abra o arquivo index.html no navegador. Não precisa instalar nada.
+Os dados ficam salvos no próprio navegador (localStorage). Faça backups em Configurações.
+Detalhes completos no README.md.
