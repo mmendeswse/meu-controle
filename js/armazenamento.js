@@ -1,274 +1,267 @@
 /**
  * armazenamento.js
  * -----------------------------------------------------------------------
- * Camada de persistência do Meu Controle (Vida & Fitness).
+ * Camada de persistência do Meu Controle. Tudo fica em uma única chave do
+ * localStorage, como um objeto JSON. Este arquivo não sabe nada sobre a
+ * interface — só salva, carrega, migra, exporta, importa e apaga.
  *
- * Tudo é guardado em uma única chave do localStorage, como um objeto
- * JSON. Este arquivo não sabe nada sobre a interface — só sabe salvar,
- * carregar, exportar, importar e apagar dados, e oferece um pequeno
- * barramento de eventos para que a interface saiba quando os dados
- * mudaram e precise se redesenhar.
+ * MODELO DE DADOS (versão 2) — cada coleção é uma "tabela":
  *
- * Funções públicas (todas em window.Armazenamento):
- *   carregarDados()      -> objeto de dados atual (nunca null)
- *   salvarDados(dados)   -> grava no localStorage e notifica ouvintes
- *   exportarDados()      -> dispara o download de um backup .json
- *   importarDados(file)  -> Promise<void>, lê um backup e substitui os dados
- *   limparDados()        -> apaga tudo e recomeça do zero (sem exemplo)
- *   perfil(dados)        -> o perfil único (nome, altura, peso inicial…)
- *   carregarExemplo()    -> repõe os dados de demonstração
- *   novoId()             -> gera um identificador único simples
- *   hoje(offsetDias)     -> "AAAA-MM-DD" de hoje (ou N dias antes/depois)
- *   aoMudar(fn)          -> registra um ouvinte chamado após cada gravação
+ *   usuarios        users              perfil único de quem usa
+ *   alimentos       foods              cadastro com nutrição e preço
+ *   refeicoes       meals              data, tipo, horário, status
+ *   refeicaoItens   meal_items         refeicaoId → alimentoId + quantidade
+ *   favoritas       (refeições modelo) nome + itens [{alimentoId, qtd}]
+ *   agua            (registro de água) data + ml
+ *   compras         shopping_items     lista de compras / compras feitas
+ *   estoque         inventory          alimentoId → quantidade em casa
+ *   fichas          (fichas de treino) "Treino A — Peito + Tríceps"
+ *   exercicios      exercises          fichaId → séries/reps alvo
+ *   treinos         workouts           sessão de treino por data
+ *   series          workout_sets       treinoId → séries, reps, carga, RPE
+ *   planoSemanal    (calendário)       dia da semana → ficha
+ *   pesagens        weight_records     data + peso
+ *   medidas         body_measurements  composição corporal e medidas
+ *   metas           goals              tipo, valor inicial, alvo, prazo
+ *   notificacoes    notifications      estado (lida) dos alertas gerados
+ *   config          settings           preferências, alertas, integração
+ *
+ * Relações por id (nunca copiando dados): um item de refeição aponta para
+ * o alimento; o estoque e a compra também. Peso atual, IMC, calorias do
+ * dia, gastos do mês etc. NÃO são armazenados — são sempre calculados.
  * -----------------------------------------------------------------------
  */
 (function (global) {
   "use strict";
 
-  var CHAVE = "meuControle:v1";
-  var ouvintes = [];
+  const N = global.Nucleo;
+  const CHAVE = "meuControle:v1"; // a chave é a mesma desde a v1 (o objeto tem `versao`)
+  const VERSAO = 2;
+  const ouvintes = [];
 
   function lerBruto() {
     try { return localStorage.getItem(CHAVE); } catch (e) { return null; }
   }
-  function gravarBruto(texto) {
-    localStorage.setItem(CHAVE, texto);
-  }
+  function gravarBruto(texto) { localStorage.setItem(CHAVE, texto); }
 
-  // ---------------------------------------------------------------------
-  // utilidades
-  // ---------------------------------------------------------------------
-  function novoId() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  }
-
-  // data local (sem UTC, para o "hoje" não virar "amanhã" à noite)
-  function isoLocal(dt) {
-    return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
-  }
-  function hoje(offsetDias) {
-    var d = new Date();
-    if (offsetDias) d.setDate(d.getDate() + offsetDias);
-    return isoLocal(d);
-  }
-
-  function aoMudar(fn) {
-    if (typeof fn === "function") ouvintes.push(fn);
-  }
+  function aoMudar(fn) { if (typeof fn === "function") ouvintes.push(fn); }
   function notificar() {
-    ouvintes.forEach(function (fn) {
-      try { fn(); } catch (e) { console.error("Erro em ouvinte de dados:", e); }
-    });
+    ouvintes.forEach((fn) => { try { fn(); } catch (e) { console.error("Erro em ouvinte de dados:", e); } });
   }
 
   // ---------------------------------------------------------------------
-  // perfil único — o sistema é de uma pessoa só (como o de finanças).
-  // Fica em `usuarios[0]`; os registros guardam `usuarioId` apontando
-  // para ele, o que mantém compatíveis os backups antigos.
+  // esquema
   // ---------------------------------------------------------------------
   function perfilPadrao() {
-    return { id: novoId(), nome: "Eu", altura: null, pesoInicial: null, objetivo: "Saúde e bem-estar", dataInicio: hoje(0), cor: "#00E5FF", ativo: true, obs: "" };
+    return { id: N.novoId(), nome: "Eu", altura: null, pesoInicial: null, objetivo: "Saúde e bem-estar", dataInicio: N.hoje(0), obs: "" };
   }
-  function perfil(d) {
-    return d.usuarios[0];
-  }
-
-  // ---------------------------------------------------------------------
-  // esquema vazio (usuário que zera tudo cai aqui)
-  // ---------------------------------------------------------------------
-  function esquemaVazio() {
+  const TIPOS_ALERTA = {
+    treinoNaoRealizado: "Treino planejado não realizado",
+    pesoSemRegistro: "Peso sem registro há vários dias",
+    estoqueBaixo: "Estoque abaixo do mínimo",
+    itemImportante: "Item de alta prioridade pendente",
+    metaAtrasada: "Meta atrasada ou fora do ritmo",
+    refeicaoPlanejada: "Próxima refeição planejada",
+    aguaAbaixo: "Água abaixo da meta",
+    proteinaAbaixo: "Proteína abaixo da meta",
+    mudancaRelevante: "Mudança relevante nas métricas",
+    backupAntigo: "Backup antigo"
+  };
+  function configPadrao() {
+    const alertas = {};
+    Object.keys(TIPOS_ALERTA).forEach((k) => { alertas[k] = true; });
     return {
-      versao: 1,
-      demo: false,
-      usuarios: [perfilPadrao()], // sempre exatamente um: o perfil de quem usa
-      produtos: [],        // catálogo de produtos (nome, categoria, preço de referência)
-      compras: [],         // itens da lista de compras / compras feitas
-      refeicoes: [],       // um alimento de uma refeição, com horário
-      planoSemanal: [],    // treino previsto para cada dia da semana
-      treinos: [],         // treinos por data (planejado / realizado …)
-      exercicios: [],      // exercícios de cada treino (séries, repetições, carga)
-      pesagens: [],        // registros de peso
-      notificacoesLidas: [],
-      atualizadoEm: null,
-      config: { ultimoBackup: null }
+      ultimoBackup: null,
+      alertas,
+      diasSemPesagem: 7,
+      copoAgua: 250,
+      integracao: {
+        baixarEstoqueAoComer: true,   // refeição realizada desconta do estoque
+        somarEstoqueAoComprar: true,  // item comprado entra no estoque
+        listaAutomatica: true,        // planejamento + estoque mínimo geram a lista
+        diasPlanejamento: 7           // quantos dias à frente o planejamento olha
+      },
+      boasVindas: true
     };
   }
+  function esquemaVazio() {
+    return {
+      versao: VERSAO,
+      demo: false,
+      usuarios: [perfilPadrao()],
+      alimentos: [], refeicoes: [], refeicaoItens: [], favoritas: [], agua: [],
+      compras: [], estoque: [],
+      fichas: [], exercicios: [], treinos: [], series: [], planoSemanal: [],
+      pesagens: [], medidas: [],
+      metas: [],
+      notificacoes: [],
+      config: configPadrao(),
+      atualizadoEm: null
+    };
+  }
+  const COLECOES = ["alimentos", "refeicoes", "refeicaoItens", "favoritas", "agua", "compras", "estoque", "fichas", "exercicios", "treinos", "series", "planoSemanal", "pesagens", "medidas", "metas", "notificacoes"];
+
+  function perfil(d) { return d.usuarios[0]; }
 
   // ---------------------------------------------------------------------
-  // dados de demonstração — claramente marcados (demo:true) para que a
-  // interface possa avisar o usuário e oferecer removê-los com um clique.
-  // São fictícios: servem só para mostrar como o sistema funciona.
+  // migração v1 → v2 (preserva tudo o que o usuário já registrou)
   // ---------------------------------------------------------------------
-  function dadosDemo() {
-    var d = esquemaVazio();
-    d.demo = true;
+  const MAPA_CATEGORIA_V1 = {
+    "Carnes": "Proteínas", "Frango": "Proteínas", "Peixes": "Proteínas", "Ovos": "Proteínas",
+    "Grãos": "Carboidratos", "Padaria": "Carboidratos", "Laticínios": "Laticínios", "Verduras": "Verduras",
+    "Legumes": "Legumes", "Frutas": "Frutas", "Bebidas": "Bebidas"
+  };
+  const UNIDADE_BASE_V1 = { kg: "g", g: "g", L: "ml", ml: "ml", un: "un", dz: "un", pct: "porção", cx: "porção" };
 
-    var eu = novoId();
-    d.usuarios = [
-      { id: eu, nome: "Você (exemplo)", altura: 1.75, pesoInicial: 82.5, objetivo: "Ganhar massa", dataInicio: hoje(-57), cor: "#00E5FF", ativo: true, obs: "Perfil de exemplo — edite em Ajustes." }
-    ];
-
-    var pBanana = novoId(), pMaca = novoId(), pBrocolis = novoId(), pArroz = novoId(), pOvos = novoId(), pLeite = novoId(), pFrango = novoId(), pCarne = novoId();
-    d.produtos = [
-      { id: pBanana, nome: "Banana", emoji: "🍌", categoria: "Frutas", unidade: "kg", precoRef: 6, local: "Feira" },
-      { id: pMaca, nome: "Maçã", emoji: "🍎", categoria: "Frutas", unidade: "kg", precoRef: 9, local: "Feira" },
-      { id: pBrocolis, nome: "Brócolis", emoji: "🥦", categoria: "Verduras", unidade: "un", precoRef: 5, local: "Feira" },
-      { id: pArroz, nome: "Arroz", emoji: "🍚", categoria: "Grãos", unidade: "kg", precoRef: 6, local: "Mercado" },
-      { id: pOvos, nome: "Ovos", emoji: "🥚", categoria: "Ovos", unidade: "dz", precoRef: 10, local: "Mercado" },
-      { id: pLeite, nome: "Leite", emoji: "🥛", categoria: "Laticínios", unidade: "L", precoRef: 5, local: "Mercado" },
-      { id: pFrango, nome: "Peito de frango", emoji: "🍗", categoria: "Frango", unidade: "kg", precoRef: 22, local: "Açougue" },
-      { id: pCarne, nome: "Carne (patinho)", emoji: "🥩", categoria: "Carnes", unidade: "kg", precoRef: 42, local: "Açougue" }
-    ];
-
-    function compra(u, p, qtd, preco, status, data, prioridade) {
-      var prod = d.produtos.filter(function (x) { return x.id === p; })[0];
-      return { id: novoId(), usuarioId: u, produtoId: p, nome: prod.nome, emoji: prod.emoji, categoria: prod.categoria, local: prod.local,
-        quantidade: qtd, unidade: prod.unidade, precoUnit: preco, status: status, prioridade: prioridade || "Média", data: data, obs: "" };
+  function migrarV1(v1) {
+    const d = esquemaVazio();
+    d.demo = !!v1.demo;
+    d.atualizadoEm = v1.atualizadoEm || null;
+    if (Array.isArray(v1.usuarios) && v1.usuarios.length) {
+      const u = v1.usuarios[0];
+      d.usuarios = [{ id: u.id || N.novoId(), nome: u.nome || "Eu", altura: u.altura || null, pesoInicial: u.pesoInicial || null,
+        objetivo: u.objetivo || "Saúde e bem-estar", dataInicio: u.dataInicio || N.hoje(0), obs: u.obs || "" }];
     }
-    d.compras = [
-      // mês anterior (comprados)
-      compra(eu, pArroz, 5, 5.8, "Comprado", mesRelativo(-1, 5)),
-      compra(eu, pFrango, 2, 21, "Comprado", mesRelativo(-1, 10)),
-      compra(eu, pCarne, 1, 40, "Comprado", mesRelativo(-1, 12)),
-      compra(eu, pLeite, 12, 4.9, "Comprado", mesRelativo(-1, 15)),
-      // mês atual (comprados)
-      compra(eu, pOvos, 2.5, 10, "Comprado", mesRelativo(0, 5)),
-      compra(eu, pArroz, 5, 6, "Comprado", mesRelativo(0, 5)),
-      compra(eu, pMaca, 1, 9, "Comprado", mesRelativo(0, 6)),
-      compra(eu, pBanana, 2, 6, "Comprado", mesRelativo(0, 6)),
-      compra(eu, pCarne, 1.5, 42, "Comprado", mesRelativo(0, 12)),
-      compra(eu, pOvos, 5, 10, "Comprado", mesRelativo(0, 12)),
-      compra(eu, pFrango, 2, 22, "Comprado", mesRelativo(0, 13)),
-      // para comprar
-      compra(eu, pBrocolis, 3, 5, "Comprar", hoje(1), "Alta"),
-      compra(eu, pBanana, 3, 6, "Comprar", hoje(2), "Média"),
-      compra(eu, pLeite, 12, 5, "Planejado", hoje(2), "Média")
-    ];
+    const uid = d.usuarios[0].id;
+    if (v1.config && v1.config.ultimoBackup) d.config.ultimoBackup = v1.config.ultimoBackup;
 
-    function ref(u, data, horario, tipo, alimento, emoji, qtd, un, status) {
-      return { id: novoId(), usuarioId: u, data: data, horario: horario, tipo: tipo, alimento: alimento, emoji: emoji, quantidade: qtd, unidade: un, status: status || "Planejada", obs: "" };
+    // catálogo de produtos → alimentos (mantém os ids, as compras apontam para eles)
+    (v1.produtos || []).forEach((p) => {
+      const base = UNIDADE_BASE_V1[p.unidade] || "porção";
+      d.alimentos.push({
+        id: p.id, nome: p.nome, emoji: p.emoji || "", categoria: MAPA_CATEGORIA_V1[p.categoria] || "Outros", marca: "",
+        porcao: base === "g" || base === "ml" ? 100 : 1, unidade: base,
+        kcal: null, proteina: null, carbo: null, gordura: null, fibra: null,
+        preco: N.temValor(p.precoRef) ? Number(p.precoRef) : null, precoQtd: 1, precoUnidade: p.unidade || N.unidadeCompraPadrao(base),
+        mercado: p.local || "Mercado", obs: "", criadoEm: N.hoje(0)
+      });
+    });
+    function alimentoPorNome(nome, emoji, unidadeItem, categoria) {
+      const chave = String(nome || "").trim().toLowerCase();
+      let a = d.alimentos.filter((x) => x.nome.toLowerCase() === chave)[0];
+      if (a) return a;
+      const base = UNIDADE_BASE_V1[unidadeItem] || unidadeItem || "porção";
+      a = { id: N.novoId(), nome: String(nome || "Alimento").trim(), emoji: emoji || "", categoria: categoria || "Outros", marca: "",
+        porcao: base === "g" || base === "ml" ? 100 : 1, unidade: base,
+        kcal: null, proteina: null, carbo: null, gordura: null, fibra: null,
+        preco: null, precoQtd: 1, precoUnidade: N.unidadeCompraPadrao(base), mercado: "Mercado", obs: "", criadoEm: N.hoje(0) };
+      d.alimentos.push(a);
+      return a;
     }
-    var H = hoje(0), AM = hoje(1);
-    d.refeicoes = [
-      ref(eu, H, "07:30", "Café da manhã", "Café", "☕", 200, "ml", "Realizada"),
-      ref(eu, H, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un", "Realizada"),
-      ref(eu, H, "07:30", "Café da manhã", "Banana", "🍌", 1, "un", "Realizada"),
-      ref(eu, H, "12:30", "Almoço", "Arroz", "🍚", 150, "g", "Realizada"),
-      ref(eu, H, "12:30", "Almoço", "Frango", "🍗", 200, "g", "Realizada"),
-      ref(eu, H, "12:30", "Almoço", "Brócolis", "🥦", 100, "g", "Realizada"),
-      ref(eu, H, "16:00", "Lanche da tarde", "Maçã", "🍎", 1, "un"),
-      ref(eu, H, "20:00", "Jantar", "Arroz", "🍚", 100, "g"),
-      ref(eu, H, "20:00", "Jantar", "Carne", "🥩", 150, "g"),
-      ref(eu, H, "20:00", "Jantar", "Salada", "🥗", 150, "g"),
-      ref(eu, H, "22:30", "Ceia", "Leite", "🥛", 300, "ml"),
-      ref(eu, AM, "07:30", "Café da manhã", "Ovos", "🥚", 3, "un"),
-      ref(eu, AM, "12:30", "Almoço", "Arroz", "🍚", 150, "g")
-    ];
 
-    function plano(u, dia, treino, grupos, horario) {
-      return { id: novoId(), usuarioId: u, diaSemana: dia, treino: treino, grupos: grupos, horario: horario || "", obs: "" };
-    }
-    d.planoSemanal = [
-      plano(eu, 1, "Treino de Peito", ["Peito", "Tríceps"], "18:00"),
-      plano(eu, 2, "Treino de Costas", ["Costas", "Bíceps"], "18:00"),
-      plano(eu, 3, "Treino de Pernas", ["Pernas", "Glúteos"], "18:00"),
-      plano(eu, 4, "Ombros + Abdômen", ["Ombros", "Abdômen"], "18:00"),
-      plano(eu, 5, "Corpo inteiro", ["Corpo inteiro"], "18:00"),
-      plano(eu, 6, "Cardio", ["Cardio"], "09:00"),
-      plano(eu, 7, "Descanso", [], "")
-    ];
+    // refeições: na v1 cada linha era um alimento; agora a refeição agrupa itens
+    const grupos = {};
+    (v1.refeicoes || []).forEach((r) => {
+      const k = (r.data || "") + "|" + (r.horario || "") + "|" + (r.tipo || "");
+      (grupos[k] = grupos[k] || []).push(r);
+    });
+    Object.keys(grupos).forEach((k) => {
+      const linhas = grupos[k], r0 = linhas[0];
+      const realizadas = linhas.filter((x) => x.status === "Realizada").length;
+      const puladas = linhas.filter((x) => x.status === "Pulada").length;
+      const ref = { id: N.novoId(), usuarioId: uid, data: r0.data || N.hoje(0), tipo: N.TIPOS_REFEICAO.indexOf(r0.tipo) !== -1 ? r0.tipo : "Almoço",
+        horario: r0.horario || "", status: realizadas ? "Realizada" : (puladas === linhas.length ? "Pulada" : "Planejada"), favoritaId: null, obs: "" };
+      d.refeicoes.push(ref);
+      linhas.forEach((x) => {
+        const a = alimentoPorNome(x.alimento, x.emoji, x.unidade);
+        let qtd = Number(x.quantidade) || 0, un = x.unidade || a.unidade;
+        const conv = N.converter(qtd, un, a.unidade);
+        if (conv != null) { qtd = conv; un = a.unidade; }
+        d.refeicaoItens.push({ id: N.novoId(), refeicaoId: ref.id, alimentoId: a.id, quantidade: qtd, unidade: un });
+      });
+    });
 
-    function treino(u, nome, data, grupos, status, duracao) {
-      return { id: novoId(), usuarioId: u, nome: nome, data: data, grupos: grupos, status: status, duracao: duracao || 60, obs: "" };
-    }
-    var tPeito = treino(eu, "Treino de Peito", hoje(-6), ["Peito", "Tríceps"], "Realizado", 65);
-    var tPernas = treino(eu, "Treino de Pernas", hoje(-4), ["Pernas", "Glúteos"], "Realizado", 70);
-    var tCostas = treino(eu, "Treino de Costas", hoje(-5), ["Costas", "Bíceps"], "Realizado", 60);
-    d.treinos = [
-      treino(eu, "Cardio (bike)", hoje(-20), ["Cardio"], "Realizado", 40),
-      treino(eu, "Treino de Peito", hoje(-13), ["Peito", "Tríceps"], "Realizado", 60),
-      treino(eu, "Treino de Pernas", hoje(-11), ["Pernas", "Glúteos"], "Realizado", 70),
-      tPeito, tCostas, tPernas,
-      treino(eu, "Ombros + Abdômen", hoje(-3), ["Ombros", "Abdômen"], "Realizado", 55),
-      treino(eu, "Treino de Peito", hoje(1), ["Peito", "Tríceps"], "Planejado", 60),
-      treino(eu, "Treino de Costas", hoje(3), ["Costas", "Bíceps"], "Planejado", 60),
-      treino(eu, "Cardio", hoje(-1), ["Cardio"], "Realizado", 30),
-      treino(eu, "Caminhada leve", hoje(0), ["Cardio"], "Planejado", 40)
-    ];
+    // compras
+    const STATUS = { "Planejado": "Pendente", "Comprar": "Pendente", "Comprado": "Comprado", "Não comprado": "Cancelado" };
+    (v1.compras || []).forEach((c) => {
+      const st = STATUS[c.status] || "Pendente";
+      const total = (Number(c.quantidade) || 0) * (Number(c.precoUnit) || 0);
+      let alimentoId = c.produtoId && d.alimentos.some((a) => a.id === c.produtoId) ? c.produtoId : null;
+      if (!alimentoId && c.nome) alimentoId = alimentoPorNome(c.nome, c.emoji, c.unidade, MAPA_CATEGORIA_V1[c.categoria]).id;
+      d.compras.push({
+        id: c.id || N.novoId(), usuarioId: uid, alimentoId, nome: c.nome || "Item", categoria: MAPA_CATEGORIA_V1[c.categoria] || "Outros",
+        quantidade: Number(c.quantidade) || 0, unidade: c.unidade || "un",
+        precoEstimado: total || null, precoPago: st === "Comprado" ? total : null,
+        mercado: c.local || "Mercado", prioridade: c.prioridade === "Alta" ? "Alta" : c.prioridade === "Baixa" ? "Baixa" : "Normal",
+        status: st, dataCompra: st === "Comprado" ? (c.data || null) : null, dataPrevista: st !== "Comprado" ? (c.data || null) : null,
+        origem: "manual", auto: false, motivo: "", criadoEm: c.data || N.hoje(0), obs: c.obs || ""
+      });
+    });
 
-    function ex(t, nome, grupo, series, reps, carga, descanso, status) {
-      return { id: novoId(), treinoId: t.id, nome: nome, grupo: grupo, series: series, repeticoes: reps, carga: carga, descanso: descanso, status: status || "Feito", obs: "" };
-    }
-    d.exercicios = [
-      ex(tPeito, "Supino reto", "Peito", 4, 10, 60, "90s"),
-      ex(tPeito, "Supino inclinado", "Peito", 3, 12, 50, "90s"),
-      ex(tPeito, "Crucifixo", "Peito", 3, 12, 14, "60s"),
-      ex(tPeito, "Tríceps corda", "Tríceps", 3, 15, 25, "60s"),
-      ex(tCostas, "Puxada frontal", "Costas", 4, 10, 55, "90s"),
-      ex(tCostas, "Remada curvada", "Costas", 3, 10, 50, "90s"),
-      ex(tCostas, "Rosca direta", "Bíceps", 3, 12, 20, "60s"),
-      ex(tPernas, "Agachamento livre", "Pernas", 4, 8, 80, "120s"),
-      ex(tPernas, "Leg press", "Pernas", 3, 12, 140, "90s"),
-      ex(tPernas, "Cadeira extensora", "Pernas", 3, 15, 45, "60s"),
-      ex(tPernas, "Elevação pélvica", "Glúteos", 3, 12, 60, "60s", "Pulado")
-    ];
-
-    function peso(u, data, kg) { return { id: novoId(), usuarioId: u, data: data, peso: kg, altura: null, obs: "" }; }
-    d.pesagens = [
-      peso(eu, hoje(-57), 82.5), peso(eu, hoje(-43), 82.1), peso(eu, hoje(-29), 81.6), peso(eu, hoje(-19), 81.2),
-      peso(eu, hoje(-12), 80.9), peso(eu, hoje(-5), 80.4), peso(eu, hoje(-1), 80.1)
-    ];
-
+    // treinos e exercícios realizados (os registros de carga viram "series")
+    (v1.treinos || []).forEach((t) => {
+      d.treinos.push({ id: t.id, usuarioId: uid, fichaId: null, nome: t.nome || "Treino", data: t.data || N.hoje(0),
+        grupos: Array.isArray(t.grupos) ? t.grupos : [], status: t.status === "Adiado" ? "Planejado" : (N.STATUS_TREINO.indexOf(t.status) !== -1 ? t.status : "Planejado"),
+        duracao: Number(t.duracao) || 0, obs: t.obs || "" });
+    });
+    const ordemPorTreino = {};
+    (v1.exercicios || []).forEach((e) => {
+      ordemPorTreino[e.treinoId] = (ordemPorTreino[e.treinoId] || 0) + 1;
+      d.series.push({ id: e.id || N.novoId(), treinoId: e.treinoId, exercicioId: null, exercicio: e.nome || "Exercício", grupo: e.grupo || "",
+        ordem: ordemPorTreino[e.treinoId], series: Number(e.series) || 0, repeticoes: Number(e.repeticoes) || 0, carga: Number(e.carga) || 0,
+        rpe: null, descanso: e.descanso || "", status: N.STATUS_SERIE.indexOf(e.status) !== -1 ? e.status : "Feito", obs: e.obs || "" });
+    });
+    (v1.planoSemanal || []).forEach((p) => {
+      const descanso = String(p.treino || "").trim().toLowerCase() === "descanso";
+      d.planoSemanal.push({ id: p.id || N.novoId(), usuarioId: uid, diaSemana: Number(p.diaSemana) || 1, fichaId: null,
+        treino: p.treino || "", grupos: p.grupos || [], horario: p.horario || "", tipo: descanso ? "descanso" : "treino", obs: p.obs || "" });
+    });
+    (v1.pesagens || []).forEach((p) => {
+      d.pesagens.push({ id: p.id || N.novoId(), usuarioId: uid, data: p.data, peso: Number(p.peso), altura: p.altura || null, obs: p.obs || "" });
+    });
     return d;
   }
 
-  // "AAAA-MM-DD" do dia `dia` de N meses atrás/à frente
-  function mesRelativo(offsetMeses, dia) {
-    var d = new Date();
-    d.setDate(1);
-    d.setMonth(d.getMonth() + offsetMeses);
-    d.setDate(Math.min(dia, 28));
-    return isoLocal(d);
+  // completa chaves que faltem (backups de versões intermediárias, etc.)
+  function normalizar(d) {
+    if (!d || typeof d !== "object") return esquemaVazio();
+    if (!d.versao || d.versao < 2) d = migrarV1(d);
+    const base = esquemaVazio();
+    Object.keys(base).forEach((k) => { if (d[k] === undefined) d[k] = base[k]; });
+    COLECOES.forEach((k) => { if (!Array.isArray(d[k])) d[k] = []; });
+    if (!Array.isArray(d.usuarios) || !d.usuarios.length) d.usuarios = [perfilPadrao()];
+    if (d.usuarios.length > 1) d.usuarios = [d.usuarios[0]];
+    const cfg = configPadrao();
+    d.config = Object.assign({}, cfg, d.config || {});
+    d.config.alertas = Object.assign({}, cfg.alertas, (d.config && d.config.alertas) || {});
+    d.config.integracao = Object.assign({}, cfg.integracao, (d.config && d.config.integracao) || {});
+    d.versao = VERSAO;
+    return d;
   }
 
   // ---------------------------------------------------------------------
   // carregar / salvar
   // ---------------------------------------------------------------------
-  function migrar(d) {
-    var base = esquemaVazio();
-    Object.keys(base).forEach(function (k) {
-      if (d[k] === undefined) d[k] = base[k];
-    });
-    if (!d.config) d.config = base.config;
-    delete d.config.usuarioAtivo;
-    // versões antigas eram multiusuário: tudo passa a pertencer ao perfil único
-    if (!d.usuarios.length) d.usuarios = [perfilPadrao()];
-    if (d.usuarios.length > 1) d.usuarios = [d.usuarios[0]];
-    var id = d.usuarios[0].id;
-    ["compras", "refeicoes", "planoSemanal", "treinos", "pesagens"].forEach(function (k) {
-      d[k].forEach(function (x) { x.usuarioId = id; });
-    });
-    return d;
-  }
-
+  let cache = null;
   function carregarDados() {
-    var bruto = lerBruto();
+    if (cache) return cache;
+    const bruto = lerBruto();
     if (!bruto) {
-      var demo = dadosDemo();
-      salvarDados(demo, true);
-      return demo;
+      cache = esquemaVazio();
+      salvarDados(cache, true, true);
+      return cache;
     }
     try {
-      return migrar(JSON.parse(bruto));
+      const obj = JSON.parse(bruto);
+      const versaoAntes = obj && obj.versao;
+      cache = normalizar(obj);
+      if (versaoAntes !== VERSAO) {
+        // guarda uma cópia da versão antiga antes de migrar (segurança)
+        try { localStorage.setItem(CHAVE + ":antes-da-v" + VERSAO, bruto); } catch (e) { /* sem espaço: segue */ }
+        salvarDados(cache, true, true);
+      }
+      return cache;
     } catch (e) {
-      console.error("Dados corrompidos, recomeçando com exemplo.", e);
-      var reset = dadosDemo();
-      salvarDados(reset, true);
-      return reset;
+      console.error("Dados corrompidos — guardando cópia e recomeçando vazio.", e);
+      try { localStorage.setItem(CHAVE + ":corrompido", bruto); } catch (e2) { /* ignora */ }
+      cache = esquemaVazio();
+      salvarDados(cache, true, true);
+      return cache;
     }
   }
 
   function salvarDados(dados, semNotificar, semCarimbo) {
+    cache = dados;
     if (!semCarimbo) dados.atualizadoEm = new Date().toISOString();
     try {
       gravarBruto(JSON.stringify(dados));
@@ -279,69 +272,101 @@
     if (!semNotificar) notificar();
   }
 
-  function limparDados() {
-    var vazio = esquemaVazio();
+  function substituir(dados) {
+    const d = normalizar(dados);
+    salvarDados(d);
+    return d;
+  }
+
+  // reset completo: volta ao sistema vazio (com tela de boas-vindas)
+  function resetCompleto() {
+    try { localStorage.removeItem(CHAVE + ":antes-da-v" + VERSAO); } catch (e) { /* ignora */ }
+    const vazio = esquemaVazio();
     salvarDados(vazio);
     return vazio;
   }
+  // apaga só os registros, mantendo perfil e configurações
+  function limparRegistros(d) {
+    const novo = esquemaVazio();
+    novo.usuarios = [Object.assign({}, perfil(d), { nome: d.demo ? "Eu" : perfil(d).nome })];
+    novo.config = Object.assign({}, d.config, { boasVindas: false });
+    salvarDados(novo);
+    return novo;
+  }
 
-  function carregarExemplo() {
-    var demo = dadosDemo();
-    salvarDados(demo);
-    return demo;
+  // grupos de exclusão parcial (Configurações → Excluir dados)
+  const GRUPOS_EXCLUSAO = {
+    refeicoes: { rotulo: "Refeições e água", colecoes: ["refeicoes", "refeicaoItens", "agua"], ajuda: "Diário e planejamento de refeições e registros de água." },
+    favoritas: { rotulo: "Refeições favoritas", colecoes: ["favoritas"], ajuda: "Modelos como “Almoço padrão”." },
+    compras: { rotulo: "Lista de compras e gastos", colecoes: ["compras"], ajuda: "Itens pendentes e o histórico de compras (os gastos são calculados a partir dele)." },
+    estoque: { rotulo: "Estoque", colecoes: ["estoque"], ajuda: "Quantidades em casa e estoques mínimos." },
+    treinos: { rotulo: "Treinos realizados", colecoes: ["treinos", "series"], ajuda: "Sessões de treino e cargas registradas." },
+    fichas: { rotulo: "Fichas e plano semanal", colecoes: ["fichas", "exercicios", "planoSemanal"], ajuda: "Fichas de treino e o calendário semanal." },
+    corpo: { rotulo: "Peso e medidas", colecoes: ["pesagens", "medidas"], ajuda: "Pesagens, composição corporal e medidas." },
+    metas: { rotulo: "Metas", colecoes: ["metas"], ajuda: "Todas as metas cadastradas." },
+    alimentos: { rotulo: "Cadastro de alimentos", colecoes: ["alimentos", "refeicaoItens", "favoritas", "estoque"], ajuda: "Os alimentos e tudo que depende deles (itens das refeições, favoritas e estoque)." }
+  };
+  function apagarGrupo(d, chave) {
+    const g = GRUPOS_EXCLUSAO[chave];
+    if (!g) return 0;
+    let n = 0;
+    g.colecoes.forEach((c) => { n += d[c].length; d[c] = []; });
+    return n;
   }
 
   // ---------------------------------------------------------------------
   // backup
   // ---------------------------------------------------------------------
-  function exportarDados() {
-    var dados = carregarDados();
-    dados.config.ultimoBackup = new Date().toISOString();
-    salvarDados(dados);
-    var texto = JSON.stringify(dados, null, 2);
-    var blob = new Blob([texto], { type: "application/json" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "meu-controle-backup-" + hoje(0) + ".json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  function baixarArquivo(nome, conteudo, tipo) {
+    const blob = conteudo instanceof Blob ? conteudo : new Blob([conteudo], { type: tipo || "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nome;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
-
+  function exportarDados() {
+    const dados = carregarDados();
+    dados.config.ultimoBackup = new Date().toISOString();
+    salvarDados(dados, false, true);
+    baixarArquivo("meu-controle-backup-" + N.hoje(0) + ".json", JSON.stringify(dados, null, 2), "application/json");
+  }
+  function validarBackup(obj) {
+    return !!(obj && typeof obj === "object" && Array.isArray(obj.usuarios));
+  }
   function importarDados(arquivo) {
-    return new Promise(function (resolve, reject) {
-      var leitor = new FileReader();
-      leitor.onload = function () {
-        try {
-          var obj = JSON.parse(leitor.result);
-          if (!obj || !Array.isArray(obj.usuarios)) {
-            reject(new Error("Esse arquivo não parece ser um backup do Meu Controle."));
-            return;
-          }
-          salvarDados(migrar(obj));
-          resolve(obj);
-        } catch (e) {
-          reject(new Error("Não consegui ler esse arquivo. Verifique se é o JSON exportado pelo próprio sistema."));
+    return new Promise((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => {
+        let obj;
+        try { obj = JSON.parse(leitor.result); } catch (e) {
+          reject(new Error("Não consegui ler esse arquivo. Verifique se é o JSON exportado pelo próprio sistema.")); return;
         }
+        if (!validarBackup(obj)) { reject(new Error("Esse arquivo não parece ser um backup do Meu Controle.")); return; }
+        resolve(substituir(obj));
       };
-      leitor.onerror = function () { reject(new Error("Falha ao ler o arquivo.")); };
+      leitor.onerror = () => reject(new Error("Falha ao ler o arquivo."));
       leitor.readAsText(arquivo);
     });
   }
 
+  function carregarExemplo() {
+    const demo = global.Demo.gerar(esquemaVazio());
+    if (global.Compras && global.Compras.sincronizarAutomaticos) global.Compras.sincronizarAutomaticos(demo);
+    salvarDados(demo);
+    return demo;
+  }
+
+  function usoArmazenamento() {
+    const b = lerBruto();
+    return b ? b.length * 2 : 0; // UTF-16 ≈ 2 bytes por caractere
+  }
+
   global.Armazenamento = {
-    carregarDados: carregarDados,
-    salvarDados: salvarDados,
-    limparDados: limparDados,
-    perfil: perfil,
-    carregarExemplo: carregarExemplo,
-    exportarDados: exportarDados,
-    importarDados: importarDados,
-    novoId: novoId,
-    hoje: hoje,
-    isoLocal: isoLocal,
-    aoMudar: aoMudar
+    VERSAO, COLECOES, TIPOS_ALERTA, GRUPOS_EXCLUSAO,
+    carregarDados, salvarDados, substituir, resetCompleto, limparRegistros, apagarGrupo,
+    perfil, carregarExemplo, exportarDados, importarDados, validarBackup, baixarArquivo, usoArmazenamento,
+    esquemaVazio, configPadrao, migrarV1, normalizar,
+    novoId: N.novoId, hoje: N.hoje, isoLocal: N.isoLocal, aoMudar
   };
 })(window);
