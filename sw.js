@@ -1,19 +1,20 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v2";
+const CACHE = "meu-controle-v3";
+const V = "?v=2.0.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "metas", "insights", "relatorios", "graficos", "ui", "app", "formularios",
+  "paginas/dashboard", "paginas/alimentacao", "paginas/refeicoes", "paginas/compras", "paginas/estoque", "paginas/academia", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
-  "./", "./index.html", "./css/style.css?v=1.1.0", "./manifest.json", "./manifest.webmanifest",
+  "./", "./index.html", "./css/style.css" + V, "./manifest.json", "./manifest.webmanifest",
   "./js/vendor/chart.umd.min.js",
-  "./js/armazenamento.js?v=1.1.0", "./js/fitness.js?v=1.1.0", "./js/alimentacao.js?v=1.1.0",
-  "./js/graficos.js?v=1.1.0", "./js/app.js?v=1.1.0",
   "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
   "./apple-touch-icon.png", "./apple-touch-icon-180.png", "./apple-touch-icon-167.png", "./apple-touch-icon-152.png", "./apple-touch-icon-precomposed.png"
-];
+].concat(MODULOS.map((m) => "./js/" + m + ".js" + V));
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return;
+  if (url.origin !== location.origin || e.request.method !== "GET") return;
   const ehPagina = e.request.mode === "navigate" || (e.request.destination === "document");
   if (ehPagina) {
     e.respondWith(fetch(e.request).then((resp) => { const cp = resp.clone(); caches.open(CACHE).then((c) => c.put(e.request, cp)); return resp; }).catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html"))));

@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?v=1">
 <meta name="color-scheme" content="dark">
 <title>Meu Controle — Vida & Fitness</title>
-<link rel="stylesheet" href="css/style.css?v=1.1.0">
+<link rel="stylesheet" href="css/style.css?v=2.0.0">
 </head>
 <body>
 
@@ -31,21 +31,21 @@
       <div class="logo-txt"><b>Meu Controle</b><span>Vida & Fitness</span></div>
     </button>
 
-    <nav class="nav" id="navPrincipal">
-      <button data-secao="dashboard"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="11.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="11.5" width="6" height="6" rx="1.2"/></svg>Dashboard</button>
-      <button data-secao="compras"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2 9h8l2-6H6"/><circle cx="8" cy="16" r="1.2"/><circle cx="14" cy="16" r="1.2"/></svg>Compras</button>
-      <button data-secao="gastos"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15V9M10 15V5M15 15v-6"/><path d="M3 17h14"/></svg>Gastos</button>
-      <button data-secao="alimentacao"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a2 2 0 0 0 4 0V3"/><path d="M8 9v8"/><path d="M14 3c-1.5 1.5-2 4-2 6h2v8"/></svg>Refeições</button>
-      <button data-secao="academia"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="3" height="6" rx="1"/><rect x="15" y="7" width="3" height="6" rx="1"/><rect x="5" y="8.5" width="2" height="3" rx=".6"/><rect x="13" y="8.5" width="2" height="3" rx=".6"/><path d="M7 10h6"/></svg>Academia</button>
-      <button data-secao="semana"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M3 8h14"/><path d="M7 2.5v3M13 2.5v3"/><path d="M6.5 11.5h2M11.5 11.5h2M6.5 14.5h2"/></svg>Semana</button>
-      <button data-secao="evolucao"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l4.5-4.5L11 12l6-6"/><path d="M13 6h4v4"/></svg>Evolução</button>
-      <button data-secao="relatorio"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h7l3 3v11H5z"/><path d="M12 3v3h3"/><path d="M7.5 10h5M7.5 13h5"/></svg>Relatório</button>
-      <div class="nav-sep"></div>
-      <button data-secao="configuracoes"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.4 1.4M13.6 13.6L15 15M15 5l-1.4 1.4M6.4 13.6L5 15"/></svg>Ajustes</button>
+    <nav class="nav" id="navPrincipal" aria-label="Menu principal">
+      <button data-secao="dashboard"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="11.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="11.5" width="6" height="6" rx="1.2"/></svg><span>Dashboard</span></button>
+      <button data-secao="alimentacao"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v6a2 2 0 0 0 4 0V3"/><path d="M8 9v8"/><path d="M14 3c-1.5 1.5-2 4-2 6h2v8"/></svg><span>Alimentação</span></button>
+      <button data-secao="refeicoes"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M3 8h14M7 2.5v3M13 2.5v3"/><path d="M6.5 11.5h2M11.5 11.5h2M6.5 14.5h2"/></svg><span>Refeições</span></button>
+      <button data-secao="compras"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2 9h8l2-6H6"/><circle cx="8" cy="16" r="1.2"/><circle cx="14" cy="16" r="1.2"/></svg><span>Compras</span></button>
+      <button data-secao="estoque"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l7-4 7 4v8l-7 4-7-4z"/><path d="M3 7l7 4 7-4M10 11v8"/></svg><span>Estoque</span></button>
+      <button data-secao="academia"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="3" height="6" rx="1"/><rect x="15" y="7" width="3" height="6" rx="1"/><rect x="5" y="8.5" width="2" height="3" rx=".6"/><rect x="13" y="8.5" width="2" height="3" rx=".6"/><path d="M7 10h6"/></svg><span>Academia</span></button>
+      <button data-secao="evolucao"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l4.5-4.5L11 12l6-6"/><path d="M13 6h4v4"/></svg><span>Evolução</span></button>
+      <button data-secao="metas"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r=".6" fill="currentColor"/></svg><span>Metas</span></button>
+      <button data-secao="relatorios"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h7l3 3v11H5z"/><path d="M12 3v3h3"/><path d="M7.5 10h5M7.5 13h5"/></svg><span>Relatórios</span></button>
+      <button data-secao="configuracoes"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.4 1.4M13.6 13.6L15 15M15 5l-1.4 1.4M6.4 13.6L5 15"/></svg><span>Configurações</span></button>
     </nav>
     <div class="nav-ferramentas">
-        <div class="status-vivo" id="statusVivo" title="Data e hora locais"><span class="dot-vivo"></span><span id="dataTopbar" class="data-topbar"></span><span id="relogioTopbar">--:--:--</span></div>
-        <button class="icon-btn" id="btnNotificacoes" aria-label="Notificações" title="Notificações">
+        <div class="status-vivo" id="statusVivo" title="Data e hora locais"><span class="dot-vivo"></span><span id="dataTopbar" class="data-topbar"></span><span id="relogioTopbar">--:--</span></div>
+        <button class="icon-btn" id="btnNotificacoes" aria-label="Notificações" title="Notificações" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a4 4 0 0 1 8 0c0 3.5 1.2 4.5 1.2 4.5H4.8S6 11.5 6 8z"/><path d="M8.3 15a1.8 1.8 0 0 0 3.4 0"/></svg>
           <span class="bolinha" id="badgeNotificacoes" style="display:none">0</span>
         </button>
@@ -57,29 +57,49 @@
   </aside>
 
   <div class="main">
-    <div style="display:none"><h1 id="tituloSecao"></h1><div id="subtituloSecao"></div></div>
-
     <div class="scroll">
       <div id="conteudo"></div>
-      <div class="rodape-app"><span id="rodapeAtualizado"></span><span>Armazenamento local · nenhum dado sai do navegador</span><span>Meu Controle v1.0</span></div>
+      <div class="rodape-app"><span id="rodapeAtualizado"></span><span>Armazenamento local · nenhum dado sai do navegador</span><span id="rodapeVersao">Meu Controle</span></div>
     </div>
   </div>
 </div>
 
+<!-- registro rápido -->
+<div class="fab-menu" id="fabMenu" role="menu" aria-label="Registro rápido"></div>
+<button class="fab" id="fab" aria-label="Registro rápido" aria-haspopup="true" aria-expanded="false" title="Registro rápido"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg></button>
+
 <div class="scrim" id="scrim"></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="inputImportarBackup" accept="application/json" style="display:none">
 
 <!-- bibliotecas de terceiros (offline, incluídas no projeto) -->
 <script src="js/vendor/chart.umd.min.js"></script>
 
-<!-- módulos do sistema — ordem importa: cada um usa o anterior -->
-<script src="js/armazenamento.js?v=1.1.0"></script>
-<script src="js/fitness.js?v=1.1.0"></script>
-<script src="js/alimentacao.js?v=1.1.0"></script>
-<script src="js/graficos.js?v=1.1.0"></script>
-<script src="js/app.js?v=1.1.0"></script>
+<!-- módulos do sistema — a ordem importa: regras → interface → páginas -->
+<script src="js/nucleo.js?v=2.0.0"></script>
+<script src="js/armazenamento.js?v=2.0.0"></script>
+<script src="js/demo.js?v=2.0.0"></script>
+<script src="js/alimentacao.js?v=2.0.0"></script>
+<script src="js/compras.js?v=2.0.0"></script>
+<script src="js/fitness.js?v=2.0.0"></script>
+<script src="js/metas.js?v=2.0.0"></script>
+<script src="js/insights.js?v=2.0.0"></script>
+<script src="js/relatorios.js?v=2.0.0"></script>
+<script src="js/graficos.js?v=2.0.0"></script>
+<script src="js/ui.js?v=2.0.0"></script>
+<script src="js/app.js?v=2.0.0"></script>
+<script src="js/formularios.js?v=2.0.0"></script>
+<script src="js/paginas/dashboard.js?v=2.0.0"></script>
+<script src="js/paginas/alimentacao.js?v=2.0.0"></script>
+<script src="js/paginas/refeicoes.js?v=2.0.0"></script>
+<script src="js/paginas/compras.js?v=2.0.0"></script>
+<script src="js/paginas/estoque.js?v=2.0.0"></script>
+<script src="js/paginas/academia.js?v=2.0.0"></script>
+<script src="js/paginas/evolucao.js?v=2.0.0"></script>
+<script src="js/paginas/metas.js?v=2.0.0"></script>
+<script src="js/paginas/relatorios.js?v=2.0.0"></script>
+<script src="js/paginas/configuracoes.js?v=2.0.0"></script>
 <script>
   // registra o service worker (só funciona via http/https — no celular, depois de publicado)
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

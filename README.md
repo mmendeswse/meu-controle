@@ -27,11 +27,9 @@ https://<seu-usuario>.github.io/<nome-do-repositorio>/
 No celular ou iPad, abra esse endereço e use **Compartilhar → Adicionar à
 Tela de Início**: ele vira um app, abre em tela cheia e funciona offline.
 
-Na primeira vez que você abrir, o sistema carrega um perfil de
-demonstração (**Você (exemplo)**) com compras, refeições, treinos e
-pesagens fictícias, só para você ver tudo
-funcionando. Use **Apagar exemplo e começar do zero** (no aviso amarelo do
-topo ou em **Ajustes**) quando quiser usar com os seus dados.
+Na primeira vez que você abrir, o sistema começa **vazio**, com um passo a passo
+de boas-vindas. Se quiser conhecer antes, use **Explorar com dados de exemplo**
+(dados fictícios, marcados com um aviso amarelo e removíveis com um clique).
 
 ## Onde ficam os seus dados
 
@@ -47,37 +45,63 @@ Tudo é salvo no armazenamento local do seu próprio navegador
 
 ## O que o sistema faz
 
-- **Uso pessoal** — como o sistema de finanças, é de uma pessoa só: sem
-  cadastro de usuários nem seletor de pessoa. Seu perfil (nome, altura,
-  peso inicial, objetivo) fica em **Ajustes → Meu perfil**.
-- **Dashboard** — KPIs de treinos, refeições, gastos, compras e peso,
-  refeições de hoje em linha do tempo, próximos treinos, avisos
-  automáticos, lista de compras, gráfico de peso e últimas pesagens.
-- **Compras** — lista em cards com emoji do produto, preço total
-  (quantidade × preço unitário), local, prioridade e status
-  (Planejado → Comprar → Comprado → Não comprado, com um clique). Abas por
-  Feira, Mercado e Açougue. Catálogo de produtos com preço de referência,
-  último preço pago e total gasto por produto.
-- **Gastos** — gasto do mês x mês anterior, diferença, média mensal, maior
-  compra, gráfico real x previsto dos últimos 6 meses, rosca por
-  categoria, barras por local e produto, e extrato do mês.
-  Só entra como gasto o que estiver **Comprado**.
-- **Refeições** — cronograma do dia por horário (café da manhã, lanches,
-  almoço, jantar, ceia), navegação entre dias, clique no alimento para
-  marcar como realizado, e **Repetir dia** para copiar um dia inteiro.
-- **Academia** — treinos por data com grupos musculares e status, detalhe
-  de cada treino com exercícios (séries, repetições, carga, descanso),
-  volume total, progresso, **Repetir treino** e gráfico de evolução da
-  carga por exercício.
-- **Semana** — plano semanal Seg → Dom, com destaque no dia de
-  hoje; **Gerar treinos da semana** cria os treinos planejados de uma vez.
-- **Evolução** — peso inicial, atual, diferença, variação no mês, peso
-  médio, IMC com classificação, dias de acompanhamento, gráfico e
-  histórico de pesagens.
-- **Relatório** — fechamento do mês: gasto, comparação com o
-  mês anterior, compras, refeições, treinos feitos/planejados e peso do
-  início ao fim do mês.
-- **Ajustes** — meu perfil, backup, restauração, dados de exemplo e privacidade.
+Tudo conversa entre si — esse é o diferencial:
+
+```
+planejar refeição ─► soma o que vai ser consumido ─► confere o estoque
+      │                                                  │ falta?
+      │                                                  ▼
+      │                                   entra sozinho na lista de compras
+      │                                                  │ marcado como comprado
+      ▼                                                  ▼
+marcar como realizada ─► calorias/macros do dia      soma ao estoque
+      │                  └─► Dashboard, metas, insights e relatórios
+      └─► desconta do estoque (e devolve se desmarcar)
+```
+
+- **Dashboard ("Como estou hoje?")** — resumo de hoje em checklist (café,
+  almoço, lanche, jantar, água, treino, peso), seu progresso (primeiro →
+  atual → meta), insights, painéis de Saúde, Alimentação, Academia e Compras,
+  gráfico de peso e metas.
+- **Alimentação** — diário com calorias, proteína, carboidratos, gorduras,
+  fibras e água × metas; refeições montadas com alimentos cadastrados
+  (nutrição calculada sozinha); cadastro de alimentos com nutrição, preço,
+  marca e categoria.
+- **Refeições** — planejador semanal SEG → DOM, copiar um dia para outros,
+  refeições favoritas ("Almoço padrão") e "Compras para o planejado".
+- **Compras** — lista com produto, quantidade, preço estimado e pago,
+  mercado, categoria, prioridade, data e status (Pendente / Comprado /
+  Cancelado), marcar como comprado direto na lista, itens automáticos;
+  abas de Gastos (mês a mês, por categoria e mercado) e Histórico de preços.
+- **Estoque** — o que há em casa, estoque mínimo, validade, alertas de
+  estoque baixo e "+ Adicionar à lista de compras".
+- **Academia** — fichas de treino, registro de séries/repetições/carga/RPE
+  por exercício (com "última vez"), calendário mensal e plano semanal
+  (planejado/realizado/cancelado), frequência, sequência atual e melhor
+  sequência, evolução de carga por exercício e por semana.
+- **Evolução** — peso, massa muscular, gordura, massa de gordura, água
+  corporal, IMC e medidas (pescoço, peito, cintura, abdômen, quadril,
+  braços, coxas), nada obrigatório; comparação primeira → atual → meta
+  com 🟢🟡🔴 calculado pela **tendência** (regressão linear) e gráficos por
+  período (7 dias a tudo).
+- **Metas** — peso, massa muscular, gordura, cintura, treinos por semana,
+  calorias, proteína, carboidratos, gorduras, fibras, água, gastos e
+  orçamento da lista, com atual, objetivo, prazo e % concluído.
+- **Relatórios** — diário, semanal, mensal e trimestral, comparando com o
+  período anterior; exportação em **PDF** (impressão), **CSV** e **Excel**.
+  Aba **Insights**: observações geradas só a partir dos seus registros.
+- **Alertas** — treino não realizado, peso sem registro, estoque baixo,
+  item importante pendente, meta atrasada, refeição planejada, água e
+  proteína abaixo da meta, mudanças relevantes e backup antigo; cada tipo
+  pode ser ligado/desligado.
+- **Botão "+"** — registrar peso, refeição, água, treino, alimento, compra
+  ou medidas de qualquer tela.
+- **Configurações** — perfil, alertas, integração, backup/restauração,
+  exportação completa em Excel, exclusão parcial de dados e reset completo
+  (sempre com confirmação; o reset exige digitar APAGAR).
+
+Sem dados suficientes, as telas dizem **"Sem dados suficientes"** em vez de
+estimar — nada é inventado.
 
 ## Limitações desta versão (de propósito)
 
@@ -92,41 +116,58 @@ Tudo é salvo no armazenamento local do seu próprio navegador
 
 ```
 meu-controle/
-├── index.html              # estrutura da página (barra de guias, modal)
-├── manifest.json           # app instalável (PWA)
-├── sw.js                   # funciona offline depois de publicado
-├── css/
-│   └── style.css           # tema visual (o mesmo do sistema de finanças + componentes novos)
-├── js/
-│   ├── armazenamento.js    # salvar/carregar/exportar/importar dados + dados de exemplo
-│   ├── fitness.js          # cálculos de peso, IMC, treinos, exercícios e plano semanal
-│   ├── alimentacao.js      # cálculos de compras, gastos, catálogo e refeições
-│   ├── graficos.js         # todos os gráficos (Chart.js)
-│   ├── app.js              # interface: navegação, telas, modais, eventos
-│   └── vendor/
-│       └── chart.umd.min.js
-└── assets/
-    └── icons/              # ícones do app
+├── index.html               # estrutura da página (menu, botão +, modal)
+├── sw.js                    # funciona offline depois de publicado
+├── css/style.css            # tema visual
+└── js/
+    ├── nucleo.js            # datas, unidades (g↔kg, ml↔L, un↔dz), estatística, listas fixas
+    ├── armazenamento.js     # salvar/carregar, esquema v2, migração da v1, backup
+    ├── demo.js              # dados de exemplo (só quando pedidos)
+    ├── alimentacao.js       # alimentos, nutrição, refeições, água, favoritas, planejamento
+    ├── compras.js           # lista, gastos, estoque e a integração entre eles
+    ├── fitness.js           # peso, composição, medidas, fichas, treinos, calendário, cargas
+    ├── metas.js             # metas e avaliação por tendência
+    ├── insights.js          # insights e alertas
+    ├── relatorios.js        # relatórios + exportação CSV / XLSX / PDF
+    ├── graficos.js          # todos os gráficos (Chart.js)
+    ├── ui.js                # componentes de interface (cards, KPIs, modal, dicas…)
+    ├── app.js               # rotas, menu, botão +, notificações, delegação de eventos
+    ├── formularios.js       # todos os formulários (modais)
+    ├── paginas/             # uma página por arquivo (dashboard, alimentacao, …)
+    └── vendor/chart.umd.min.js
 ```
 
-Cada módulo só conversa com o de baixo: `app.js` desenha as telas e chama
-`fitness.js` / `alimentacao.js`, que calculam tudo a partir do objeto de
-dados entregue por `armazenamento.js`. Nenhum módulo de regra toca no DOM.
+Os módulos de regra (`alimentacao`, `compras`, `fitness`, `metas`,
+`insights`, `relatorios`) não tocam no DOM: recebem o objeto de dados e
+devolvem números. Cada página se registra com `App.registrarPagina(...)` —
+para criar uma tela nova basta um arquivo em `js/paginas/`.
 
-## Modelo de dados
+## Modelo de dados (versão 2)
 
-Uma única chave no `localStorage` (`meuControle:v1`) guarda um objeto com:
+Uma única chave no `localStorage` (`meuControle:v1`, campo `versao: 2`).
+Dados da versão 1 são convertidos automaticamente na primeira abertura, e
+uma cópia do original fica guardada em `meuControle:v1:antes-da-v2`.
 
-| Coleção        | O que guarda                                                  |
-| -------------- | ------------------------------------------------------------- |
-| `usuarios`     | o perfil único: nome, altura, peso inicial, objetivo, início  |
-| `produtos`     | catálogo: nome, emoji, categoria, unidade, preço de referência |
-| `compras`      | item, quantidade, unidade, preço unitário, local, status      |
-| `refeicoes`    | data, horário, tipo de refeição, alimento, porção, status     |
-| `planoSemanal` | dia da semana (1 = segunda … 7 = domingo), treino, grupos     |
-| `treinos`      | data, nome, grupos musculares, status, duração                |
-| `exercicios`   | treino, séries, repetições, carga, descanso, status           |
-| `pesagens`     | data, peso, altura opcional                                   |
+| Coleção         | Entidade           | O que guarda                                           |
+| --------------- | ------------------ | ------------------------------------------------------ |
+| `usuarios`      | users              | perfil único: nome, altura, objetivo, início           |
+| `alimentos`     | foods              | nutrição por porção, preço, marca, categoria           |
+| `refeicoes`     | meals              | data, tipo, horário, status (Planejada/Realizada/Pulada) |
+| `refeicaoItens` | meal_items         | refeição → alimento + quantidade                       |
+| `favoritas`     | —                  | refeições modelo                                       |
+| `agua`          | —                  | registros de água (ml)                                 |
+| `compras`       | shopping_items     | lista e compras feitas (estimado, pago, status…)       |
+| `estoque`       | inventory          | alimento → quantidade em casa, mínimo, validade        |
+| `fichas`        | —                  | fichas de treino                                       |
+| `exercicios`    | exercises          | exercícios de cada ficha (séries, faixa de reps)       |
+| `treinos`       | workouts           | sessão por data (Planejado/Realizado/Cancelado)        |
+| `series`        | workout_sets       | séries, repetições, carga, RPE de cada exercício       |
+| `planoSemanal`  | —                  | dia da semana → ficha ou descanso                      |
+| `pesagens`      | weight_records     | data + peso                                            |
+| `medidas`       | body_measurements  | composição corporal e medidas                          |
+| `metas`         | goals              | tipo, inicial, alvo, prazo                             |
+| `notificacoes`  | notifications      | quais alertas já foram vistos                          |
+| `config`        | settings           | alertas ligados, integração, backup                    |
 
-Tudo que não está nessa lista (peso atual, diferença, IMC, gasto do mês,
-treinos da semana, próxima refeição…) é calculado na hora.
+Relações por id, sem copiar dados. Peso atual, IMC, calorias do dia, gastos,
+frequência, sequências, progresso de metas etc. são sempre **calculados**.
