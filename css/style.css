@@ -1847,3 +1847,56 @@ div.rw.clicavel { cursor: pointer; }
   .kpi-row:has(> :nth-child(6)) { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .kpi-valor { font-size: 17px; }
 }
+
+/* =======================================================================
+   iPAD — MENOS ROLAGEM
+   Espaçamentos mais enxutos, gráficos mais baixos e listas longas com
+   rolagem própria dentro do quadro (cabeçalho fixo), para a página não
+   ficar comprida demais. No iPad em pé, quadros pequenos ficam lado a lado.
+   ======================================================================= */
+@media (min-width: 701px) and (max-width: 1366px) {
+  #conteudo { padding-top: 14px; padding-bottom: 18px; }
+  .faixa-demo { margin-bottom: 12px; padding: 9px 14px; }
+  .cabecalho-pagina { margin-bottom: 12px; }
+  .grid, .kpi-row, .paineis { gap: 12px; margin-bottom: 12px; }
+  .espaco { height: 12px; }
+  .sechead { margin: 14px 2px 8px; }
+
+  .card > header { padding: 11px 16px 8px; }
+  .card > .foot { margin: 6px 14px 10px; padding: 8px 12px; }
+  .kpi { padding: 12px 16px 11px; }
+  .kpi-rotulo { margin-bottom: 6px; }
+  .kpi-delta, .kpi-sub { margin-top: 4px; }
+  .mini { padding: 9px 12px; }
+  .rw { padding-top: 8px; padding-bottom: 8px; }
+
+  /* gráficos mais baixos (a altura vem no próprio HTML) */
+  .grafico { max-height: 210px; }
+
+  /* listas longas: rolam dentro do quadro */
+  .tabela-scroll { max-height: 430px; overflow: auto; overscroll-behavior: contain; }
+  .tabela-scroll > .hd { position: sticky; top: 0; z-index: 1; background: var(--painel); }
+  .lista-compras { max-height: 560px; overflow-y: auto; overscroll-behavior: contain; }
+  .refeicoes { max-height: 600px; overflow-y: auto; overscroll-behavior: contain; }
+  .alertas-lista, .metas-mini, .insights { max-height: 380px; overflow-y: auto; overscroll-behavior: contain; }
+
+  /* coluna com 2 quadros empilhados que foi para a largura toda (por causa
+     de uma tabela ao lado): os 2 quadros ficam lado a lado */
+  .grid.grid:has(.tabela-scroll) > :not(:has(.tabela-scroll)):has(> .card ~ .card) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .grid.grid:has(.tabela-scroll) > :not(:has(.tabela-scroll)):has(> .card ~ .card) > .espaco { display: none; }
+  .grid.grid:has(.tabela-scroll) > :not(:has(.tabela-scroll)):has(> .card ~ .card) > .card { height: 100%; }
+}
+
+/* iPad em pé: 2 quadros lado a lado; KPIs de 3 e 4 numa só linha */
+@media (min-width: 701px) and (max-width: 999px) {
+  .grid > :first-child:nth-last-child(2), .grid > :first-child:nth-last-child(2) ~ *,
+  .grid > :first-child:nth-last-child(3), .grid > :first-child:nth-last-child(3) ~ :nth-child(2),
+  .grid > :first-child:nth-last-child(4), .grid > :first-child:nth-last-child(4) ~ * { grid-column: span 6; }
+  .grid.grid:has(table, .tabela-scroll) > * { grid-column: span 12; }
+
+  .kpi-row:has(> :first-child:nth-last-child(4)) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .kpi-row > :first-child:nth-last-child(4), .kpi-row > :first-child:nth-last-child(4) ~ * { grid-column: auto; }
+  .kpi-valor { font-size: 16px; }
+  .kpi-gauge, .kpi-gauge svg { width: 42px; height: 42px; }
+  .kpi-gauge-txt { font-size: 9.5px; }
+}

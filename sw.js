@@ -1,6 +1,6 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v4";
+const CACHE = "meu-controle-v5";
 const V = "?v=2.0.0";
 const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "metas", "insights", "relatorios", "graficos", "ui", "app", "formularios",
   "paginas/dashboard", "paginas/alimentacao", "paginas/refeicoes", "paginas/compras", "paginas/estoque", "paginas/academia", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
