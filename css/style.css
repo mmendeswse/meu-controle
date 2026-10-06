@@ -1802,3 +1802,48 @@ div.rw.clicavel { cursor: pointer; }
 
 /* cards empilhados numa mesma coluna não esticam */
 .grid > div:has(> .espaco) > .card { height: auto; }
+
+/* =======================================================================
+   iPAD — QUADROS PADRONIZADOS
+   Entre 701px e 1366px (iPad em pé e deitado) os quadros deixam de usar
+   larguras quebradas (5+7, 8+4...) e passam a seguir um padrão fixo:
+     · iPad deitado (≥ 1000px): quadros da mesma linha com a MESMA largura
+       (2 quadros = metade cada, 3 quadros = um terço cada) e mesma altura;
+     · iPad em pé (< 1000px): um quadro por linha, largura total.
+   Os KPIs seguem a mesma lógica: linhas completas, sem quadro sobrando
+   sozinho na última linha.
+   ======================================================================= */
+@media (min-width: 701px) and (max-width: 1366px) {
+  .grid { gap: 14px; margin-bottom: 14px; align-items: stretch; }
+  .grid > * { grid-column: span 12; min-width: 0; display: flex; flex-direction: column; }
+  .grid > * > .card { flex: 0 0 auto; height: auto; }
+  .grid > * > .card:last-child { flex: 1 1 auto; }
+  .grid > * > .espaco { flex: none; }
+
+  /* KPIs: 6 colunas-base, para dividir 2, 3, 4 ou 5 itens sem sobras */
+  .kpi-row { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .kpi-row > * { grid-column: span 3; }
+  .kpi-row > :first-child:nth-last-child(3), .kpi-row > :first-child:nth-last-child(3) ~ *,
+  .kpi-row > :first-child:nth-last-child(6), .kpi-row > :first-child:nth-last-child(6) ~ * { grid-column: span 2; }
+  .kpi-row > :first-child:nth-last-child(5), .kpi-row > :first-child:nth-last-child(5) ~ :nth-child(-n+3) { grid-column: span 2; }
+  .kpi-row > :only-child { grid-column: span 6; }
+  .kpi { height: 100%; }
+  .kpi-valor { font-size: 18px; }
+
+  .paineis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+}
+
+/* iPad deitado: quadros lado a lado com larguras iguais */
+@media (min-width: 1000px) and (max-width: 1366px) {
+  .grid > :first-child:nth-last-child(2), .grid > :first-child:nth-last-child(2) ~ * { grid-column: span 6; }
+  .grid > :first-child:nth-last-child(3), .grid > :first-child:nth-last-child(3) ~ * { grid-column: span 4; }
+  .grid > :first-child:nth-last-child(4), .grid > :first-child:nth-last-child(4) ~ * { grid-column: span 6; }
+  /* quadros com tabelas precisam da largura toda para não cortar colunas */
+  .grid.grid:has(table, .tabela-scroll) > * { grid-column: span 12; }
+
+  /* KPIs numa única linha (até 5); com 6 ou mais, 3 por linha */
+  .kpi-row { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .kpi-row > * { grid-column: auto !important; }
+  .kpi-row:has(> :nth-child(6)) { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi-valor { font-size: 17px; }
+}
