@@ -499,7 +499,7 @@
     const previa = () => {
       const p = UI.numero("f_peso");
       const v = F.imc(p, alt);
-      m.querySelector("#imcPrevia").innerHTML = v ? `IMC: <b>${UI.num(v, 1)}</b> · ${F.classificacaoIMC(v)} ${UI.dica(F.METRICA.imc.dica)}` : (p && !alt ? `<span class="dim">Informe sua altura em Configurações → Perfil para calcular o IMC.</span>` : "");
+      m.querySelector("#imcPrevia").innerHTML = v ? `IMC: <b>${UI.num(v, 1)}</b> · ${F.classificacaoIMC(v)} ${UI.dica(F.METRICA.imc.dica)}` : (p && !alt ? `<span class="dim">Informe sua altura em Ajustes → Perfil para calcular o IMC.</span>` : "");
     };
     m.querySelector("#f_peso").addEventListener("input", previa);
     previa();
@@ -972,7 +972,7 @@
           <div class="campo"><label for="f_alvo">${t.modo === "limite" || t.modo === "limiteLista" ? "Limite" : "Objetivo"} (${unid})</label><input id="f_alvo" type="number" step="any" min="0" value="${mt ? mt.valorAlvo : ""}"></div>
           <div class="campo"><label for="f_prazo">Prazo ${t.modo === "resultado" ? "" : "(opcional)"}</label><input id="f_prazo" type="date" value="${esc(mt ? mt.prazo || "" : "")}"></div>
         </div>
-        ${t.modo === "diaria" ? `<p class="ajuda">Esta meta também é usada como objetivo diário no resumo de Alimentação e no Dashboard.</p>` : ""}`;
+        ${t.modo === "diaria" ? `<p class="ajuda">Esta meta também é usada como objetivo diário no diário de Alimentação e na tela Hoje.</p>` : ""}`;
     };
     campos();
     m.querySelector("#f_tipo").addEventListener("change", () => {
@@ -1054,7 +1054,7 @@
       const r = AL.refeicao(d, el.dataset.id);
       if (!r) return;
       const f = AL.favoritaDeRefeicao(d, r.id, r.tipo + " de " + UI.dataCurta(r.data));
-      salvar(`Salva como favorita: "${f.nome}". Renomeie em Refeições → Favoritas.`);
+      salvar(`Salva como favorita: "${f.nome}". Renomeie em Alimentação → Semana.`);
     },
     "copiar-dia": (el) => copiarDia(el.dataset.data),
     "agua": (el) => agua(el.dataset.data),

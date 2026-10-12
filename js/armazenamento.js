@@ -294,7 +294,7 @@
     return novo;
   }
 
-  // grupos de exclusão parcial (Configurações → Excluir dados)
+  // grupos de exclusão parcial (Ajustes → Excluir dados)
   const GRUPOS_EXCLUSAO = {
     refeicoes: { rotulo: "Refeições e água", colecoes: ["refeicoes", "refeicaoItens", "agua"], ajuda: "Diário e planejamento de refeições e registros de água." },
     favoritas: { rotulo: "Refeições favoritas", colecoes: ["favoritas"], ajuda: "Modelos como “Almoço padrão”." },

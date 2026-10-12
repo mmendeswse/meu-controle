@@ -23,7 +23,7 @@
     d.config.boasVindas = false;
     d.config.ultimoBackup = new Date(Date.now() - 9 * 86400000).toISOString();
     const eu = id();
-    d.usuarios = [{ id: eu, nome: "Você (exemplo)", altura: 1.75, pesoInicial: null, objetivo: "Recomposição corporal", dataInicio: H(-84), obs: "Perfil de exemplo — edite em Configurações." }];
+    d.usuarios = [{ id: eu, nome: "Você (exemplo)", altura: 1.75, pesoInicial: null, objetivo: "Recomposição corporal", dataInicio: H(-84), obs: "Perfil de exemplo — edite em Ajustes." }];
 
     // ---------------------------------------------------------------
     // alimentos (valores aproximados de tabelas nutricionais)

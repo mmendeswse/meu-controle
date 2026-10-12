@@ -1790,7 +1790,7 @@ div.rw.clicavel { cursor: pointer; }
 
 /* impressão / PDF do relatório */
 @media print {
-  .fab, .fab-menu, .barra-ferramentas, .cabecalho-pagina .abas, .faixa-demo, .modal, .scrim, .toast, .tooltip, .dica, .voltar { display: none !important; }
+  .fab, .fab-menu, .barra-ferramentas, .cabecalho-pagina .abas, .faixa-demo, .modal, .scrim, .toast, .tooltip, .dica, .voltar, .nao-imprimir { display: none !important; }
   body.imprimindo .so-impressao { display: block; margin-bottom: 12px; }
   body.imprimindo .so-impressao h1 { margin: 0; font-size: 18px; }
   body, .card, .kpi, .painel-grupo { background: #fff !important; color: #111 !important; }
@@ -1899,4 +1899,22 @@ div.rw.clicavel { cursor: pointer; }
   .kpi-valor { font-size: 16px; }
   .kpi-gauge, .kpi-gauge svg { width: 42px; height: 42px; }
   .kpi-gauge-txt { font-size: 9.5px; }
+}
+
+/* ---------------------------------------------------------------------
+   v2.1 — tela Hoje: roteiro por horário e "em números"
+   --------------------------------------------------------------------- */
+.check-hora { font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 600; margin-right: 8px; }
+.checklist li.proximo { background: color-mix(in srgb, var(--cy) 9%, transparent); box-shadow: inset 3px 0 0 var(--cy); }
+.checklist li.proximo .check-ic { border-color: var(--cy); }
+.pg-grade.numeros { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pg-grade.numeros .mini { border-right: 1px solid var(--linha); border-bottom: 1px solid var(--linha); }
+.pg-grade.numeros .mini:nth-child(3n) { border-right: none; }
+.pg-grade.numeros .mini:nth-last-child(-n+3) { border-bottom: none; }
+@media (max-width: 700px) {
+  .pg-grade.numeros { grid-template-columns: 1fr 1fr; }
+  .pg-grade.numeros .mini:nth-child(3n) { border-right: 1px solid var(--linha); }
+  .pg-grade.numeros .mini:nth-child(2n) { border-right: none; }
+  .pg-grade.numeros .mini:nth-last-child(-n+3) { border-bottom: 1px solid var(--linha); }
+  .pg-grade.numeros .mini:nth-last-child(-n+2) { border-bottom: none; }
 }

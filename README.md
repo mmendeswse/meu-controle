@@ -37,11 +37,11 @@ Tudo é salvo no armazenamento local do seu próprio navegador
 (`localStorage`). Nada é enviado para nenhum servidor. Isso quer dizer:
 
 - Os dados ficam ligados àquele navegador, naquele aparelho. Outro
-  navegador ou outro aparelho começa com os dados de demonstração.
+  navegador ou outro aparelho começa vazio.
 - Limpar os dados de navegação apaga os seus dados.
 - Para levar seus dados para outro lugar (ou ter uma cópia de segurança),
-  use **Ajustes → Exportar backup** (arquivo `.json`) ou **Copiar backup**
-  (texto), e depois **Importar / Colar backup** no outro aparelho.
+  use **Ajustes → Fazer backup** (arquivo `.json`) ou **Copiar como texto**
+  (texto), e depois **Restaurar backup / Colar texto de backup** no outro aparelho.
 
 ## O que o sistema faz
 
@@ -55,50 +55,45 @@ planejar refeição ─► soma o que vai ser consumido ─► confere o estoque
       │                                                  │ marcado como comprado
       ▼                                                  ▼
 marcar como realizada ─► calorias/macros do dia      soma ao estoque
-      │                  └─► Dashboard, metas, insights e relatórios
+      │                  └─► Hoje, metas, insights e relatórios     
       └─► desconta do estoque (e devolve se desmarcar)
 ```
 
-- **Dashboard ("Como estou hoje?")** — resumo de hoje em checklist (café,
-  almoço, lanche, jantar, água, treino, peso), seu progresso (primeiro →
-  atual → meta), insights, painéis de Saúde, Alimentação, Academia e Compras,
-  gráfico de peso e metas.
-- **Alimentação** — diário com calorias, proteína, carboidratos, gorduras,
-  fibras e água × metas; refeições montadas com alimentos cadastrados
-  (nutrição calculada sozinha); cadastro de alimentos com nutrição, preço,
-  marca e categoria.
-- **Refeições** — planejador semanal SEG → DOM, copiar um dia para outros,
-  refeições favoritas ("Almoço padrão") e "Compras para o planejado".
-- **Compras** — lista com produto, quantidade, preço estimado e pago,
-  mercado, categoria, prioridade, data e status (Pendente / Comprado /
-  Cancelado), marcar como comprado direto na lista, itens automáticos;
-  abas de Gastos (mês a mês, por categoria e mercado) e Histórico de preços.
-- **Estoque** — o que há em casa, estoque mínimo, validade, alertas de
-  estoque baixo e "+ Adicionar à lista de compras".
-- **Academia** — fichas de treino, registro de séries/repetições/carga/RPE
-  por exercício (com "última vez"), calendário mensal e plano semanal
-  (planejado/realizado/cancelado), frequência, sequência atual e melhor
-  sequência, evolução de carga por exercício e por semana.
-- **Evolução** — peso, massa muscular, gordura, massa de gordura, água
-  corporal, IMC e medidas (pescoço, peito, cintura, abdômen, quadril,
-  braços, coxas), nada obrigatório; comparação primeira → atual → meta
-  com 🟢🟡🔴 calculado pela **tendência** (regressão linear) e gráficos por
-  período (7 dias a tudo).
-- **Metas** — peso, massa muscular, gordura, cintura, treinos por semana,
-  calorias, proteína, carboidratos, gorduras, fibras, água, gastos e
-  orçamento da lista, com atual, objetivo, prazo e % concluído.
-- **Relatórios** — diário, semanal, mensal e trimestral, comparando com o
-  período anterior; exportação em **PDF** (impressão), **CSV** e **Excel**.
-  Aba **Insights**: observações geradas só a partir dos seus registros.
-- **Alertas** — treino não realizado, peso sem registro, estoque baixo,
-  item importante pendente, meta atrasada, refeição planejada, água e
-  proteína abaixo da meta, mudanças relevantes e backup antigo; cada tipo
-  pode ser ligado/desligado.
-- **Botão "+"** — registrar peso, refeição, água, treino, alimento, compra
-  ou medidas de qualquer tela.
-- **Configurações** — perfil, alertas, integração, backup/restauração,
-  exportação completa em Excel, exclusão parcial de dados e reset completo
-  (sempre com confirmação; o reset exige digitar APAGAR).
+O menu segue a ordem do dia (o mesmo vale para o botão **+**):
+
+1. **Hoje**: o **roteiro do dia em ordem de horário** (peso ao acordar →
+   café → lanche → almoço → treino → jantar, e água ao longo do dia), com o
+   próximo item em destaque e um toque para marcar como feito. Também mostra
+   os números do dia/semana/mês, os insights e o progresso (primeiro → atual
+   → meta, com o gráfico do peso). Na primeira vez, um passo a passo
+   numerado: perfil → peso → metas → alimentos → ficha de treino.
+2. **Corpo**: peso, massa muscular, gordura, água corporal, IMC e medidas,
+   nada obrigatório. Comparação primeira → atual → meta com 🟢🟡🔴 calculado
+   pela **tendência** (regressão linear), gráficos por período e histórico.
+3. **Alimentação**, em três abas: **Diário** (calorias, macros, fibras e
+   água × metas; marcar ✓ entra nas calorias e baixa o estoque), **Semana**
+   (cardápio SEG → DOM, copiar dia, favoritas e "Compras para o cardápio") e
+   **Alimentos** (cadastro com nutrição, preço, marca e categoria).
+4. **Treino**, em quatro abas: **Treinos** (hoje, próximos 7 dias,
+   histórico, frequência e sequências), **Fichas e plano** (as fichas e o
+   plano da semana), **Calendário** (o mês) e **Carga** (evolução por
+   exercício, recorde e 1RM estimado). Registro de séries/repetições/carga/RPE
+   com "última vez".
+5. **Compras**, em três abas: **Lista** (marcar como comprado direto na
+   lista, itens automáticos), **Em casa** (estoque, mínimo, validade e
+   alertas) e **Gastos** (mês a mês, por categoria e mercado, extrato e
+   histórico de preços).
+6. **Metas**: atual, objetivo, prazo e % concluído, avaliadas pela tendência.
+7. **Relatórios**: diário, semanal, mensal e trimestral comparando com o
+   período anterior; exportação em **PDF**, **CSV** e **Excel**; e, no fim,
+   todos os insights.
+8. **Ajustes**: perfil, integração, alertas, backup/restauração, exportação
+   completa em Excel, exclusão parcial e reset completo (sempre com
+   confirmação; o reset exige digitar APAGAR).
+
+Os **alertas** (treino não feito, peso sem registro, estoque baixo, meta
+atrasada, água e proteína abaixo da meta, backup antigo…) ficam no sino, e
+cada tipo pode ser ligado/desligado em Ajustes.
 
 Sem dados suficientes, as telas dizem **"Sem dados suficientes"** em vez de
 estimar — nada é inventado.
@@ -133,7 +128,7 @@ meu-controle/
     ├── ui.js                # componentes de interface (cards, KPIs, modal, dicas…)
     ├── app.js               # rotas, menu, botão +, notificações, delegação de eventos
     ├── formularios.js       # todos os formulários (modais)
-    ├── paginas/             # uma página por arquivo (dashboard, alimentacao, …)
+    ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```
 

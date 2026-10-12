@@ -1,6 +1,6 @@
 /**
- * paginas/evolucao.js — peso, composição corporal e medidas: comparação
- * primeira → atual → meta (com tendência), gráficos e histórico.
+ * paginas/evolucao.js — "Corpo": peso, composição corporal e medidas.
+ * De cima para baixo: primeira → atual → meta (com tendência), gráfico e histórico.
  */
 (function () {
   "use strict";
@@ -20,20 +20,6 @@
   const COMPARAR = [["peso", "peso"], ["massaMuscular", "massaMuscular"], ["gorduraPct", "gordura"], ["cintura", "cintura"]];
 
   function inicioPeriodo() { return st.periodo === "tudo" ? null : N.hoje(-Number(st.periodo)); }
-
-  function kpis(d) {
-    const p = F.atual(d, "peso"), v = F.variacao(d, "peso", 30);
-    const mm = F.atual(d, "massaMuscular"), gc = F.atual(d, "gorduraPct"), ci = F.atual(d, "cintura");
-    const imc = F.atual(d, "imc");
-    const vf = (k, dias, un) => { const x = F.variacao(d, k, dias); return x ? UI.sinal(x.delta, 1, un) + " desde " + UI.dataCurta(x.de.data) : ""; };
-    return `<div class="kpi-row">
-      ${UI.kpi({ rotulo: "Peso atual", valor: p ? UI.kg(p.valor) : UI.SEM_DADOS, sub: v ? UI.sinal(v.delta, 1, "kg") + " em " + v.dias + " dias" : p ? "em " + UI.dataCurta(p.data) : "" })}
-      ${UI.kpi({ rotulo: "Massa muscular", dica: F.METRICA.massaMuscular.dica, valor: mm ? UI.kg(mm.valor) : UI.SEM_DADOS, sub: vf("massaMuscular", 60, "kg") })}
-      ${UI.kpi({ rotulo: "Gordura corporal", dica: F.METRICA.gorduraPct.dica, valor: gc ? UI.num(gc.valor, 1) + "%" : UI.SEM_DADOS, sub: vf("gorduraPct", 60, "p.p.") })}
-      ${UI.kpi({ rotulo: "IMC", dica: F.METRICA.imc.dica, valor: imc ? UI.num(imc.valor, 1) : UI.SEM_DADOS, sub: imc ? F.classificacaoIMC(imc.valor) : F.altura(d) ? "" : "informe a altura no perfil" })}
-      ${UI.kpi({ rotulo: "Cintura", dica: F.METRICA.cintura.dica, valor: ci ? UI.num(ci.valor, 1) + " cm" : UI.SEM_DADOS, sub: vf("cintura", 60, "cm") })}
-    </div>`;
-  }
 
   function comparacao(d) {
     const blocos = COMPARAR.map(([chave, tipoMeta]) => {
@@ -59,7 +45,8 @@
         : `<div class="comp-semmeta"><button class="link-acao" data-acao="nova-meta" data-tipo="${tipoMeta}">+ definir meta</button></div>`}
       </div>`;
     }).join("");
-    return UI.card({ titulo: "Evolução corporal", sub: "primeira medição → atual → meta",
+    const imc = F.atual(d, "imc");
+    return UI.card({ titulo: "Evolução corporal", sub: "primeira medição → atual → meta" + (imc ? ` · IMC ${UI.num(imc.valor, 1)} (${F.classificacaoIMC(imc.valor).toLowerCase()})` : F.altura(d) ? "" : " · informe a altura no perfil para ver o IMC"),
       dica: "O status de cada meta considera a TENDÊNCIA dos registros recentes (regressão linear), não só o último valor: 🟢 no ritmo para chegar no prazo; 🟡 na direção certa mas devagar, ou estável; 🔴 na direção contrária ou prazo vencido.",
       corpo: `<div class="comparacao">${blocos}</div>` });
   }
@@ -93,11 +80,10 @@
   }
 
   App.registrarPagina("evolucao", {
-    titulo: "Evolução",
+    titulo: "Corpo",
     render(d) {
-      return `<div class="cabecalho-pagina"><div><h1>Evolução</h1><p class="sub">Peso, composição corporal e medidas</p></div>
+      return `<div class="cabecalho-pagina"><div><h1>Corpo</h1><p class="sub">Peso, composição corporal e medidas</p></div>
         <div class="acoes-cab">${UI.botao("rapido-peso", "Peso", { icone: "mais" })}${UI.botao("rapido-medida", "Medição completa", { classe: "primario", icone: "mais" })}</div></div>
-        ${kpis(d)}
         <div class="grid"><div class="c12">${comparacao(d)}</div></div>
         <div class="grid"><div class="c12">${grafico(d)}</div></div>
         <div class="grid"><div class="c12">${historico(d)}</div></div>

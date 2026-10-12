@@ -1,13 +1,18 @@
 /**
- * paginas/compras.js — lista de compras (marcar como comprado direto na
- * lista), gastos com alimentação e histórico de preços.
+ * paginas/compras.js — o ciclo da comida em casa, em três abas:
+ *   Lista   — o que comprar (marcar como comprado direto na lista)
+ *   Em casa — estoque, mínimo, validade e alertas
+ *   Gastos  — quanto gastou no mês, por categoria/mercado, e histórico de preços
+ * A aba fica na rota (#/compras/estoque).
  */
 (function () {
   "use strict";
 
   const N = window.Nucleo, UI = window.UI, AL = window.Alimentacao, C = window.Compras, G = window.Graficos, App = window.App;
   const esc = UI.esc;
-  const st = App.estado.compras = { aba: "lista", status: "Pendente", cat: "", mercado: "", busca: "", mes: N.hoje(0).slice(0, 7) };
+  const st = App.estado.compras = { status: "Pendente", cat: "", mercado: "", busca: "", mes: N.hoje(0).slice(0, 7) };
+  const ABAS = [{ k: "lista", r: "Lista" }, { k: "estoque", r: "Em casa" }, { k: "gastos", r: "Gastos" }];
+  const PASSO = { kg: 0.1, g: 100, L: 0.5, ml: 250, un: 1, dz: 1 };
 
   // ------------------------------------------------------------------
   // LISTA
@@ -62,17 +67,6 @@
     return UI.card({ titulo: "Lista de compras", sub: "toque no quadrado para marcar como comprado", acoes: UI.botao("nova-compra", "Item", { classe: "primario", icone: "mais" }),
       corpo: (todas.length ? filtros : "") + `<div class="lista-compras">${corpo}</div>`, rodape: itens.length ? `<span>Total ${st.status === "Comprado" ? "pago" : "desta lista"}</span><b>${UI.brl(total)}</b>` : "" });
   }
-  function kpisLista(d) {
-    const r = C.resumo(d);
-    const pend = C.pendentes(d);
-    return `<div class="kpi-row">
-      ${UI.kpi({ rotulo: "Total estimado", valor: UI.brl(r.totalEstimado), sub: "itens pendentes", dica: "Soma do preço estimado dos itens pendentes." })}
-      ${UI.kpi({ rotulo: "Total gasto no mês", valor: UI.brl(r.gastoMes), sub: UI.mesRotulo(N.hoje(0)), dica: "Soma do preço pago dos itens comprados neste mês." })}
-      ${UI.kpi({ rotulo: "Economia no mês", valor: UI.brl(r.economiaMes), delta: r.economiaMes ? UI.deltaPill(r.economiaMes > 0 ? "abaixo do estimado" : "acima do estimado", r.economiaMes > 0) : "", dica: "Preço estimado − preço pago, nos itens comprados que têm os dois valores." })}
-      ${UI.kpi({ rotulo: "Itens pendentes", valor: String(r.pendentes), sub: pend.filter((c) => c.auto).length ? pend.filter((c) => c.auto).length + " automáticos" : "" })}
-      ${UI.kpi({ rotulo: "Alta prioridade", valor: String(r.altaPrioridade), sub: r.altaPrioridade ? pend.filter((c) => c.prioridade === "Alta").slice(0, 3).map((c) => esc(c.nome)).join(", ") : "nenhum" })}
-    </div>`;
-  }
   function lateralLista(d) {
     const pend = C.pendentes(d);
     const porMercado = {};
@@ -82,7 +76,7 @@
     return UI.card({ titulo: "Quanto vou gastar", sub: "pendentes por mercado", corpo: `<div class="pad">${UI.barList(itens, "var(--cy)")}</div>` }) +
       `<div class="espaco"></div>` +
       UI.card({ titulo: "Lista automática", dica: "O sistema soma o que está planejado nas refeições dos próximos dias e o estoque mínimo, desconta o que há em casa, e coloca o que faltar na lista (marcado como “auto”).",
-        corpo: `<div class="pad texto-integ">${integ.listaAutomatica ? `<p><span class="up">● Ligada.</span> Considera as refeições planejadas dos próximos <b>${integ.diasPlanejamento}</b> dias e os estoques mínimos.</p>` : `<p><span class="dim">● Desligada.</span> Use “Compras para o planejado” em Refeições e os botões do Estoque para adicionar manualmente.</p>`}
+        corpo: `<div class="pad texto-integ">${integ.listaAutomatica ? `<p><span class="up">● Ligada.</span> Considera as refeições planejadas dos próximos <b>${integ.diasPlanejamento}</b> dias e os estoques mínimos.</p>` : `<p><span class="dim">● Desligada.</span> Use “Compras para o cardápio” em Alimentação → Semana e os botões da aba Em casa.</p>`}
           <p>${integ.somarEstoqueAoComprar ? "Itens marcados como comprados <b>entram no estoque</b>." : "Itens comprados não alteram o estoque."}</p>
           <button class="btn pequeno" data-acao="ir" data-secao="configuracoes" data-param="integracao">Configurar</button></div>` });
   }
@@ -122,7 +116,7 @@
         <div class="c7">${UI.card({ titulo: "Extrato", sub: `${extrato.length} ${UI.plural(extrato.length, "compra", "compras")}`, corpo: extrato.length ? `<div class="tabela-scroll"><div class="hd" style="${gr}"><i>Data</i><i>Item</i><i>Mercado</i><i class="r">Qtd</i><i class="r">Pago</i></div>` +
           extrato.map((c) => `<button class="rw clicavel" style="${gr}" data-acao="editar-compra" data-id="${c.id}"><div class="dim">${UI.dataCurta(c.dataCompra)}</div><div class="nm">${esc(c.nome)}</div><div class="dim">${esc(c.mercado || "—")}</div><div class="r dim">${N.qtdLegivel(c.quantidade, c.unidade)}</div><div class="r big">${UI.brl(C.valorPago(c))}</div></button>`).join("") + `</div>` : `<div class="vazio"><p>Nenhuma compra em ${UI.mesRotulo(ini)}.</p></div>`,
           rodape: `<span>Total do mês</span><b>${UI.brl(g)}</b>` })}</div>
-      </div>`;
+      </div>${historico(d)}`;
   }
 
   // ------------------------------------------------------------------
@@ -131,21 +125,77 @@
   function historico(d) {
     const h = C.historicoPrecos(d);
     const gr = "grid-template-columns:1.5fr 70px 110px 110px 110px 110px";
-    return `<div class="grid"><div class="c12">${UI.card({ titulo: "Histórico de preços", sub: "por produto · preço unitário pago", corpo: h.length ? `<div class="tabela-scroll"><div class="hd" style="${gr}"><i>Produto</i><i class="r">Vezes</i><i class="r">Último</i><i class="r">Menor</i><i class="r">Maior</i><i class="r">Total gasto</i></div>` +
+    return `<div class="grid"><div class="c12">${UI.card({ titulo: "Histórico de preços", id: "sec-precos", sub: "por produto · preço unitário pago", corpo: h.length ? `<div class="tabela-scroll"><div class="hd" style="${gr}"><i>Produto</i><i class="r">Vezes</i><i class="r">Último</i><i class="r">Menor</i><i class="r">Maior</i><i class="r">Total gasto</i></div>` +
       h.map((x) => `<div class="rw" style="${gr}"><div><div class="nm">${esc(x.nome)}</div><div class="sub">${esc(x.categoria || "")} · última compra ${UI.dataCurta(x.ultimaData)}</div></div><div class="r">${x.vezes}</div>
         <div class="r big">${x.ultimoPreco == null ? "—" : UI.brl(x.ultimoPreco) + `<div class="sub">/${esc(x.unidade)}</div>`}</div><div class="r up">${x.menor == null ? "—" : UI.brl(x.menor)}</div><div class="r down">${x.maior == null ? "—" : UI.brl(x.maior)}</div><div class="r big">${UI.brl(x.total)}</div></div>`).join("") + `</div>`
       : UI.vazio({ icone: "🏷️", titulo: "Sem compras registradas ainda.", texto: "Quando você marcar itens como comprados, o histórico de preços aparece aqui." }) })}</div></div>`;
   }
 
+  // ------------------------------------------------------------------
+  // EM CASA (estoque)
+  // ------------------------------------------------------------------
+  function naLista(d, alimentoId) { return d.compras.some((c) => c.status === "Pendente" && c.alimentoId === alimentoId); }
+
+  function alertas(d) {
+    const baixo = C.estoqueBaixo(d);
+    const venc = C.vencendo(d, 3);
+    if (!baixo.length && !venc.length) return "";
+    return `<div class="alertas-estoque">${baixo.map((e) => {
+      const a = AL.alimento(d, e.alimentoId);
+      if (!a) return "";
+      return `<div class="alerta-card perigo"><span class="ic">${UI.svg("alerta")}</span><div><b>Estoque baixo</b><p>${esc(a.nome)} está abaixo da quantidade mínima (${N.qtdLegivel(e.quantidade, e.unidade)} de ${N.qtdLegivel(e.minimo, e.unidade)}).</p></div>
+        ${naLista(d, a.id) ? `<span class="na-lista">${UI.svg("check")} na lista</span>` : `<button class="btn pequeno" data-acao="add-necessidade" data-alimento="${a.id}">+ Adicionar à lista de compras</button>`}</div>`;
+    }).join("")}${venc.map((e) => {
+      const a = AL.alimento(d, e.alimentoId);
+      const dias = N.diasEntre(N.hoje(0), e.validade);
+      return a ? `<div class="alerta-card aviso"><span class="ic">${UI.svg("aviso")}</span><div><b>Validade</b><p>${esc(a.nome)} ${dias < 0 ? "venceu em " + UI.dataCurta(e.validade) : dias === 0 ? "vence hoje" : "vence em " + dias + " " + UI.plural(dias, "dia", "dias")}.</p></div></div>` : "";
+    }).join("")}</div>`;
+  }
+
+  function tabela(d) {
+    const plan = AL.consumoPlanejado(d, N.hoje(0), N.hoje(6));
+    const lista = d.estoque.map((e) => ({ e, a: AL.alimento(d, e.alimentoId) })).filter((x) => x.a)
+      .sort((x, y) => (C.abaixoDoMinimo(y.e) - C.abaixoDoMinimo(x.e)) || x.a.nome.localeCompare(y.a.nome, "pt-BR"));
+    if (!lista.length) return UI.vazio({ icone: "📦", titulo: "Você ainda não controla nenhum estoque.", texto: "Registre o que tem em casa e defina um mínimo: o sistema avisa quando estiver acabando, desconta o que você come e soma o que você compra.", acao: "novo-estoque", rotulo: "Adicionar ao estoque" });
+    const gr = "grid-template-columns:minmax(150px,1.4fr) 150px 100px minmax(110px,1fr) 120px 96px 72px";
+    return `<div class="tabela-scroll"><div class="hd" style="${gr}"><i>Alimento</i><i class="r">Quantidade</i><i class="r">Mínimo</i><i>Nível</i><i class="r">Planejado 7 dias ${UI.dica("Quanto as refeições planejadas para os próximos 7 dias vão consumir deste alimento.")}</i><i class="r">Validade</i><i></i></div>` +
+      lista.map(({ e, a }) => {
+        const baixo = C.abaixoDoMinimo(e);
+        const min = N.temValor(e.minimo) ? Number(e.minimo) : 0;
+        const nivel = min ? Math.min(100, (e.quantidade / (min * 2)) * 100) : null;
+        const p = plan[a.id] ? N.converter(plan[a.id], a.unidade, e.unidade) : null;
+        const falta = p != null && p > e.quantidade;
+        const passo = PASSO[e.unidade] || 1;
+        const venc = e.validade && e.validade <= N.hoje(3);
+        return `<div class="rw ${baixo ? "linha-alerta" : ""}" style="${gr}">
+          <div><div class="nm">${AL.emojiAlimento(a)} ${esc(a.nome)}</div><div class="sub">${esc(a.categoria)}${e.atualizadoEm ? " · atualizado " + UI.rotuloRelativo(e.atualizadoEm).toLowerCase() : ""}</div></div>
+          <div class="r qtd-ajuste"><button class="btn fantasma" data-acao="ajustar-estoque" data-id="${e.id}" data-delta="${-passo}" aria-label="Diminuir">−</button><b class="${baixo ? "down" : ""}">${N.qtdLegivel(e.quantidade, e.unidade)}</b><button class="btn fantasma" data-acao="ajustar-estoque" data-id="${e.id}" data-delta="${passo}" aria-label="Aumentar">+</button></div>
+          <div class="r dim">${min ? N.qtdLegivel(min, e.unidade) : "—"}</div>
+          <div>${nivel == null ? `<span class="dim">sem mínimo</span>` : UI.barra(nivel, baixo ? "var(--down)" : nivel < 70 ? "var(--acc)" : "var(--up)", true)}</div>
+          <div class="r ${falta ? "down" : ""}">${p ? N.qtdLegivel(p, e.unidade) + (falta ? " ⚠" : "") : `<span class="dim">—</span>`}</div>
+          <div class="r ${venc ? "down" : "dim"}">${e.validade ? UI.dataCurta(e.validade) : "—"}</div>
+          <div class="r"><span class="cel-botoes">${!naLista(d, a.id) ? UI.botaoIcone("add-necessidade", "carrinho", "Adicionar à lista de compras", `data-alimento="${a.id}"`) : `<span class="na-lista-ic" title="Já está na lista">${UI.svg("check")}</span>`}${UI.botaoIcone("editar-estoque", "editar", "Editar", `data-id="${e.id}"`)}</span></div>
+        </div>`;
+      }).join("") + `</div>`;
+  }
+
+  function emCasa(d) {
+    const baixo = C.estoqueBaixo(d).length, venc = C.vencendo(d, 7).length, integ = d.config.integracao;
+    const resumo = d.estoque.length ? `${d.estoque.length} ${UI.plural(d.estoque.length, "item", "itens")} · ${baixo ? `<span class="down">${baixo} abaixo do mínimo</span>` : "nada abaixo do mínimo"}${venc ? ` · ${venc} vencendo em 7 dias` : ""} · valor ≈ ${UI.brl(C.valorDoEstoque(d))}` : "";
+    return `${alertas(d)}
+      <div class="grid"><div class="c12">${UI.card({ titulo: "Em casa", sub: resumo || "o que existe em casa agora",
+        dica: `${integ.baixarEstoqueAoComer ? "Refeições realizadas descontam do estoque." : "Refeições não alteram o estoque."} ${integ.somarEstoqueAoComprar ? "Itens comprados somam ao estoque." : "Compras não alteram o estoque."} O valor estimado usa o preço cadastrado de cada alimento.`,
+        acoes: UI.botao("novo-estoque", "Item", { classe: "primario", icone: "mais" }), corpo: tabela(d) })}</div></div>`;
+  }
+
   App.registrarPagina("compras", {
     titulo: "Compras",
-    render(d) {
-      const abas = UI.abas([{ k: "lista", r: "Lista" }, { k: "gastos", r: "Gastos" }, { k: "historico", r: "Histórico de preços" }], st.aba, "aba-compras");
-      let corpo;
-      if (st.aba === "gastos") corpo = gastos(d);
-      else if (st.aba === "historico") corpo = historico(d);
-      else corpo = kpisLista(d) + `<div class="grid"><div class="c8">${lista(d)}</div><div class="c4">${lateralLista(d)}</div></div>`;
-      return `<div class="cabecalho-pagina"><div><h1>Compras</h1><p class="sub">Lista, gastos com alimentação e preços</p></div>${abas}</div>${corpo}`;
+    render(d, rota) {
+      const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "lista";
+      const pend = d.compras.filter((c) => c.status === "Pendente").length, baixo = C.estoqueBaixo(d).length;
+      const abas = UI.abas(ABAS.map((x) => x.k === "lista" ? Object.assign({ n: pend }, x) : x.k === "estoque" && baixo ? Object.assign({ n: baixo }, x) : x), aba, "aba-compras");
+      const corpo = aba === "gastos" ? gastos(d) : aba === "estoque" ? emCasa(d) : `<div class="grid"><div class="c8">${lista(d)}</div><div class="c4">${lateralLista(d)}</div></div>`;
+      return `<div class="cabecalho-pagina"><div><h1>Compras</h1><p class="sub">O que comprar, o que tem em casa e quanto gastou</p></div>${abas}</div>${corpo}`;
     },
     depois(d) {
       if (document.getElementById("graf-gastos-mes")) G.renderGastosMes("graf-gastos-mes", C.serieMensal(d, 6));
@@ -160,7 +210,15 @@
   });
 
   App.registrarAcoes({
-    "aba-compras": (el) => { st.aba = el.dataset.k; App.renderizar(); },
+    "aba-compras": (el) => App.ir("compras", el.dataset.k === "lista" ? null : el.dataset.k, { manterRolagem: true }),
+    "ajustar-estoque": (el) => {
+      const d = App.dados();
+      const e = C.itemEstoque(d, el.dataset.id);
+      if (!e) return;
+      e.quantidade = N.arred(Math.max(0, Number(e.quantidade) + Number(el.dataset.delta)), 3);
+      e.atualizadoEm = N.hoje(0);
+      App.salvar();
+    },
     "status-lista": (el) => { st.status = el.dataset.k; App.renderizar(); },
     "cat-compra": (el) => { st.cat = el.dataset.k; App.renderizar(); }
   });
