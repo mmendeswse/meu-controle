@@ -1938,3 +1938,13 @@ div.rw.clicavel { cursor: pointer; }
   .barra-novo { margin-left: auto; }
   .barra-novo .btn-txt { display: inline !important; }
 }
+
+/* v2.3 — puxar para atualizar (seta circular) */
+.puxar { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 50%; z-index: 300; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--painel-2); border: 1px solid var(--linha-2); color: var(--dim); box-shadow: 0 6px 18px rgba(0,0,0,.45); opacity: 0; transform: translate(-50%, -50px); pointer-events: none; }
+.puxar svg { width: 20px; height: 20px; }
+.puxar.pronto { color: var(--cy); border-color: var(--cy); }
+.puxar.girando { color: var(--cy); border-color: var(--cy); opacity: 1; }
+.puxar.girando svg { animation: puxar-gira .7s linear infinite; }
+@keyframes puxar-gira { to { transform: rotate(360deg); } }
+@media print { .puxar { display: none !important; } }

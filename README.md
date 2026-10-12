@@ -26,6 +26,9 @@ https://<seu-usuario>.github.io/<nome-do-repositorio>/
 
 No celular ou iPad, abra esse endereço e use **Compartilhar → Adicionar à
 Tela de Início**: ele vira um app, abre em tela cheia e funciona offline.
+Para atualizar o app (pegar uma versão nova publicada), no topo de qualquer
+tela **segure e puxe para baixo**: aparece a seta circular; solte quando
+ela ficar ciano.
 
 Na primeira vez que você abrir, o sistema começa **vazio**, com um passo a passo
 de boas-vindas. Se quiser conhecer antes, use **Explorar com dados de exemplo**
