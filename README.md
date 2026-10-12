@@ -83,9 +83,10 @@ O menu segue a ordem do dia (o mesmo vale para o botão **+**):
    exercício, recorde e 1RM estimado). Registro de séries/repetições/carga/RPE
    com "última vez".
 5. **Compras**, em três abas: **Lista mensal** (barra com ano + JAN…DEZ +
-   Novo; cada mês tem sua lista, com "Copiar mês anterior", aviso de
-   pendentes de meses passados com "Trazer para este mês", marcar como
-   comprado direto na lista e itens automáticos), **Em casa** (estoque, mínimo, validade e
+   Novo; cada mês tem sua lista e cada item tem a situação **Falta comprar /
+   Já tenho / Comprado**, com totais no topo que também filtram; "Copiar mês
+   anterior", aviso de pendentes de meses passados com "Trazer para este
+   mês" e itens automáticos), **Em casa** (estoque, mínimo, validade e
    alertas) e **Gastos** (pela mesma barra do mês, por categoria e mercado, extrato e
    histórico de preços).
 6. **Metas**: atual, objetivo, prazo e % concluído, avaliadas pela tendência.

@@ -1948,3 +1948,45 @@ div.rw.clicavel { cursor: pointer; }
 .puxar.girando svg { animation: puxar-gira .7s linear infinite; }
 @keyframes puxar-gira { to { transform: rotate(360deg); } }
 @media print { .puxar { display: none !important; } }
+
+/* v2.3 — lista do mês: já tenho / falta comprar / comprado */
+.acc-txt { color: var(--acc); }
+.pilulas-st { display: flex; gap: 8px; flex-wrap: wrap; }
+.pilula-st { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--linha-2); background: var(--painel-2); text-align: left; min-width: 112px; }
+.pilula-st small { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.pilula-st b { font-family: var(--mono); font-size: 13px; }
+.pilula-st.falta { color: var(--acc); border-color: rgba(255,194,51,.35); background: rgba(255,194,51,.08); }
+.pilula-st.tenho { color: var(--azul); border-color: rgba(47,139,255,.4); background: rgba(47,139,255,.08); }
+.pilula-st.comprado { color: var(--cy); border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.07); }
+.pilula-st.cancelado { color: var(--dim); }
+.pilula-st.ativo { box-shadow: 0 0 0 2px currentColor inset; }
+.tabela-compras .grupo-cab { display: flex; justify-content: space-between; padding: 12px 16px 6px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; min-width: 820px; }
+.linha-compra { align-items: center; }
+.lc-nome { display: flex; flex-direction: column; align-items: flex-start; text-align: left; min-width: 0; gap: 2px; }
+.lc-nome .nm { white-space: normal; }
+.lc-valor { display: flex; flex-direction: column; align-items: flex-end; }
+.lc-valor small { font-size: 10px; color: var(--dim); }
+.seg-compra { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--linha-2); border-radius: 8px; background: var(--painel); }
+.seg-compra button { padding: 6px 10px; border-radius: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); min-width: 74px; }
+.seg-compra button:hover { color: var(--texto); background: var(--painel-2); }
+.seg-compra button.falta.ativo { background: rgba(255,194,51,.16); color: var(--acc); box-shadow: inset 0 0 0 1px rgba(255,194,51,.45); }
+.seg-compra button.tenho.ativo { background: rgba(47,139,255,.16); color: var(--azul); box-shadow: inset 0 0 0 1px rgba(47,139,255,.5); }
+.seg-compra button.comprado.ativo { background: rgba(0,229,255,.12); color: var(--cy); box-shadow: inset 0 0 0 1px rgba(0,229,255,.4); }
+.linha-compra.st-tenho .nm, .linha-compra.st-comprado .nm { color: #AFC0CC; }
+.linha-compra.st-cancelado { opacity: .55; }
+/* celular: cada item vira um cartão — nome, quantidade e valor, e a situação embaixo */
+@media (max-width: 700px) {
+  .tabela-compras { overflow: visible; max-height: none; }
+  .tabela-compras .hd { display: none; }
+  .tabela-compras .grupo-cab { min-width: 0; padding: 12px 12px 6px; }
+  .linha-compra { grid-template-columns: minmax(0, 1fr) auto !important; grid-template-areas: "nome valor" "qtd qtd" "seg seg"; min-width: 0 !important; row-gap: 6px; padding: 10px 12px !important; }
+  .linha-compra .lc-nome { grid-area: nome; }
+  .linha-compra .lc-valor { grid-area: valor; }
+  .linha-compra .lc-qtd { grid-area: qtd; text-align: left; color: var(--dim); font-size: 12px; }
+  .linha-compra .lc-seg { grid-area: seg; }
+  .linha-compra .lc-mercado, .linha-compra .lc-botoes { display: none; }
+  .linha-compra .seg-compra { display: flex; width: 100%; }
+  .linha-compra .seg-compra button { flex: 1; min-width: 0; padding: 9px 4px; }
+  .pilula-st { flex: 1; min-width: 0; }
+}
+.tabela-scroll.tabela-compras { max-height: none !important; }
