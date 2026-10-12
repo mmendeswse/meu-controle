@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "2.2.0";
+  const VERSAO_APP = "2.3.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -282,6 +282,60 @@
     window.addEventListener("scroll", esconder, { passive: true });
   }
 
+  // ---------------------------------------------------------------------
+  // puxar para atualizar (iPad/iPhone como app da tela de início não têm
+  // o gesto nativo): no topo da página, segurar e puxar para baixo mostra
+  // a seta circular; soltar depois do limite recarrega o app (e busca a
+  // versão nova pelo service worker)
+  // ---------------------------------------------------------------------
+  function ligarPuxarParaAtualizar() {
+    if (!("ontouchstart" in window)) return;
+    const LIMITE = 70, MAX = 110;
+    const ind = document.createElement("div");
+    ind.className = "puxar";
+    ind.setAttribute("aria-hidden", "true");
+    ind.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>`;
+    document.body.appendChild(ind);
+    let y0 = null, dist = 0, atualizando = false;
+    const noTopo = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    // não disputa o gesto com quadros que rolam por dentro
+    const roladoPorDentro = (el) => {
+      for (; el && el !== document.body; el = el.parentElement) if (el.scrollTop > 0) return true;
+      return false;
+    };
+    const posicionar = (d, animar) => {
+      ind.style.transition = animar ? "transform .25s ease, opacity .25s ease" : "none";
+      ind.style.opacity = d > 4 ? Math.min(1, d / LIMITE) : 0;
+      ind.style.transform = `translate(-50%, ${d - 50}px) rotate(${d * 3.2}deg)`;
+      ind.classList.toggle("pronto", d >= LIMITE);
+    };
+    document.addEventListener("touchstart", (e) => {
+      if (atualizando || e.touches.length !== 1 || UI.modalAberto() || document.body.classList.contains("fab-aberto") || !noTopo() || roladoPorDentro(e.target)) { y0 = null; return; }
+      y0 = e.touches[0].clientY; dist = 0;
+    }, { passive: true });
+    document.addEventListener("touchmove", (e) => {
+      if (y0 == null) return;
+      const dy = e.touches[0].clientY - y0;
+      if (dy <= 0 || !noTopo()) { if (dist) posicionar(0, true); y0 = dy <= 0 ? y0 : null; dist = 0; return; }
+      dist = Math.min(MAX, dy * 0.5); // resistência: o indicador anda metade do dedo
+      if (e.cancelable) e.preventDefault();
+      posicionar(dist);
+    }, { passive: false });
+    document.addEventListener("touchend", () => {
+      if (y0 == null) return;
+      y0 = null;
+      if (dist < LIMITE) { posicionar(0, true); dist = 0; return; }
+      atualizando = true;
+      ind.classList.add("girando");
+      ind.style.transition = "transform .2s ease";
+      ind.style.transform = `translate(-50%, ${LIMITE - 40}px)`;
+      const recarregar = () => location.reload();
+      const reg = "serviceWorker" in navigator && location.protocol.indexOf("http") === 0 ? navigator.serviceWorker.getRegistration() : Promise.resolve(null);
+      Promise.race([reg.then((r) => r && r.update()), new Promise((ok) => setTimeout(ok, 1500))]).catch(() => {}).then(() => setTimeout(recarregar, 350));
+    });
+    document.addEventListener("touchcancel", () => { y0 = null; dist = 0; posicionar(0, true); });
+  }
+
   function iniciar() {
     DADOS = A.carregarDados();
     // a integração roda uma vez ao abrir (o "hoje" pode ter mudado desde a última vez)
@@ -303,6 +357,7 @@
     ligarDelegacao();
     ligarNotificacoes();
     ligarDicas();
+    ligarPuxarParaAtualizar();
     montarFab();
     iniciarRelogio();
     ajustarBarraGuias();
