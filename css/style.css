@@ -1918,3 +1918,23 @@ div.rw.clicavel { cursor: pointer; }
   .pg-grade.numeros .mini:nth-last-child(-n+3) { border-bottom: 1px solid var(--linha); }
   .pg-grade.numeros .mini:nth-last-child(-n+2) { border-bottom: none; }
 }
+
+/* v2.2 — barra do mês (lista de compras mensal e gastos) */
+.barra-mes { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.barra-ano { font-family: var(--mono); font-size: 14px; font-weight: 800; padding: 9px 12px; border-radius: 10px; }
+.barra-meses { flex: 1; display: flex; gap: 2px; padding: 4px; background: var(--painel); border: 1px solid var(--linha); border-radius: 10px; overflow-x: auto; scrollbar-width: none; }
+.barra-meses::-webkit-scrollbar { display: none; }
+.barra-meses button { flex: 1; min-width: 42px; padding: 7px 6px; border-radius: 7px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; color: var(--dim); position: relative; }
+.barra-meses button:hover { color: var(--texto); background: var(--painel-2); }
+.barra-meses button.tem::after { content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--dim); }
+.barra-meses button.atual { color: var(--texto); }
+.barra-meses button.ativo { background: rgba(0,229,255,.12); color: var(--cy); }
+.barra-meses button.ativo::after { background: var(--cy); }
+.barra-novo { padding: 9px 16px; border-radius: 10px; text-transform: uppercase; letter-spacing: .06em; }
+@media (max-width: 700px) {
+  .barra-mes { gap: 8px; }
+  .barra-meses { order: 3; flex-basis: 100%; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .barra-meses button { min-width: 0; }
+  .barra-novo { margin-left: auto; }
+  .barra-novo .btn-txt { display: inline !important; }
+}

@@ -559,7 +559,7 @@
     const ini = c || {
       nome: aBase ? aBase.nome : "", categoria: aBase ? aBase.categoria : "Outros", quantidade: 1, unidade: aBase ? (aBase.precoUnidade || N.unidadeCompraPadrao(aBase.unidade)) : "un",
       precoEstimado: aBase ? C.estimarPreco(d, aBase.id, 1, aBase.precoUnidade) : null, precoPago: null, mercado: (aBase && aBase.mercado) || "Mercado",
-      prioridade: "Normal", status: "Pendente", dataCompra: null, obs: ""
+      prioridade: "Normal", status: "Pendente", dataCompra: null, obs: "", mes: base.mes || C.mesAtual()
     };
     const m = UI.abrirModal(`
       <h3>${c ? "Editar item" : "Adicionar à lista de compras"}</h3>
@@ -580,7 +580,10 @@
         <div class="campo"><label for="f_status">Status</label><select id="f_status">${UI.opcoes(N.STATUS_COMPRA, ini.status)}</select></div>
         <div class="campo"><label for="f_dcompra">Data da compra</label><input id="f_dcompra" type="date" value="${esc(ini.dataCompra || "")}"></div>
       </div>
-      <div class="campo"><label for="f_obs">Observações</label><input id="f_obs" value="${esc(ini.obs || "")}" placeholder="opcional"></div>
+      <div class="par">
+        <div class="campo"><label for="f_mes">Lista do mês ${UI.dica("Em qual lista mensal o item fica. A data da compra continua valendo para os gastos.")}</label><input id="f_mes" type="month" value="${esc(c ? C.mesDaCompra(c) : ini.mes)}"></div>
+        <div class="campo"><label for="f_obs">Observações</label><input id="f_obs" value="${esc(ini.obs || "")}" placeholder="opcional"></div>
+      </div>
       ${!c ? `<label class="chk-linha" id="f_cad_box"><input type="checkbox" id="f_cad" checked> Cadastrar como alimento (para controlar estoque e nutrição)</label>` : ""}
       ${UI.botoesModal(!!c)}`, { largo: true });
     let estimadoManual = !!c;
@@ -622,7 +625,7 @@
       const antes = c ? c.status : null;
       const reg = { nome, alimentoId: a ? a.id : null, categoria: UI.valor("f_cat"), quantidade: UI.numero("f_qtd") || 0, unidade: UI.valor("f_un"),
         precoEstimado: UI.numero("f_est"), precoPago: UI.numero("f_pago"), mercado: UI.texto("f_mercado"), prioridade: UI.valor("f_prio"),
-        status: UI.valor("f_status"), dataCompra: UI.valor("f_dcompra") || null, obs: UI.texto("f_obs") };
+        status: UI.valor("f_status"), dataCompra: UI.valor("f_dcompra") || null, obs: UI.texto("f_obs"), mes: UI.valor("f_mes") || (c ? C.mesDaCompra(c) : C.mesAtual()) };
       let alvo = c;
       if (c) {
         // se já tinha entrado no estoque, desfaz antes de aplicar as mudanças
@@ -1060,7 +1063,7 @@
     "agua": (el) => agua(el.dataset.data),
     "registrar-corpo": (el) => corpo(el.dataset.data || N.hoje(0), el.dataset.foco || "peso"),
     "excluir-corpo": (el) => excluirRegistroCorpo(el.dataset.data),
-    "nova-compra": (el) => compra(null, { alimentoId: el.dataset.alimento }),
+    "nova-compra": (el) => compra(null, { alimentoId: el.dataset.alimento, mes: el.dataset.mes }),
     "editar-compra": (el) => compra(el.dataset.id),
     "excluir-compra": (el) => excluirCompra(el.dataset.id),
     "status-compra": (el) => definirStatusCompra(el.dataset.id, el.dataset.status),

@@ -1,6 +1,6 @@
 /**
  * paginas/compras.js — o ciclo da comida em casa, em três abas:
- *   Lista   — o que comprar (marcar como comprado direto na lista)
+ *   Lista   — a lista de compras do mês (marcar como comprado direto na lista)
  *   Em casa — estoque, mínimo, validade e alertas
  *   Gastos  — quanto gastou no mês, por categoria/mercado, e histórico de preços
  * A aba fica na rota (#/compras/estoque).
@@ -13,13 +13,34 @@
   const st = App.estado.compras = { status: "Pendente", cat: "", mercado: "", busca: "", mes: N.hoje(0).slice(0, 7) };
   const ABAS = [{ k: "lista", r: "Lista" }, { k: "estoque", r: "Em casa" }, { k: "gastos", r: "Gastos" }];
   const PASSO = { kg: 0.1, g: 100, L: 0.5, ml: 250, un: 1, dz: 1 };
+  const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
+  const NOME_MES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  function nomeMes(mes) { return NOME_MES[Number(mes.slice(5, 7)) - 1]; }
+
+  // barra do mês: ano + JAN…DEZ + Novo (usada na Lista e nos Gastos)
+  function barraMes(d) {
+    const ano = Number(st.mes.slice(0, 4)), atual = C.mesAtual();
+    const anosDados = C.mesesComItens(d).map((m) => Number(m.slice(0, 4)));
+    const anos = [];
+    for (let a = Math.min(ano, Number(atual.slice(0, 4)) - 1, ...anosDados); a <= Math.max(ano, Number(atual.slice(0, 4)) + 1, ...anosDados); a++) anos.push(a);
+    const comItens = {};
+    d.compras.forEach((c) => { const m = C.mesDaCompra(c); if (c.status !== "Cancelado") comItens[m] = (comItens[m] || 0) + 1; });
+    return `<div class="barra-mes">
+      <select class="sel barra-ano" data-mudar="ano-compras" aria-label="Ano">${anos.map((a) => `<option value="${a}"${a === ano ? " selected" : ""}>${a}</option>`).join("")}</select>
+      <div class="barra-meses" role="tablist" aria-label="Mês">${MESES.map((r, i) => {
+        const m = ano + "-" + String(i + 1).padStart(2, "0");
+        return `<button role="tab" aria-selected="${m === st.mes}" class="${m === st.mes ? "ativo" : ""}${m === atual ? " atual" : ""}${comItens[m] ? " tem" : ""}" data-acao="mes-compras" data-k="${m}" title="${nomeMes(m)} de ${ano}${comItens[m] ? " · " + comItens[m] + " " + UI.plural(comItens[m], "item", "itens") : ""}">${r}</button>`;
+      }).join("")}</div>
+      <button class="btn primario barra-novo" data-acao="nova-compra" data-mes="${st.mes}">${UI.svg("mais")}<span class="btn-txt">Novo</span></button>
+    </div>`;
+  }
 
   // ------------------------------------------------------------------
   // LISTA
   // ------------------------------------------------------------------
   function filtrar(d) {
     const b = st.busca.trim().toLowerCase();
-    let lista = st.status === "Pendente" ? C.pendentes(d) : d.compras.filter((c) => st.status === "todos" || c.status === st.status)
+    let lista = st.status === "Pendente" ? C.pendentes(d).filter((c) => C.mesDaCompra(c) === st.mes) : C.doMes(d, st.mes).filter((c) => st.status === "todos" || c.status === st.status)
       .sort((a, b2) => (b2.dataCompra || b2.criadoEm || "").localeCompare(a.dataCompra || a.criadoEm || ""));
     return lista.filter((c) => (!st.cat || c.categoria === st.cat) && (!st.mercado || c.mercado === st.mercado) && (!b || c.nome.toLowerCase().indexOf(b) !== -1));
   }
@@ -44,18 +65,23 @@
     </div>`;
   }
   function lista(d) {
-    const todas = d.compras;
+    const todas = C.doMes(d, st.mes);
     const itens = filtrar(d);
+    const ant = C.mesAnterior(st.mes), doAnt = C.doMes(d, ant).filter((c) => c.status !== "Cancelado").length;
     const contagem = { Pendente: todas.filter((c) => c.status === "Pendente").length, Comprado: todas.filter((c) => c.status === "Comprado").length, Cancelado: todas.filter((c) => c.status === "Cancelado").length };
+    const mercados = N.MERCADOS.concat(d.compras.map((c) => c.mercado).filter((m) => m && N.MERCADOS.indexOf(m) === -1)).filter((v, i, a) => a.indexOf(v) === i);
     const filtros = `<div class="filtros-linha">
       ${UI.abas([{ k: "Pendente", r: "Pendentes", n: contagem.Pendente }, { k: "Comprado", r: "Comprados", n: contagem.Comprado }, { k: "Cancelado", r: "Cancelados", n: contagem.Cancelado }, { k: "todos", r: "Todos" }], st.status, "status-lista")}
       <label class="busca">${UI.svg("buscar")}<input type="search" placeholder="Buscar" value="${esc(st.busca)}" data-digitar="busca-compra" aria-label="Buscar item"></label>
-      <select class="sel" data-mudar="mercado-compra" aria-label="Filtrar por mercado">${UI.opcoes(N.MERCADOS.concat(todas.map((c) => c.mercado).filter((m) => m && N.MERCADOS.indexOf(m) === -1)).filter((v, i, a) => a.indexOf(v) === i), st.mercado, "Todos os mercados")}</select>
+      <select class="sel" data-mudar="mercado-compra" aria-label="Filtrar por mercado">${UI.opcoes(mercados, st.mercado, "Todos os mercados")}</select>
     </div>
     <div class="chips-filtro"><button class="${!st.cat ? "ativo" : ""}" data-acao="cat-compra" data-k="">Todas</button>${N.CATEGORIAS.map((c) => `<button class="${st.cat === c ? "ativo" : ""}" data-acao="cat-compra" data-k="${esc(c)}">${N.EMOJI_CATEGORIA[c]} ${esc(c)}</button>`).join("")}</div>`;
+    const copiar = doAnt ? `<button class="btn pequeno" data-acao="copiar-mes-compras" title="Repete os itens de ${nomeMes(ant)} como pendentes (sem duplicar)">${UI.svg("copiar")}Copiar ${nomeMes(ant)}</button>` : "";
     let corpo;
-    if (!todas.length) corpo = UI.vazio({ icone: "🛒", titulo: "Sua lista de compras está vazia.", texto: "Adicione itens aqui — ou planeje refeições e defina estoques mínimos: o que faltar entra sozinho na lista.", acao: "nova-compra", rotulo: "Adicionar item" });
-    else if (!itens.length) corpo = `<div class="vazio"><p>${st.status === "Pendente" && !st.cat && !st.busca && !st.mercado ? "Nada pendente — lista em dia! 🎉" : "Nenhum item com esse filtro."}</p></div>`;
+    if (!todas.length) corpo = UI.vazio({ icone: "🛒", titulo: `A lista de ${nomeMes(st.mes)} está vazia.`,
+      texto: doAnt ? `Repita a lista de ${nomeMes(ant)} (${doAnt} ${UI.plural(doAnt, "item", "itens")}) ou adicione itens. Refeições planejadas e estoque mínimo também enchem a lista sozinhos.` : "Adicione itens — ou planeje refeições e defina estoques mínimos: o que faltar entra sozinho na lista.",
+      acao: doAnt ? "copiar-mes-compras" : "nova-compra", rotulo: doAnt ? `Copiar lista de ${nomeMes(ant)}` : "Adicionar item", dados: doAnt ? "" : `data-mes="${st.mes}"` });
+    else if (!itens.length) corpo = `<div class="vazio"><p>${st.status === "Pendente" && !st.cat && !st.busca && !st.mercado ? "Nada pendente — lista do mês em dia! 🎉" : "Nenhum item com esse filtro."}</p></div>`;
     else {
       const grupos = {};
       itens.forEach((c) => { (grupos[c.categoria || "Outros"] = grupos[c.categoria || "Outros"] || []).push(c); });
@@ -63,17 +89,29 @@
         <div class="grupo-cab"><span>${N.EMOJI_CATEGORIA[k] || "📦"} ${esc(k)}</span><span class="dim">${grupos[k].length} · ${UI.brl(N.soma(grupos[k], (c) => c.status === "Comprado" ? C.valorPago(c) : C.valorEstimado(c)))}</span></div>
         ${grupos[k].map((c) => linhaItem(d, c)).join("")}</div>`).join("");
     }
-    const total = N.soma(itens, (c) => c.status === "Comprado" ? C.valorPago(c) : c.status === "Pendente" ? C.valorEstimado(c) : 0);
-    return UI.card({ titulo: "Lista de compras", sub: "toque no quadrado para marcar como comprado", acoes: UI.botao("nova-compra", "Item", { classe: "primario", icone: "mais" }),
-      corpo: (todas.length ? filtros : "") + `<div class="lista-compras">${corpo}</div>`, rodape: itens.length ? `<span>Total ${st.status === "Comprado" ? "pago" : "desta lista"}</span><b>${UI.brl(total)}</b>` : "" });
+    const previsto = N.soma(todas.filter((c) => c.status === "Pendente"), C.valorEstimado);
+    const pago = N.soma(todas, C.valorPago);
+    const feitos = contagem.Comprado, total = contagem.Pendente + contagem.Comprado;
+    return UI.card({ titulo: `Lista de ${nomeMes(st.mes)}`, sub: total ? `${feitos} de ${total} comprados · toque no quadrado para marcar` : "toque no quadrado para marcar como comprado",
+      acoes: copiar, corpo: (todas.length ? filtros : "") + `<div class="lista-compras">${corpo}</div>`,
+      rodape: todas.length ? `<span>Falta comprar <b>${UI.brl(previsto)}</b></span><span>Já pago <b>${UI.brl(pago)}</b></span>` : "" });
+  }
+  // pendentes de meses anteriores: aviso com "trazer para este mês"
+  function atrasados(d) {
+    if (st.mes !== C.mesAtual()) return "";
+    const lista = C.pendentesAtrasados(d, st.mes);
+    if (!lista.length) return "";
+    return `<div class="alerta-card aviso"><span class="ic">${UI.svg("aviso")}</span><div><b>${lista.length} ${UI.plural(lista.length, "item pendente", "itens pendentes")} de meses anteriores</b>
+      <p>${esc(lista.slice(0, 5).map((c) => c.nome).join(", "))}${lista.length > 5 ? "…" : ""}</p></div>
+      <button class="btn pequeno" data-acao="trazer-atrasados">Trazer para ${nomeMes(st.mes)}</button></div><div class="espaco"></div>`;
   }
   function lateralLista(d) {
-    const pend = C.pendentes(d);
+    const pend = C.pendentes(d).filter((c) => C.mesDaCompra(c) === st.mes);
     const porMercado = {};
     pend.forEach((c) => { porMercado[c.mercado || "—"] = (porMercado[c.mercado || "—"] || 0) + C.valorEstimado(c); });
     const itens = Object.keys(porMercado).map((k) => ({ nome: k, valor: porMercado[k] })).sort((a, b) => b.valor - a.valor);
     const integ = d.config.integracao;
-    return UI.card({ titulo: "Quanto vou gastar", sub: "pendentes por mercado", corpo: `<div class="pad">${UI.barList(itens, "var(--cy)")}</div>` }) +
+    return UI.card({ titulo: "Quanto vou gastar", sub: `pendentes de ${nomeMes(st.mes)} por mercado`, corpo: `<div class="pad">${UI.barList(itens, "var(--cy)")}</div>` }) +
       `<div class="espaco"></div>` +
       UI.card({ titulo: "Lista automática", dica: "O sistema soma o que está planejado nas refeições dos próximos dias e o estoque mínimo, desconta o que há em casa, e coloca o que faltar na lista (marcado como “auto”).",
         corpo: `<div class="pad texto-integ">${integ.listaAutomatica ? `<p><span class="up">● Ligada.</span> Considera as refeições planejadas dos próximos <b>${integ.diasPlanejamento}</b> dias e os estoques mínimos.</p>` : `<p><span class="dim">● Desligada.</span> Use “Compras para o cardápio” em Alimentação → Semana e os botões da aba Em casa.</p>`}
@@ -94,11 +132,10 @@
     const extrato = C.comprados(d, ini, fim);
     const maior = extrato.slice().sort((a, b) => C.valorPago(b) - C.valorPago(a))[0];
     const porCat = C.gastoPorCategoria(d, ini, fim);
-    const meses = C.mesesComGasto(d).concat([N.hoje(0).slice(0, 7)]).filter((v, i, a) => a.indexOf(v) === i).sort().reverse();
     const metaGasto = window.Metas.metaDoTipo(d, "gastos");
     const varPct = N.variacaoPct(g, gAnt);
     const gr = "grid-template-columns:64px 1.5fr 110px 90px 100px";
-    return `<div class="barra-ferramentas"><select class="sel" data-mudar="mes-gastos" aria-label="Mês">${meses.map((m) => `<option value="${m}"${m === mes ? " selected" : ""}>${UI.mesRotulo(m + "-01")}</option>`).join("")}</select></div>
+    return `${barraMes(d)}
       <div class="kpi-row">
         ${UI.kpi({ rotulo: "Gasto no mês", valor: UI.brl(g), gauge: metaGasto ? (g / metaGasto.valorAlvo) * 100 : null, cor: metaGasto && g > metaGasto.valorAlvo ? "var(--down)" : "var(--cy)", delta: varPct != null ? UI.deltaPill(UI.sinal(varPct, 0, "%"), varPct <= 0) + ` <span class="dim">vs mês anterior</span>` : "", sub: metaGasto ? "limite: " + UI.brl(metaGasto.valorAlvo) : "" })}
         ${UI.kpi({ rotulo: "Mês anterior", valor: UI.brl(gAnt), sub: UI.mesRotulo(iniAnt) })}
@@ -194,7 +231,7 @@
       const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "lista";
       const pend = d.compras.filter((c) => c.status === "Pendente").length, baixo = C.estoqueBaixo(d).length;
       const abas = UI.abas(ABAS.map((x) => x.k === "lista" ? Object.assign({ n: pend }, x) : x.k === "estoque" && baixo ? Object.assign({ n: baixo }, x) : x), aba, "aba-compras");
-      const corpo = aba === "gastos" ? gastos(d) : aba === "estoque" ? emCasa(d) : `<div class="grid"><div class="c8">${lista(d)}</div><div class="c4">${lateralLista(d)}</div></div>`;
+      const corpo = aba === "gastos" ? gastos(d) : aba === "estoque" ? emCasa(d) : `${barraMes(d)}${atrasados(d)}<div class="grid"><div class="c8">${lista(d)}</div><div class="c4">${lateralLista(d)}</div></div>`;
       return `<div class="cabecalho-pagina"><div><h1>Compras</h1><p class="sub">O que comprar, o que tem em casa e quanto gastou</p></div>${abas}</div>${corpo}`;
     },
     depois(d) {
@@ -220,11 +257,23 @@
       App.salvar();
     },
     "status-lista": (el) => { st.status = el.dataset.k; App.renderizar(); },
+    "mes-compras": (el) => { st.mes = el.dataset.k; App.renderizar(); },
+    "copiar-mes-compras": () => {
+      const d = App.dados(), ant = C.mesAnterior(st.mes);
+      const n = C.copiarMes(JSON.parse(JSON.stringify(d)), ant, st.mes); // conta antes, para a mensagem
+      if (!n) { UI.toast(`Os itens de ${nomeMes(ant)} já estão nesta lista.`); return; }
+      st.status = "Pendente";
+      App.comDesfazer(`${n} ${UI.plural(n, "item copiado", "itens copiados")} de ${nomeMes(ant)}.`, () => C.copiarMes(d, ant, st.mes));
+    },
+    "trazer-atrasados": () => {
+      const d = App.dados(), lista = C.pendentesAtrasados(d, st.mes);
+      App.comDesfazer(`${lista.length} ${UI.plural(lista.length, "item trazido", "itens trazidos")} para ${nomeMes(st.mes)}.`, () => C.moverParaMes(d, lista, st.mes));
+    },
     "cat-compra": (el) => { st.cat = el.dataset.k; App.renderizar(); }
   });
   App.registrarMudancas({
     "mercado-compra": (el) => { st.mercado = el.value; App.renderizar(); },
-    "mes-gastos": (el) => { st.mes = el.value; App.renderizar(); },
+    "ano-compras": (el) => { st.mes = el.value + st.mes.slice(4); App.renderizar(); },
     "busca-compra": (el) => {
       st.busca = el.value;
       const pos = el.selectionStart;

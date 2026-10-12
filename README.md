@@ -79,9 +79,11 @@ O menu segue a ordem do dia (o mesmo vale para o botão **+**):
    plano da semana), **Calendário** (o mês) e **Carga** (evolução por
    exercício, recorde e 1RM estimado). Registro de séries/repetições/carga/RPE
    com "última vez".
-5. **Compras**, em três abas: **Lista** (marcar como comprado direto na
-   lista, itens automáticos), **Em casa** (estoque, mínimo, validade e
-   alertas) e **Gastos** (mês a mês, por categoria e mercado, extrato e
+5. **Compras**, em três abas: **Lista mensal** (barra com ano + JAN…DEZ +
+   Novo; cada mês tem sua lista, com "Copiar mês anterior", aviso de
+   pendentes de meses passados com "Trazer para este mês", marcar como
+   comprado direto na lista e itens automáticos), **Em casa** (estoque, mínimo, validade e
+   alertas) e **Gastos** (pela mesma barra do mês, por categoria e mercado, extrato e
    histórico de preços).
 6. **Metas**: atual, objetivo, prazo e % concluído, avaliadas pela tendência.
 7. **Relatórios**: diário, semanal, mensal e trimestral comparando com o
@@ -151,7 +153,7 @@ uma cópia do original fica guardada em `meuControle:v1:antes-da-v2`.
 | `refeicaoItens` | meal_items         | refeição → alimento + quantidade                       |
 | `favoritas`     | —                  | refeições modelo                                       |
 | `agua`          | —                  | registros de água (ml)                                 |
-| `compras`       | shopping_items     | lista e compras feitas (estimado, pago, status…)       |
+| `compras`       | shopping_items     | lista mensal (`mes`) e compras feitas (estimado, pago…) |
 | `estoque`       | inventory          | alimento → quantidade em casa, mínimo, validade        |
 | `fichas`        | —                  | fichas de treino                                       |
 | `exercicios`    | exercises          | exercícios de cada ficha (séries, faixa de reps)       |

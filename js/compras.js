@@ -42,6 +42,42 @@
     return d.compras.filter((c) => c.status === "Comprado" && (!ini || N.entre(c.dataCompra, ini, fim)))
       .sort((a, b) => (b.dataCompra || "").localeCompare(a.dataCompra || ""));
   }
+  // ---------------------------------------------------------------------
+  // lista mensal: cada item pertence à lista de um mês ("AAAA-MM")
+  // ---------------------------------------------------------------------
+  function mesAtual() { return N.hoje(0).slice(0, 7); }
+  function mesDaCompra(c) {
+    if (c.mes) return c.mes;
+    if (c.status === "Comprado" && c.dataCompra) return c.dataCompra.slice(0, 7);
+    if (c.status === "Pendente" && c.auto) return mesAtual(); // automáticos são sempre da lista atual
+    return (c.dataPrevista || c.criadoEm || N.hoje(0)).slice(0, 7);
+  }
+  function doMes(d, mes) { return d.compras.filter((c) => mesDaCompra(c) === mes); }
+  function mesAnterior(mes) { return N.addMeses(mes + "-01", -1).slice(0, 7); }
+  // pendentes que ficaram em listas de meses anteriores
+  function pendentesAtrasados(d, mes) { return d.compras.filter((c) => pendente(c) && mesDaCompra(c) < mes); }
+  function moverParaMes(d, itens, mes) { itens.forEach((c) => { c.mes = mes; }); return itens.length; }
+  // repete a lista de um mês em outro (como pendentes); não duplica o que já está lá
+  function copiarMes(d, de, para) {
+    const ja = {};
+    doMes(d, para).filter((c) => c.status !== "Cancelado").forEach((c) => { ja[c.nome.toLowerCase()] = true; });
+    let n = 0;
+    doMes(d, de).filter((c) => c.status !== "Cancelado" && !ja[c.nome.toLowerCase()]).forEach((c) => {
+      ja[c.nome.toLowerCase()] = true;
+      const est = N.temValor(c.precoEstimado) ? Number(c.precoEstimado) : N.temValor(c.precoPago) ? Number(c.precoPago) : null;
+      d.compras.push({ id: N.novoId(), usuarioId: c.usuarioId, nome: c.nome, alimentoId: c.alimentoId || null, categoria: c.categoria, quantidade: c.quantidade, unidade: c.unidade,
+        precoEstimado: est, precoPago: null, mercado: c.mercado, prioridade: c.prioridade || "Normal", status: "Pendente", dataCompra: null, dataPrevista: null,
+        origem: "manual", auto: false, motivo: "", criadoEm: N.hoje(0), mes: para, obs: c.obs || "" });
+      n++;
+    });
+    return n;
+  }
+  function mesesComItens(d) {
+    const m = {};
+    d.compras.forEach((c) => { m[mesDaCompra(c)] = true; });
+    return Object.keys(m).sort();
+  }
+
   function totalEstimadoPendente(d) { return N.soma(pendentes(d), valorEstimado); }
   function gastoNoPeriodo(d, ini, fim) { return N.soma(comprados(d, ini, fim), valorPago); }
   function gastoNoMes(d, mes) {
@@ -311,7 +347,7 @@
   }
 
   global.Compras = {
-    compra, pendente, valorPago, valorEstimado, pendentes, comprados, totalEstimadoPendente,
+    compra, pendente, valorPago, mesAtual, mesDaCompra, doMes, mesAnterior, pendentesAtrasados, moverParaMes, copiarMes, mesesComItens, valorEstimado, pendentes, comprados, totalEstimadoPendente,
     gastoNoPeriodo, gastoNoMes, economiaNoPeriodo, mesesComGasto, mediaMensal,
     gastoPorCategoria, gastoPorMercado, gastoPorProduto, serieMensal, historicoPrecos, frequenciaCompras, estimarPreco,
     itemEstoque, estoqueDoAlimento, quantidadeEm, abaixoDoMinimo, estoqueBaixo, vencendo, valorDoEstoque, movimentarEstoque,
