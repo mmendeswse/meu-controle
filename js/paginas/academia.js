@@ -1,13 +1,18 @@
 /**
- * paginas/academia.js — treinos, fichas, calendário (plano semanal e mês),
- * evolução de carga e a tela de registro de uma sessão (rota "treino").
+ * paginas/academia.js — "Treino", em quatro abas na ordem de uso:
+ *   Treinos        — hoje, próximos 7 dias e histórico
+ *   Fichas e plano — as fichas e o plano da semana (montados uma vez)
+ *   Calendário     — o mês: realizado, planejado, perdido
+ *   Carga          — evolução da carga por exercício
+ * Mais a tela de registro de uma sessão (rota "treino").
  */
 (function () {
   "use strict";
 
   const N = window.Nucleo, UI = window.UI, F = window.Fitness, G = window.Graficos, App = window.App, FM = () => window.Formularios;
   const esc = UI.esc;
-  const st = App.estado.academia = { aba: "treinos", calModo: "mes", mes: N.inicioMes(), exercicio: "" };
+  const st = App.estado.academia = { mes: N.inicioMes(), exercicio: "" };
+  const ABAS = [{ k: "treinos", r: "Treinos" }, { k: "fichas", r: "Fichas e plano" }, { k: "calendario", r: "Calendário" }, { k: "carga", r: "Carga" }];
 
   function statusTreinoBotoes(t) {
     return `<span class="seg-status">${N.STATUS_TREINO.map((s) => `<button class="${t.status === s ? "ativo st-" + s.toLowerCase() : ""}" data-acao="status-treino" data-id="${t.id}" data-status="${s}" aria-pressed="${t.status === s}">${s === "Realizado" ? "✓ " : s === "Cancelado" ? "✕ " : ""}${s}</button>`).join("")}</span>`;
@@ -75,7 +80,7 @@
     const passados = F.treinosOrdenados(d).filter((t) => t.data < hj || (t.data === hj && t.status !== "Planejado")).reverse().slice(0, 30);
     return kpis(d) + `<div class="grid">
         <div class="c5">${cardHoje(d)}<div class="espaco"></div>${UI.card({ titulo: "Treinos por semana", sub: "últimas 8 semanas", corpo: d.treinos.length ? `<div class="grafico" style="height:200px"><canvas id="graf-treinos-sem" aria-label="Treinos realizados e perdidos por semana"></canvas></div>` : `<div class="vazio"><p>Sem dados suficientes.</p></div>` })}</div>
-        <div class="c7">${UI.card({ titulo: "Próximos 7 dias", acoes: UI.botao("novo-treino", "Treino", { icone: "mais" }), corpo: tabelaTreinos(d, proximos, "Nada planejado para os próximos dias. Monte o plano semanal em Calendário.") })}
+        <div class="c7">${UI.card({ titulo: "Próximos 7 dias", acoes: UI.botao("novo-treino", "Treino", { icone: "mais" }), corpo: tabelaTreinos(d, proximos, "Nada planejado para os próximos dias. Monte o plano em Fichas e plano.") })}
           <div class="espaco"></div>${UI.card({ titulo: "Histórico", sub: d.treinos.length ? "últimos 30" : "", corpo: d.treinos.length ? tabelaTreinos(d, passados, "Nenhum treino anterior.") : UI.vazio({ icone: "📒", titulo: "Você ainda não registrou nenhum treino.", acao: "rapido-treino", rotulo: "Adicionar treino" }) })}</div>
       </div>`;
   }
@@ -84,6 +89,9 @@
   // FICHAS
   // ------------------------------------------------------------------
   function abaFichas(d) {
+    return `<div class="sechead">1 · FICHAS</div>${fichasHtml(d)}<div class="sechead">2 · PLANO DA SEMANA</div><div class="grid"><div class="c12">${planoSemanal(d)}</div></div>`;
+  }
+  function fichasHtml(d) {
     const fichas = F.fichasOrdenadas(d);
     if (!fichas.length) return `<div class="grid"><div class="c12">${UI.card({ titulo: "Fichas de treino", corpo: UI.vazio({ icone: "📋", titulo: "Nenhuma ficha de treino ainda.", texto: "Exemplo: TREINO A — PEITO + TRÍCEPS com supino reto 4×8-12, supino inclinado 4×8-12, crucifixo 3×10-15 e tríceps pulley 3×10-15.", acao: "nova-ficha", rotulo: "Criar ficha" }) })}</div></div>`;
     return `<div class="fichas">${fichas.map((f) => {
@@ -117,7 +125,6 @@
   function calendarioMes(d) {
     const ini = st.mes, fim = N.fimMes(ini), hj = N.hoje(0);
     const est = F.estatisticas(d, ini, fim);
-    const seq = F.sequencias(d);
     const primeiro = N.inicioSemana(ini);
     const ultimo = N.fimSemana(fim);
     const cel = N.intervalo(primeiro, ultimo).map((dia) => {
@@ -138,14 +145,9 @@
         ${UI.kpi({ rotulo: "Planejados no mês", valor: String(est.planejados), dica: "Treinos registrados no mês (exceto cancelados que nunca existiram) + dias previstos pelo plano." })}
         ${UI.kpi({ rotulo: "Realizados", valor: String(est.realizados), sub: est.perdidos ? `${est.perdidos} perdidos` : "" })}
         ${UI.kpi({ rotulo: "Taxa de frequência", valor: est.taxa == null ? UI.SEM_DADOS : UI.pct(est.taxa), gauge: est.taxa, cor: "var(--up)" })}
-        ${UI.kpi({ rotulo: "Sequência atual", valor: seq.atual ? `🔥 ${seq.atual} <small>${UI.plural(seq.atual, "dia", "dias")}</small>` : "0", sub: `melhor: ${seq.melhor}` })}
       </div>
       ${UI.card({ titulo: "Calendário", sub: "verde = realizado · azul = planejado · vermelho = perdido/cancelado · tracejado = previsto no plano", acoes: nav,
         corpo: `<div class="cal"><div class="cal-sem">${[1, 2, 3, 4, 5, 6, 7].map((k) => `<span>${N.DIA_CURTO[k]}</span>`).join("")}</div><div class="cal-grade">${cel}</div></div>` })}`;
-  }
-  function abaCalendario(d) {
-    const modo = UI.abas([{ k: "mes", r: "Mensal" }, { k: "semana", r: "Plano semanal" }], st.calModo, "cal-modo", "abas-sec");
-    return `<div class="barra-ferramentas">${modo}</div>` + (st.calModo === "semana" ? `<div class="grid"><div class="c12">${planoSemanal(d)}</div></div>` : calendarioMes(d));
   }
 
   // ------------------------------------------------------------------
@@ -174,11 +176,11 @@
   }
 
   App.registrarPagina("academia", {
-    titulo: "Academia",
-    render(d) {
-      const abas = UI.abas([{ k: "treinos", r: "Treinos" }, { k: "fichas", r: "Fichas", n: d.fichas.length }, { k: "calendario", r: "Calendário" }, { k: "carga", r: "Evolução de carga" }], st.aba, "aba-academia");
-      const corpo = st.aba === "fichas" ? abaFichas(d) : st.aba === "calendario" ? abaCalendario(d) : st.aba === "carga" ? abaCarga(d) : abaTreinos(d);
-      return `<div class="cabecalho-pagina"><div><h1>Academia</h1><p class="sub">Fichas, treinos, frequência e evolução de carga</p></div>${abas}</div>${corpo}`;
+    titulo: "Treino",
+    render(d, rota) {
+      const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "treinos";
+      const corpo = aba === "fichas" ? abaFichas(d) : aba === "calendario" ? calendarioMes(d) : aba === "carga" ? abaCarga(d) : abaTreinos(d);
+      return `<div class="cabecalho-pagina"><div><h1>Treino</h1><p class="sub">Treino de hoje, fichas, plano da semana e evolução de carga</p></div>${UI.abas(ABAS, aba, "aba-academia")}</div>${corpo}`;
     },
     depois(d) {
       if (document.getElementById("graf-treinos-sem")) G.renderTreinosSemana("graf-treinos-sem", F.serieSemanalTreinos(d, 8));
@@ -193,7 +195,7 @@
     titulo: "Treino", menu: "academia",
     render(d, rota) {
       const t = F.treino(d, rota.param);
-      if (!t) return `<button class="voltar" data-acao="ir" data-secao="academia">${UI.svg("voltar")}Academia</button>${UI.vazio({ titulo: "Treino não encontrado." })}`;
+      if (!t) return `<button class="voltar" data-acao="ir" data-secao="academia">${UI.svg("voltar")}Treino</button>${UI.vazio({ titulo: "Treino não encontrado." })}`;
       const series = F.seriesDoTreino(d, t.id);
       const p = F.progressoTreino(d, t.id);
       const vol = F.volumeTreino(d, t.id);
@@ -215,7 +217,7 @@
             <div class="r">${UI.linhaAcoes("editar-serie", null, s.id)}</div>
           </div>`;
         }).join("") + `</div>` : UI.vazio({ icone: "🏋️", titulo: "Nenhum exercício neste treino.", acao: "nova-serie", rotulo: "Adicionar exercício", dados: `data-treino="${t.id}"` });
-      return `<button class="voltar" data-acao="ir" data-secao="academia">${UI.svg("voltar")}Academia</button>
+      return `<button class="voltar" data-acao="ir" data-secao="academia">${UI.svg("voltar")}Treino</button>
         <div class="cabecalho-pagina"><div><h1>${esc(t.nome)}</h1><p class="sub">${UI.dataLonga(t.data)} · ${UI.rotuloRelativo(t.data)}${t.fichaId && F.ficha(d, t.fichaId) ? " · ficha " + esc(F.ficha(d, t.fichaId).nome) : ""}</p></div>${statusTreinoBotoes(t)}</div>
         <div class="kpi-row">
           ${UI.kpi({ rotulo: "Exercícios feitos", valor: `${p.feitos}<small> / ${p.total}</small>`, gauge: p.total ? p.pct : null, cor: "var(--up)" })}
@@ -229,8 +231,7 @@
   });
 
   App.registrarAcoes({
-    "aba-academia": (el) => { st.aba = el.dataset.k; App.renderizar(); },
-    "cal-modo": (el) => { st.calModo = el.dataset.k; App.renderizar(); },
+    "aba-academia": (el) => App.ir("academia", el.dataset.k === "treinos" ? null : el.dataset.k, { manterRolagem: true }),
     "mes-cal": (el) => { st.mes = el.dataset.hoje ? N.inicioMes() : N.addMeses(st.mes, Number(el.dataset.delta)); App.renderizar(); },
     "gerar-semana": () => {
       const d = App.dados();

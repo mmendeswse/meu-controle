@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "2.0.0";
+  const VERSAO_APP = "2.1.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -35,7 +35,10 @@
   const MUDANCAS = {};
   const estado = {}; // estado de interface por página (filtros, datas…) — não é salvo
 
-  const MENU = ["dashboard", "alimentacao", "refeicoes", "compras", "estoque", "academia", "evolucao", "metas", "relatorios", "configuracoes"];
+  // menu na ordem do dia: o roteiro de hoje, depois cada área na ordem em que é usada
+  const MENU = ["dashboard", "evolucao", "alimentacao", "academia", "compras", "metas", "relatorios", "configuracoes"];
+  // telas antigas que viraram abas (links salvos e alertas continuam funcionando)
+  const ALIAS = { refeicoes: ["alimentacao", "semana"], estoque: ["compras", "estoque"] };
 
   function registrarPagina(id, def) { PAGINAS[id] = def; }
   function registrarAcoes(mapa) { Object.assign(ACOES, mapa); }
@@ -64,6 +67,7 @@
   // rotas
   // ---------------------------------------------------------------------
   function ir(secao, param, opc) {
+    if (ALIAS[secao]) { param = ALIAS[secao][1]; secao = ALIAS[secao][0]; }
     if (!PAGINAS[secao]) secao = "dashboard";
     ROTA = { secao, param: param || null };
     const hash = "#/" + secao + (param ? "/" + encodeURIComponent(param) : "");
@@ -90,7 +94,7 @@
       if (pag.depois) pag.depois(DADOS, ROTA);
     } catch (e) {
       console.error(e);
-      cont.innerHTML = `<div class="vazio"><b>Algo deu errado ao montar esta tela.</b><p>${UI.esc(e.message)}</p><button class="btn" data-acao="ir" data-secao="dashboard">Voltar ao Dashboard</button></div>`;
+      cont.innerHTML = `<div class="vazio"><b>Algo deu errado ao montar esta tela.</b><p>${UI.esc(e.message)}</p><button class="btn" data-acao="ir" data-secao="dashboard">Voltar para Hoje</button></div>`;
     }
     atualizarBadge();
     atualizarRodape();
@@ -148,14 +152,14 @@
   // ---------------------------------------------------------------------
   // botão "+" (registro rápido)
   // ---------------------------------------------------------------------
+  // na ordem do dia: pesar ao acordar, comer, beber água, treinar, comprar
   const RAPIDO = [
-    { acao: "rapido-peso", icone: "⚖️", rotulo: "Registrar peso" },
-    { acao: "rapido-refeicao", icone: "🍽️", rotulo: "Registrar refeição" },
-    { acao: "rapido-agua", icone: "💧", rotulo: "Registrar água" },
-    { acao: "rapido-treino", icone: "🏋️", rotulo: "Registrar treino" },
-    { acao: "rapido-alimento", icone: "🥦", rotulo: "Adicionar alimento" },
-    { acao: "rapido-compra", icone: "🛒", rotulo: "Adicionar compra" },
-    { acao: "rapido-medida", icone: "📏", rotulo: "Registrar medidas" }
+    { acao: "rapido-peso", icone: "⚖️", rotulo: "Peso e medidas" },
+    { acao: "rapido-refeicao", icone: "🍽️", rotulo: "Refeição" },
+    { acao: "rapido-agua", icone: "💧", rotulo: "Água" },
+    { acao: "rapido-treino", icone: "🏋️", rotulo: "Treino" },
+    { acao: "rapido-compra", icone: "🛒", rotulo: "Item na lista de compras" },
+    { acao: "rapido-alimento", icone: "🥦", rotulo: "Novo alimento" }
   ];
   function montarFab() {
     const menu = document.getElementById("fabMenu");
@@ -305,7 +309,7 @@
     window.addEventListener("resize", ajustarBarraGuias);
     window.addEventListener("hashchange", () => { const h = lerHash(); if (h && (h.secao !== ROTA.secao || h.param !== ROTA.param)) ir(h.secao, h.param); });
     const h = lerHash();
-    ir(h && PAGINAS[h.secao] ? h.secao : "dashboard", h && h.param);
+    ir(h && (PAGINAS[h.secao] || ALIAS[h.secao]) ? h.secao : "dashboard", h && h.param);
   }
 
   window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, fecharFab };

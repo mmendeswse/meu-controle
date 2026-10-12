@@ -1,6 +1,7 @@
 /**
- * paginas/configuracoes.js — perfil, alertas, integração, backup,
- * exportação, exclusão de dados e reset (sempre com confirmação).
+ * paginas/configuracoes.js — "Ajustes", na ordem em que se usa: perfil,
+ * integração, alertas, backup, e por fim exclusão de dados e reset
+ * (sempre com confirmação).
  */
 (function () {
   "use strict";
@@ -55,7 +56,7 @@
       </div>
       <p class="ajuda">Último backup: <b>${ult}</b>. Restaurar substitui todos os dados atuais (o sistema pede confirmação). Backups da versão anterior do sistema também são aceitos e convertidos automaticamente.</p>
       <div class="sechead">Exportação</div>
-      <div class="botoes-linha"><button class="btn" data-acao="exportar-planilha">${UI.svg("download")}Exportar tudo em Excel (.xlsx)</button><button class="btn" data-acao="ir" data-secao="relatorios">Relatórios (PDF / CSV / Excel)</button></div>
+      <div class="botoes-linha"><button class="btn" data-acao="exportar-planilha">${UI.svg("download")}Exportar tudo em Excel (.xlsx)</button><button class="btn" data-acao="ir" data-secao="relatorios">Relatório do período (PDF / CSV / Excel)</button></div>
     </div>` });
   }
 
@@ -68,30 +69,21 @@
       <div class="pad zona-perigo"><div><b>Reset completo</b><p class="ajuda">Apaga absolutamente tudo (perfil, registros, metas e configurações) e volta à tela inicial.</p></div><button class="btn perigo" data-acao="reset-completo">${UI.svg("lixo")}Resetar o sistema</button></div>` });
   }
 
-  function exemplo(d) {
-    return UI.card({ titulo: "Dados de exemplo", sub: d.demo ? "você está vendo dados fictícios" : "os dados atuais são seus", corpo: `<div class="pad">
-      ${d.demo ? `<button class="btn perigo" data-acao="remover-demo">Apagar exemplo e começar do zero</button>` : `<button class="btn" data-acao="carregar-demo">Carregar dados de exemplo</button>`}
-      <p class="ajuda">O exemplo é fictício e serve só para conhecer o sistema. Carregá-lo substitui os dados atuais.</p></div>` });
-  }
-
-  function registros(d) {
-    const nomes = { alimentos: "Alimentos", refeicoes: "Refeições", refeicaoItens: "Itens de refeição", favoritas: "Favoritas", agua: "Registros de água", compras: "Itens de compra", estoque: "Itens em estoque",
-      fichas: "Fichas", exercicios: "Exercícios das fichas", treinos: "Treinos", series: "Exercícios registrados", planoSemanal: "Plano semanal", pesagens: "Pesagens", medidas: "Medições", metas: "Metas" };
+  function privacidade(d) {
     const kb = A.usoArmazenamento() / 1024;
-    return UI.card({ titulo: "Privacidade e armazenamento", corpo: `<div class="pad texto-integ">
-        <p><b>100% local.</b> Os dados ficam no armazenamento do seu navegador (<code>localStorage</code>). Nada é enviado para nenhum servidor — o sistema não tem servidor.</p>
-        <p>Limpar os dados de navegação apaga tudo, e outro navegador ou aparelho começa vazio. Use o backup para levar seus dados.</p>
-        <p class="dim">Espaço usado: ${kb < 1024 ? UI.numAuto(kb, 0) + " KB" : UI.num(kb / 1024, 1) + " MB"} · versão ${App.VERSAO_APP} · dados v${d.versao}</p></div>
-      <div class="grade-registros">${Object.keys(nomes).map((k) => `<div class="kv"><span>${nomes[k]}</span><b>${d[k].length}</b></div>`).join("")}</div>` });
+    return UI.card({ titulo: "Privacidade e exemplo", corpo: `<div class="pad texto-integ">
+        <p><b>100% local.</b> Os dados ficam só neste navegador (<code>localStorage</code>) — nada é enviado para servidor. Limpar os dados de navegação apaga tudo; use o backup para levar seus dados.</p>
+        <p>${d.demo ? `<button class="btn perigo pequeno" data-acao="remover-demo">Apagar exemplo e começar do zero</button>` : `<button class="btn pequeno" data-acao="carregar-demo">Carregar dados de exemplo</button>`} <span class="dim">o exemplo é fictício e substitui os dados atuais</span></p>
+        <p class="dim">Espaço usado: ${kb < 1024 ? UI.numAuto(kb, 0) + " KB" : UI.num(kb / 1024, 1) + " MB"} · versão ${App.VERSAO_APP} · dados v${d.versao}</p></div>` });
   }
 
   App.registrarPagina("configuracoes", {
-    titulo: "Configurações",
+    titulo: "Ajustes",
     render(d) {
-      return `<div class="cabecalho-pagina"><div><h1>Configurações</h1><p class="sub">Perfil, alertas, integração e seus dados</p></div></div>
-        <div class="grid"><div class="c5">${perfil(d)}<div class="espaco"></div>${exemplo(d)}</div><div class="c7">${backup(d)}</div></div>
-        <div class="grid"><div class="c6">${integracao(d)}</div><div class="c6">${alertas(d)}</div></div>
-        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${registros(d)}</div></div>`;
+      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Perfil, integração, alertas e seus dados</p></div></div>
+        <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${integracao(d)}</div></div>
+        <div class="grid"><div class="c5">${alertas(d)}</div><div class="c7">${backup(d)}</div></div>
+        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${privacidade(d)}</div></div>`;
     },
     depois(d, rota) {
       if (rota.param) { const el = document.getElementById("sec-" + rota.param); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("destaque"); } }

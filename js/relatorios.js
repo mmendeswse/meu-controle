@@ -217,7 +217,7 @@
     global.Armazenamento.baixarArquivo(nomeArquivo(r, "xlsx"), gerarXLSX([{ nome: "Resumo", linhas: linhasResumo(r) }, { nome: "Por dia", linhas: linhasDiarias(r) }]));
   }
 
-  // todos os dados, uma aba por coleção (Configurações → Exportar planilha)
+  // todos os dados, uma aba por coleção (Ajustes → Exportar planilha)
   function exportarTudoXLSX(d) {
     const abas = [];
     const nomes = { usuarios: "Perfil", alimentos: "Alimentos", refeicoes: "Refeições", refeicaoItens: "Itens das refeições", favoritas: "Favoritas", agua: "Água",

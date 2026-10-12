@@ -1,6 +1,7 @@
 /**
- * paginas/relatorios.js — relatórios diário/semanal/mensal/trimestral com
- * exportação (PDF, CSV, Excel) e a área de Insights.
+ * paginas/relatorios.js — relatório diário/semanal/mensal/trimestral
+ * (comparado ao período anterior), exportação (PDF, CSV, Excel) e, no fim,
+ * todos os insights. Os alertas ficam no sino.
  */
 (function () {
   "use strict";
@@ -82,28 +83,21 @@
 
   function insights(d) {
     const lista = I.gerarInsights(d);
-    const alertas = I.gerarAlertas(d);
     const COR = { positivo: "sucesso", atencao: "aviso", info: "info" };
-    const NIVEL = { perigo: "perigo", aviso: "aviso", sucesso: "sucesso", info: "info" };
-    return `<div class="grid">
-      <div class="c7">${UI.card({ titulo: "Insights", sub: "observações geradas somente a partir dos seus registros",
-        dica: "Cada observação só aparece quando há registros suficientes para afirmá-la. Nada é estimado ou inventado: se faltar dado, a observação simplesmente não aparece.",
-        corpo: lista.length ? `<div class="alertas-lista">${lista.map((x) => `<button class="alerta-card ${COR[x.tipo]}" data-acao="ir" data-secao="${x.rota}"><span class="ic ic-emoji">${x.icone}</span><div><p>${esc(x.texto)}</p></div></button>`).join("")}</div>`
-          : UI.vazio({ icone: "💡", titulo: "Sem dados suficientes", texto: "Registre peso, refeições, treinos e compras por alguns dias. As observações aparecem conforme os dados permitem." }) })}</div>
-      <div class="c5">${UI.card({ titulo: "Alertas ativos", sub: "configure em Configurações → Alertas", corpo: alertas.length ? `<div class="alertas-lista">${alertas.map((a) => `<button class="alerta-card ${NIVEL[a.nivel]}" data-acao="ir" data-secao="${a.rota}"><span class="ic">${UI.svg(a.nivel === "perigo" ? "alerta" : a.nivel === "sucesso" ? "ok" : a.nivel === "aviso" ? "aviso" : "info")}</span><div><b>${esc(a.titulo)}</b><p>${esc(a.texto)}</p></div></button>`).join("")}</div>`
-        : `<div class="vazio"><p>Nenhum alerta agora. Tudo em ordem. ✓</p></div>` })}</div>
-    </div>`;
+    return `<div class="grid nao-imprimir"><div class="c12">${UI.card({ titulo: "Insights", sub: "observações geradas somente a partir dos seus registros", id: "sec-insights",
+      dica: "Cada observação só aparece quando há registros suficientes para afirmá-la. Nada é estimado ou inventado: se faltar dado, a observação simplesmente não aparece.",
+      corpo: lista.length ? `<div class="alertas-lista">${lista.map((x) => `<button class="alerta-card ${COR[x.tipo]}" data-acao="ir" data-secao="${x.rota}"><span class="ic ic-emoji">${x.icone}</span><div><p>${esc(x.texto)}</p></div></button>`).join("")}</div>`
+        : UI.vazio({ icone: "💡", titulo: "Sem dados suficientes", texto: "Registre peso, refeições, treinos e compras por alguns dias. As observações aparecem conforme os dados permitem." }) })}</div></div>`;
   }
 
   App.registrarPagina("relatorios", {
     titulo: "Relatórios",
-    render(d, rota) {
-      const aba = rota.param === "insights" ? "insights" : "relatorio";
-      return `<div class="cabecalho-pagina"><div><h1>Relatórios</h1><p class="sub">Resumo por período, exportação e insights</p></div>
-        ${UI.abas([{ k: "relatorio", r: "Relatório" }, { k: "insights", r: "Insights" }], aba, "rel-aba")}</div>
-        ${aba === "insights" ? insights(d) : relatorio(d)}`;
+    render(d) {
+      return `<div class="cabecalho-pagina"><div><h1>Relatórios</h1><p class="sub">Resumo por período comparado ao anterior, exportação e insights</p></div></div>
+        ${relatorio(d)}${insights(d)}`;
     },
-    depois(d) {
+    depois(d, rota) {
+      if (rota.param === "insights") { const el = document.getElementById("sec-insights"); if (el) el.scrollIntoView({ block: "start" }); }
       if (document.getElementById("graf-rel-kcal") && ultimo) {
         const dias = ultimo.dias.filter((x) => x.data <= N.hoje(0));
         G.renderBarrasMeta("graf-rel-kcal", dias.map((x) => ({ rotulo: st.tipo === "trimestral" ? UI.dataCurta(x.data) : N.DIA_CURTO[N.diaSemana(x.data)] + " " + x.data.slice(8, 10), valor: Math.round(x.kcal) })), { meta: ultimo.metas.kcal, un: "kcal" });
@@ -112,7 +106,6 @@
   });
 
   App.registrarAcoes({
-    "rel-aba": (el) => App.ir("relatorios", el.dataset.k === "insights" ? "insights" : null),
     "rel-tipo": (el) => { st.tipo = el.dataset.k; App.renderizar(); },
     "rel-nav": (el) => { st.ancora = el.dataset.hoje ? N.hoje(0) : R.deslocar(st.tipo, st.ancora, Number(el.dataset.delta)); App.renderizar(); },
     "rel-csv": () => { if (ultimo) { R.exportarCSV(ultimo); UI.toast("CSV exportado — verifique seus downloads."); } },
