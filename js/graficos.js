@@ -15,11 +15,15 @@
 (function (global) {
   "use strict";
 
+  // paleta no estilo dos apps de saúde; "cy" (cor principal dos gráficos)
+  // acompanha a cor da seção aberta (laranja em Alimentação, verde em Treino…)
+  const COR_SECAO = { dashboard: "#FF375F", evolucao: "#BF5AF2", alimentacao: "#FF9F0A", academia: "#30D158", compras: "#40C8E0", metas: "#FF375F", relatorios: "#5E5CE6", configuracoes: "#8E8E93" };
   const CORES = {
-    cy: "#00E5FF", up: "#2EE59D", down: "#FF5C6A", azul: "#38B6FF", vi: "#A66BFF", acc: "#FFA726",
-    dim: "#6E8494", grade: "rgba(110,132,148,0.14)", texto: "#8FA3B3", painel: "#0B141C"
+    get cy() { return COR_SECAO[document.body && document.body.dataset.secao] || "#FF375F"; },
+    up: "#30D158", down: "#FF453A", azul: "#0A84FF", vi: "#BF5AF2", acc: "#FF9F0A",
+    dim: "#8E8E93", grade: "rgba(142,142,147,0.16)", texto: "#8E8E93", painel: "#1C1C1E"
   };
-  const PALETA_CATEGORIAS = [CORES.cy, CORES.vi, CORES.acc, CORES.azul, "#7E93A6"];
+  const PALETA_CATEGORIAS = ["#FF9F0A", "#BF5AF2", "#30D158", "#0A84FF", "#8E8E93"];
 
   const instancias = {};
   function brl(v) { return (v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }); }
@@ -33,8 +37,8 @@
   function ctxOf(id) { const el = document.getElementById(id); return el ? el.getContext("2d") : null; }
   function tooltip(extra) {
     return Object.assign({
-      backgroundColor: "#0F1B26", borderColor: "#1F3440", borderWidth: 1, titleColor: "#EDF2FA", bodyColor: "#EDF2FA",
-      padding: 10, titleFont: fonte(11), bodyFont: fonte(11), displayColors: true, boxPadding: 4, mode: "index", intersect: false
+      backgroundColor: "#2C2C2E", borderColor: "#3A3A3C", borderWidth: 1, titleColor: "#FFFFFF", bodyColor: "#EBEBF5",
+      padding: 10, cornerRadius: 10, titleFont: fonte(11), bodyFont: fonte(11), displayColors: true, boxPadding: 4, mode: "index", intersect: false
     }, extra || {});
   }
   function eixoX(extra) { return Object.assign({ grid: { display: false }, border: { display: false }, ticks: { color: CORES.texto, font: fonte(10.5), maxRotation: 0, autoSkipPadding: 12 } }, extra || {}); }

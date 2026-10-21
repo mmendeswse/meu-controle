@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "2.2.0";
+  const VERSAO_APP = "2.3.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -85,7 +85,11 @@
   function renderizar() {
     const pag = PAGINAS[ROTA.secao] || PAGINAS.dashboard;
     const secaoMenu = pag.menu || ROTA.secao;
-    document.querySelectorAll("#navPrincipal button").forEach((b) => b.classList.toggle("ativo", b.dataset.secao === secaoMenu));
+    document.querySelectorAll("#navPrincipal button, #tabBar button[data-secao], #maisSheet button[data-secao]").forEach((b) => b.classList.toggle("ativo", b.dataset.secao === secaoMenu));
+    const btnMais = document.querySelector("#tabBar [data-mais]");
+    if (btnMais) btnMais.classList.toggle("ativo", SECOES_MAIS.indexOf(secaoMenu) !== -1);
+    document.body.dataset.secao = secaoMenu;
+    fecharMais();
     document.title = (pag.titulo ? pag.titulo + " · " : "") + "Meu Controle";
     G.destruirTodos();
     const cont = document.getElementById("conteudo");
@@ -246,14 +250,37 @@
     const v = document.getElementById("rodapeVersao");
     if (v) v.textContent = "Meu Controle v" + VERSAO_APP;
   }
-  // compacta a barra de guias até todas caberem
+  // a navegação agora é uma barra lateral (computador/iPad) ou uma barra
+  // de abas embaixo (celular) — não precisa mais compactar as guias
   function ajustarBarraGuias() {
-    const sb = document.getElementById("sidebar"), nav = document.getElementById("navPrincipal");
-    if (!sb || !nav) return;
-    for (let n = 0; n <= 7; n++) {
-      if (n) sb.setAttribute("data-compacta", String(n)); else sb.removeAttribute("data-compacta");
-      if (nav.scrollWidth <= nav.clientWidth + 1) return;
-    }
+    const sb = document.getElementById("sidebar");
+    if (sb) sb.removeAttribute("data-compacta");
+  }
+
+  // menu "Mais" da barra de abas (seções que não cabem nas 4 abas)
+  const SECOES_MAIS = ["compras", "metas", "relatorios", "configuracoes"];
+  function abrirMais() {
+    document.body.classList.add("mais-aberto");
+    const b = document.querySelector("#tabBar [data-mais]");
+    if (b) b.setAttribute("aria-expanded", "true");
+  }
+  function fecharMais() {
+    document.body.classList.remove("mais-aberto");
+    const b = document.querySelector("#tabBar [data-mais]");
+    if (b) b.setAttribute("aria-expanded", "false");
+  }
+  function ligarTabBar() {
+    const tab = document.getElementById("tabBar"), sheet = document.getElementById("maisSheet"), scrim = document.getElementById("maisScrim");
+    if (!tab) return;
+    tab.addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      if (b.hasAttribute("data-mais")) { document.body.classList.contains("mais-aberto") ? fecharMais() : abrirMais(); return; }
+      if (b.dataset.secao) ir(b.dataset.secao);
+    });
+    if (sheet) sheet.addEventListener("click", (e) => { const b = e.target.closest("button[data-secao]"); if (b) ir(b.dataset.secao); });
+    if (scrim) scrim.addEventListener("click", fecharMais);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharMais(); });
   }
 
   // dicas (tooltips): posicionadas no body para não serem cortadas pelos cards
@@ -301,6 +328,7 @@
       });
     });
     ligarDelegacao();
+    ligarTabBar();
     ligarNotificacoes();
     ligarDicas();
     montarFab();

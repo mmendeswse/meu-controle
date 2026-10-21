@@ -73,26 +73,77 @@
     const corpo = `<ul class="checklist">${itens.map((l) => `<li class="${l.feito ? "feito" : ""}${l.vazio || l.opcional ? " dim-item" : ""}${l.pulado ? " pulado" : ""}${l === proximo ? " proximo" : ""}">
         <button class="check-btn" ${l.acao || "disabled"}><span class="check-ic">${l.feito ? "✓" : l.pulado ? "–" : ""}</span><span class="check-txt"><b>${l.hora ? `<span class="check-hora">${l.hora}</span>` : ""}${esc(l.texto)}</b><small>${esc(l.sub || "")}${l === proximo ? " · próximo" : ""}</small></span></button>
         ${l.extra || ""}</li>`).join("")}</ul>`;
-    return UI.card({ titulo: "Roteiro de hoje", sub: `${feitos} de ${obrig.length} concluídos · toque para marcar`, acoes: `<button class="btn pequeno" data-acao="ir" data-secao="alimentacao">diário →</button>`, corpo, classe: "card-checklist" });
+    return UI.card({ titulo: "Seu dia", sub: `${feitos} de ${obrig.length} concluídos · toque para marcar`, acoes: `<button class="btn pequeno" data-acao="ir" data-secao="alimentacao">diário →</button>`, corpo, classe: "card-checklist" });
   }
 
   // ------------------------------------------------------------------
-  // A semana em números (um número por área, com link)
+  // Anéis do dia (estilo app de saúde): calorias, proteína e água
   // ------------------------------------------------------------------
-  function semana(d) {
+  const COR_ANEL = { kcal: "#FF375F", proteina: "#A3F23A", agua: "#40C8E0" };
+  function svgAneis(lista) {
+    const t = 200, larg = 22, folga = 4;
+    const aneis = lista.map((a, i) => {
+      const r = t / 2 - larg / 2 - i * (larg + folga), c = 2 * Math.PI * r;
+      const p = Math.max(0, a.p || 0), base = Math.min(p, 100);
+      const volta = p > 100 ? `<circle cx="${t / 2}" cy="${t / 2}" r="${r}" fill="none" stroke="${a.cor}" stroke-width="${larg}" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c - c * Math.min(p - 100, 100) / 100).toFixed(1)}" style="filter:drop-shadow(0 0 3px rgba(0,0,0,.7))"/>` : "";
+      return `<circle cx="${t / 2}" cy="${t / 2}" r="${r}" fill="none" stroke="${a.cor}" stroke-opacity=".22" stroke-width="${larg}"/>
+        <circle class="anel-valor" cx="${t / 2}" cy="${t / 2}" r="${r}" fill="none" stroke="${a.cor}" stroke-width="${larg}" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c - c * base / 100).toFixed(1)}"/>${volta}`;
+    }).join("");
+    return `<svg class="aneis-svg" viewBox="0 0 ${t} ${t}" role="img" aria-label="Progresso do dia">${aneis}</svg>`;
+  }
+  function aneisDoDia(d) {
     const hj = N.hoje(0);
     const c = AL.consumoDoDia(d, hj), mt = AL.metasDiarias(d);
-    const sem = F.semanaAtual(d), seq = F.sequencias(d), rc = C.resumo(d);
-    const macro = (rot, atual, meta, un) => UI.mini({ rotulo: rot + " hoje", valor: `${UI.numAuto(atual, 0)}${meta ? ` <small>/ ${UI.numAuto(meta, 0)}</small>` : ""} <small>${un}</small>`, barra: meta ? (atual / meta) * 100 : null, corBarra: meta && atual >= meta ? "var(--up)" : "var(--cy)", sub: meta ? "" : "sem meta", rota: "alimentacao" });
-    const minis = [
-      macro("Calorias", c.kcal, mt.kcal, "kcal"),
-      macro("Proteína", c.proteina, mt.proteina, "g"),
-      UI.mini({ rotulo: "Água hoje", valor: `${UI.num(c.agua / 1000, 1)}${mt.agua ? ` <small>/ ${UI.num(mt.agua / 1000, 1)}</small>` : ""} <small>L</small>`, barra: mt.agua ? (c.agua / mt.agua) * 100 : null, corBarra: mt.agua && c.agua >= mt.agua ? "var(--up)" : "var(--azul)", sub: mt.agua ? "" : "sem meta", rota: "alimentacao" }),
-      UI.mini({ rotulo: "Treinos na semana", dica: "Realizados / planejados (segunda a domingo), contando o plano semanal.", valor: `${sem.realizados} <small>/ ${sem.planejados}</small>`, barra: sem.planejados ? (sem.realizados / sem.planejados) * 100 : null, corBarra: "var(--up)", sub: seq.atual ? `🔥 ${seq.atual} ${UI.plural(seq.atual, "dia", "dias")} seguidos` : "", rota: "academia" }),
-      UI.mini({ rotulo: "Gasto no mês", dica: "Soma do preço pago dos itens comprados neste mês.", valor: UI.brl(rc.gastoMes), sub: rc.pendentes ? `${rc.pendentes} na lista · ${UI.brl(rc.totalEstimado)}` : "lista em dia", rota: "compras" }),
-      UI.mini({ rotulo: "Estoque baixo", valor: String(rc.estoqueBaixo), cor: rc.estoqueBaixo ? "var(--down)" : null, sub: rc.estoqueBaixo ? "abaixo do mínimo" : d.estoque.length ? "tudo em ordem" : "não controlado", rota: "estoque" })
+    const itens = [
+      { k: "kcal", rot: "Calorias", atual: UI.numAuto(c.kcal, 0), meta: mt.kcal ? UI.numAuto(mt.kcal, 0) : null, un: "kcal", p: mt.kcal ? (c.kcal / mt.kcal) * 100 : 0, tipo: "kcal" },
+      { k: "proteina", rot: "Proteína", atual: UI.numAuto(c.proteina, 0), meta: mt.proteina ? UI.numAuto(mt.proteina, 0) : null, un: "g", p: mt.proteina ? (c.proteina / mt.proteina) * 100 : 0, tipo: "proteina" },
+      { k: "agua", rot: "Água", atual: UI.num(c.agua / 1000, 1), meta: mt.agua ? UI.num(mt.agua / 1000, 1) : null, un: "L", p: mt.agua ? (c.agua / mt.agua) * 100 : 0, tipo: "agua" }
     ];
-    return UI.card({ titulo: "Em números", sub: "hoje, esta semana e este mês", corpo: `<div class="pg-grade numeros">${minis.join("")}</div>` });
+    const legenda = itens.map((i) => `<button class="anel-leg" data-acao="ir" data-secao="alimentacao" style="--anel:${COR_ANEL[i.k]}">
+        <span class="anel-leg-rot">${i.rot}</span>
+        <span class="anel-leg-val"><b>${i.atual}</b>${i.meta ? `<span>/${i.meta}</span>` : ""} <small>${i.un}</small></span>
+        <span class="anel-leg-pct">${i.meta ? Math.round(i.p) + "%" : "sem meta"}</span>
+      </button>`).join("");
+    const resta = mt.kcal ? Math.round(mt.kcal - c.kcal) : null;
+    return `<section class="card card-aneis">
+      <div class="aneis-topo"><h2 class="titulo-sec">Resumo do dia</h2>
+        <button class="btn pequeno agua-btn" data-acao="agua-rapida" data-data="${hj}" title="Somar um copo de água">${UI.svg("agua")}+${d.config.copoAgua || 250} ml</button></div>
+      <div class="aneis-corpo">
+        <div class="aneis-graf">${svgAneis(itens.map((i) => ({ p: i.p, cor: COR_ANEL[i.k] })))}</div>
+        <div class="aneis-leg">${legenda}
+          ${resta != null ? `<p class="aneis-resta">${resta >= 0 ? `Faltam <b>${UI.numAuto(resta, 0)} kcal</b> para a meta de hoje` : `<b>${UI.numAuto(-resta, 0)} kcal</b> acima da meta de hoje`}</p>` : ""}
+        </div>
+      </div>
+    </section>`;
+  }
+
+  // cartões de destaque, cada um com a cor da sua área
+  function tile(o) {
+    return `<button class="tile-saude" data-acao="ir" data-secao="${o.rota}" style="--t:${o.cor}">
+      <span class="ts-topo"><i class="ts-ic">${o.icone}</i><span class="ts-rot">${o.rotulo}</span><span class="ts-seta">›</span></span>
+      <span class="ts-valor">${o.valor}</span>
+      ${o.barra != null ? `<span class="ts-barra"><i style="width:${N.limitar(o.barra, 0, 100).toFixed(1)}%"></i></span>` : ""}
+      <span class="ts-sub">${o.sub || "&nbsp;"}</span>
+    </button>`;
+  }
+  const IC = {
+    treino: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="3.5" height="6" rx="1"/><rect x="18.5" y="9" width="3.5" height="6" rx="1"/><rect x="5.5" y="7" width="3" height="10" rx="1"/><rect x="15.5" y="7" width="3" height="10" rx="1"/><path d="M8.5 12h7"/></svg>',
+    peso: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.5 9a5 5 0 0 1 7 0"/><path d="M12 9l1.2-1.6"/></svg>',
+    gasto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h2.5l2.4 10.5h9.6L20 8H6.6"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg>',
+    estoque: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>'
+  };
+  function destaques(d) {
+    const sem = F.semanaAtual(d), seq = F.sequencias(d), rc = C.resumo(d);
+    const s = F.serie(d, "peso");
+    const atu = s.length ? s[s.length - 1] : null;
+    const ant = s.length > 1 ? s.filter((x) => N.diasEntre(x.data, atu.data) >= 7).pop() || s[0] : null;
+    const dp = atu && ant ? atu.valor - ant.valor : null;
+    return `<div class="tiles-saude">
+      ${tile({ rota: "academia", cor: "#30D158", icone: IC.treino, rotulo: "Treinos", valor: `${sem.realizados}<small> / ${sem.planejados} na semana</small>`, barra: sem.planejados ? (sem.realizados / sem.planejados) * 100 : null, sub: seq.atual ? `🔥 ${seq.atual} ${UI.plural(seq.atual, "dia", "dias")} seguidos` : "Comece sua sequência hoje" })}
+      ${tile({ rota: "evolucao", cor: "#BF5AF2", icone: IC.peso, rotulo: "Peso", valor: atu ? `${UI.num(atu.valor, 1)}<small> kg</small>` : `<small>sem registro</small>`, sub: dp != null ? `${UI.sinal(dp, 1, "kg")} desde ${UI.dataCurta(ant.data)}` : atu ? "registrado em " + UI.dataCurta(atu.data) : "Toque para registrar" })}
+      ${tile({ rota: "compras", cor: "#40C8E0", icone: IC.gasto, rotulo: "Gasto no mês", valor: `${UI.brl(rc.gastoMes)}`, sub: rc.pendentes ? `${rc.pendentes} ${UI.plural(rc.pendentes, "item", "itens")} na lista · ${UI.brl(rc.totalEstimado)}` : "Lista em dia" })}
+      ${tile({ rota: "estoque", cor: "#FF9F0A", icone: IC.estoque, rotulo: "Estoque baixo", valor: `${rc.estoqueBaixo}<small> ${UI.plural(rc.estoqueBaixo, "item", "itens")}</small>`, sub: rc.estoqueBaixo ? "abaixo do mínimo" : d.estoque.length ? "tudo em ordem" : "não controlado" })}
+    </div>`;
   }
 
   // ------------------------------------------------------------------
@@ -146,16 +197,23 @@
       const h = new Date().getHours();
       const saud = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
       const f = frase(d);
+      const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
+      const dataExt = N.paraData(N.hoje(0)).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
       return `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
-        <div class="cabecalho-pagina">
-          <div><h1>${saud}${u.nome && u.nome !== "Eu" ? ", " + esc(u.nome.split(" ")[0]) : ""}!</h1>
-          <p class="sub">${UI.dataLonga(N.hoje(0))}${f ? " · " + f : ""}</p></div>
+        <header class="cab-hoje">
+          <div><p class="cab-data">${esc(dataExt)}</p>
+            <h1>${saud}${nome ? ", " + esc(nome) : ""}</h1>
+            ${f ? `<p class="cab-frase">${f}</p>` : ""}</div>
+          <button class="avatar" data-acao="ir" data-secao="configuracoes" title="Perfil e ajustes">${esc((nome || "Eu").charAt(0).toUpperCase())}</button>
+        </header>
+        <div class="grid grid-hoje">
+          <div class="c7">${aneisDoDia(d)}</div>
+          <div class="c5">${destaques(d)}</div>
         </div>
         <div class="grid">
           <div class="c5">${roteiro(d)}</div>
-          <div class="c7">${semana(d)}<div class="espaco"></div>${insights(d)}</div>
-        </div>
-        <div class="grid"><div class="c12">${progresso(d)}</div></div>`;
+          <div class="c7">${insights(d)}<div class="espaco"></div>${progresso(d)}</div>
+        </div>`;
     },
     depois(d) {
       if (document.getElementById("graf-dash-peso")) {

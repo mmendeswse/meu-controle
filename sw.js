@@ -1,11 +1,11 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v7";
-const V = "?v=2.2.0";
+const CACHE = "meu-controle-v8";
+const V = "?v=2.3.0";
 const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "metas", "insights", "relatorios", "graficos", "ui", "app", "formularios",
   "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
-  "./", "./index.html", "./css/style.css" + V, "./manifest.json",
+  "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./manifest.json",
   "./js/vendor/chart.umd.min.js",
   "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
   "./apple-touch-icon.png", "./apple-touch-icon-180.png", "./apple-touch-icon-167.png", "./apple-touch-icon-152.png", "./apple-touch-icon-precomposed.png"
