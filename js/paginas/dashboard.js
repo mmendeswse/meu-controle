@@ -31,6 +31,63 @@
     </section>`;
   }
 
+  // "em 1h 20min", "agora", "há 15 min" — distância até um horário de hoje
+  function quandoFalta(hora) {
+    if (!hora) return "";
+    const [h, m] = hora.split(":").map(Number), agora = new Date();
+    const dif = Math.round((h * 60 + m) - (agora.getHours() * 60 + agora.getMinutes()));
+    const fmt = (min) => min >= 60 ? Math.floor(min / 60) + "h" + (min % 60 ? " " + (min % 60) + "min" : "") : min + " min";
+    if (Math.abs(dif) <= 10) return "agora";
+    return dif > 0 ? "em " + fmt(dif) : "atrasado " + fmt(-dif);
+  }
+
+  // ------------------------------------------------------------------
+  // Sua semana: um anel por dia com quanto do dia foi cumprido
+  // (calorias e água em relação à meta, treino previsto feito ou não)
+  // ------------------------------------------------------------------
+  function notaDoDia(d, dia) {
+    const partes = [];
+    const mk = AL.metaDiaria(d, "kcal"), ma = AL.metaDiaria(d, "agua");
+    if (mk) partes.push(Math.min(AL.consumoDoDia(d, dia).kcal / mk, 1));
+    if (ma) partes.push(Math.min(AL.aguaDoDia(d, dia) / ma, 1));
+    const s = F.situacaoDoDia(d, dia);
+    if (s.previsto) partes.push(s.realizado ? 1 : 0);
+    if (!mk) {
+      const refs = AL.refeicoesNoDia(d, dia);
+      if (refs.length) partes.push(refs.filter((r) => r.status === "Realizada").length / refs.length);
+    }
+    return partes.length ? partes.reduce((a, b) => a + b, 0) / partes.length : null;
+  }
+  function semanaRotina(d) {
+    const hj = N.hoje(0), dias = N.intervalo(N.inicioSemana(), N.fimSemana());
+    const LETRA = { 1: "S", 2: "T", 3: "Q", 4: "Q", 5: "S", 6: "S", 7: "D" };
+    let soma = 0, n = 0, cheios = 0;
+    const html = dias.map((dia) => {
+      const futuro = dia > hj, nota = futuro ? null : notaDoDia(d, dia);
+      if (nota != null) { soma += nota; n++; if (nota >= 0.85) cheios++; }
+      const p = nota == null ? 0 : nota * 100, r = 15, c = 2 * Math.PI * r;
+      return `<div class="sd-dia${dia === hj ? " hoje" : ""}${futuro ? " futuro" : ""}${nota != null && nota >= 0.85 ? " cheio" : ""}" title="${esc(UI.dataLonga(dia))}${nota != null ? " · " + Math.round(p) + "%" : ""}">
+        <span class="sd-letra">${LETRA[N.diaSemana(dia)]}</span>
+        <span class="sd-anel"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="${r}" class="sd-trilho"/>${p ? `<circle cx="20" cy="20" r="${r}" class="sd-valor" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c - c * p / 100).toFixed(1)}"/>` : ""}</svg>
+        <span class="sd-num">${Number(dia.slice(8, 10))}</span></span>
+      </div>`;
+    }).join("");
+    const media = n ? Math.round((soma / n) * 100) : null;
+    return `<section class="card card-semana">
+      <div class="sd-topo"><h2 class="titulo-sec">Sua semana</h2>
+        <span class="sd-resumo">${media != null ? `média <b>${media}%</b> · ${cheios} ${UI.plural(cheios, "dia cheio", "dias cheios")}` : "comece registrando hoje"}</span></div>
+      <div class="sd-dias">${html}</div>
+    </section>`;
+  }
+
+  // vibração curta e animação no item que acabou de ser marcado
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest(".check-btn[data-chave]");
+    if (!b || b.disabled) return;
+    window.__mcUltimoCheck = b.dataset.chave;
+    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* sem suporte */ } }
+  }, true);
+
   // ------------------------------------------------------------------
   // Roteiro de hoje: peso → refeições → treino → água, por horário
   // ------------------------------------------------------------------
@@ -67,12 +124,39 @@
     itens.push({ hora: "", feito: metaAgua ? agua >= metaAgua : false, texto: "💧 Água: " + (agua ? UI.litros(agua) : "0 L"), sub: metaAgua ? "meta " + UI.litros(metaAgua) + " · ao longo do dia" : "ao longo do dia",
       acao: `data-acao="agua" data-data="${hj}"`, extra: `<button class="btn pequeno" data-acao="agua-rapida" data-data="${hj}" title="Somar um copo">+${d.config.copoAgua || 250} ml</button>` });
 
+    // chave estável de cada item: permite animar o que acabou de ser marcado
+    itens.forEach((l) => { l.chave = l.chave || (l.acao || l.texto).replace(/\W+/g, "-").slice(0, 60); });
+
     const obrig = itens.filter((l) => !l.opcional || l.feito);
     const feitos = obrig.filter((l) => l.feito).length;
+    const pct = obrig.length ? Math.round((feitos / obrig.length) * 100) : 0;
+    const completo = obrig.length > 0 && feitos === obrig.length;
     const proximo = itens.find((l) => !l.feito && !l.pulado && !l.opcional && l.hora);
-    const corpo = `<ul class="checklist">${itens.map((l) => `<li class="${l.feito ? "feito" : ""}${l.vazio || l.opcional ? " dim-item" : ""}${l.pulado ? " pulado" : ""}${l === proximo ? " proximo" : ""}">
-        <button class="check-btn" ${l.acao || "disabled"}><span class="check-ic">${l.feito ? "✓" : l.pulado ? "–" : ""}</span><span class="check-txt"><b>${l.hora ? `<span class="check-hora">${l.hora}</span>` : ""}${esc(l.texto)}</b><small>${esc(l.sub || "")}${l === proximo ? " · próximo" : ""}</small></span></button>
-        ${l.extra || ""}</li>`).join("")}</ul>`;
+
+    // agrupa por período do dia, como nos apps de rotina
+    const PERIODOS = [
+      { k: "manha", r: "Manhã", ic: "☀️", teste: (h) => h && h < "12:00" },
+      { k: "tarde", r: "Tarde", ic: "🌤️", teste: (h) => h && h >= "12:00" && h < "18:00" },
+      { k: "noite", r: "Noite", ic: "🌙", teste: (h) => h && h >= "18:00" },
+      { k: "dia", r: "Ao longo do dia", ic: "💧", teste: (h) => !h }
+    ];
+    const ultimo = window.__mcUltimoCheck; window.__mcUltimoCheck = null;
+    const linha = (l) => `<li class="${l.feito ? "feito" : ""}${l.vazio || l.opcional ? " dim-item" : ""}${l.pulado ? " pulado" : ""}${l === proximo ? " proximo" : ""}${ultimo && ultimo === l.chave ? " recem" : ""}">
+        <button class="check-btn" data-chave="${esc(l.chave)}" ${l.acao || "disabled"}><span class="check-ic">${l.feito ? "✓" : l.pulado ? "–" : ""}</span><span class="check-txt"><b>${l.hora ? `<span class="check-hora">${l.hora}</span>` : ""}${esc(l.texto)}</b><small>${esc(l.sub || "")}</small></span>
+        ${l === proximo ? `<span class="chip-proximo">${esc(quandoFalta(l.hora))}</span>` : ""}</button>
+        ${l.extra || ""}</li>`;
+    const grupos = PERIODOS.map((g) => {
+      const lista = itens.filter((l) => g.teste(l.hora));
+      if (!lista.length) return "";
+      const ok = lista.filter((l) => l.feito).length;
+      return `<li class="periodo"><span>${g.ic} ${g.r}</span><small>${ok}/${lista.length}</small></li>${lista.map(linha).join("")}`;
+    }).join("");
+
+    const topo = `<div class="dia-progresso${completo ? " completo" : ""}">
+        <div class="dp-barra"><i style="width:${pct}%"></i></div>
+        <div class="dp-txt">${completo ? "🎉 <b>Dia completo!</b> Você cumpriu tudo o que tinha para hoje." : `<b>${pct}%</b> do dia · ${proximo ? `próximo: ${esc(proximo.texto.replace(/^\S+\s/, ""))} às ${proximo.hora}` : "falta pouco"}`}</div>
+      </div>`;
+    const corpo = topo + `<ul class="checklist">${grupos}</ul>`;
     return UI.card({ titulo: "Seu dia", sub: `${feitos} de ${obrig.length} concluídos · toque para marcar`, acoes: `<button class="btn pequeno" data-acao="ir" data-secao="alimentacao">diário →</button>`, corpo, classe: "card-checklist" });
   }
 
@@ -198,14 +282,17 @@
       const saud = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
       const f = frase(d);
       const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
+      const seqAtual = F.sequencias(d).atual;
       const dataExt = N.paraData(N.hoje(0)).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
       return `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
         <header class="cab-hoje">
           <div><p class="cab-data">${esc(dataExt)}</p>
             <h1>${saud}${nome ? ", " + esc(nome) : ""}</h1>
             ${f ? `<p class="cab-frase">${f}</p>` : ""}</div>
-          <button class="avatar" data-acao="ir" data-secao="configuracoes" title="Perfil e ajustes">${esc((nome || "Eu").charAt(0).toUpperCase())}</button>
+          <div class="cab-direita">${seqAtual ? `<button class="pill-seq" data-acao="ir" data-secao="academia" title="Dias seguidos cumprindo o plano de treino">🔥 <b>${seqAtual}</b></button>` : ""}
+          <button class="avatar" data-acao="ir" data-secao="configuracoes" title="Perfil e ajustes">${esc((nome || "Eu").charAt(0).toUpperCase())}</button></div>
         </header>
+        ${semanaRotina(d)}
         <div class="grid grid-hoje">
           <div class="c7">${aneisDoDia(d)}</div>
           <div class="c5">${destaques(d)}</div>

@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "2.3.0";
+  const VERSAO_APP = "2.4.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
