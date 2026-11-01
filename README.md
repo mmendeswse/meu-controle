@@ -24,11 +24,32 @@ sistema fica disponível em:
 https://<seu-usuario>.github.io/<nome-do-repositorio>/
 ```
 
-No celular ou iPad, abra esse endereço e use **Compartilhar → Adicionar à
-Tela de Início**: ele vira um app, abre em tela cheia e funciona offline.
-Para atualizar o app (pegar uma versão nova publicada), no topo de qualquer
-tela **segure e puxe para baixo**: aparece a seta circular; solte quando
-ela ficar ciano.
+## Instalar como app (PC, celular e tablet)
+
+O Meu Controle é um **PWA**: instalado, ele ganha ícone próprio, abre em
+tela cheia, funciona sem internet e se atualiza sozinho. Abra o endereço do
+GitHub Pages e:
+
+| Aparelho | Como instalar |
+| --- | --- |
+| **PC (Chrome ou Edge)** | botão **Instalar app** na barra lateral (ou o ícone de instalar no fim da barra de endereço) |
+| **Android (Chrome)** | **Mais → Instalar app** (ou menu ⋮ → Instalar app) |
+| **iPhone / iPad (Safari)** | **Mais → Instalar app** mostra o passo a passo: **Compartilhar → Adicionar à Tela de Início** |
+| **Mac (Safari)** | **Arquivo → Adicionar ao Dock** |
+
+O cartão **Ajustes → Instalar o app** mostra se o app já está instalado e o
+caminho para cada navegador. Segurando o ícone do app instalado (ou clicando
+com o botão direito no PC) aparecem os **atalhos**: Hoje, Registrar peso,
+Registrar refeição e Lista de compras.
+
+> **Atenção no iPhone/iPad:** o app instalado guarda os dados separado do
+> Safari e começa vazio. Se você já usava pelo Safari, faça **Ajustes → Fazer
+> backup** antes e **Restaurar backup** dentro do app. No PC e no Android o
+> app instalado usa os mesmos dados do navegador.
+
+Para atualizar na hora (pegar uma versão nova publicada), no iPhone/iPad
+**segure e puxe para baixo** no topo de qualquer tela: aparece a seta
+circular; solte quando ela ficar ciano. No PC, basta fechar e abrir o app.
 
 Na primeira vez que você abrir, o sistema começa **vazio**, com um passo a passo
 de boas-vindas. Se quiser conhecer antes, use **Explorar com dados de exemplo**
@@ -133,6 +154,7 @@ meu-controle/
     ├── graficos.js          # todos os gráficos (Chart.js)
     ├── ui.js                # componentes de interface (cards, KPIs, modal, dicas…)
     ├── app.js               # rotas, menu, botão +, notificações, delegação de eventos
+    ├── instalar.js          # botão Instalar app, guia do iPhone e atalhos do ícone
     ├── formularios.js       # todos os formulários (modais)
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js

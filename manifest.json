@@ -1,18 +1,34 @@
 {
+  "id": "./index.html?v=2",
   "name": "Meu Controle — Vida & Fitness",
   "short_name": "Meu Controle",
-  "description": "Alimentação, compras, gastos, treinos e peso — funciona offline, dados ficam no aparelho",
+  "description": "Alimentação, compras, gastos, treinos e peso num só app. Funciona offline e os dados ficam no aparelho.",
   "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "./index.html?v=2",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
+  "categories": ["health", "fitness", "food", "lifestyle"],
   "icons": [
-    { "src": "assets/icons/icon-192.png?v=2", "sizes": "192x192", "type": "image/png" },
-    { "src": "assets/icons/icon-512.png?v=2", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-192.png?v=2", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "assets/icons/icon-maskable-512.png?v=2", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "apple-touch-icon-180.png?v=2", "sizes": "180x180", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Hoje", "short_name": "Hoje", "description": "Roteiro e números do dia", "url": "./index.html#/dashboard", "icons": [{ "src": "assets/icons/atalho-hoje.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Registrar peso", "short_name": "Peso", "description": "Anotar o peso e as medidas de hoje", "url": "./index.html?acao=rapido-peso#/evolucao", "icons": [{ "src": "assets/icons/atalho-peso.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Registrar refeição", "short_name": "Refeição", "description": "Anotar o que você comeu", "url": "./index.html?acao=rapido-refeicao#/alimentacao", "icons": [{ "src": "assets/icons/atalho-refeicao.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Lista de compras", "short_name": "Compras", "description": "A lista do mês, o que tem em casa e os gastos", "url": "./index.html#/compras", "icons": [{ "src": "assets/icons/atalho-compras.png", "sizes": "96x96", "type": "image/png" }] }
+  ],
+  "screenshots": [
+    { "src": "assets/screenshots/celular-hoje.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Tela Hoje: roteiro do dia e anéis de calorias, proteína e água" },
+    { "src": "assets/screenshots/celular-compras.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "Lista de compras do mês com a situação de cada item" },
+    { "src": "assets/screenshots/pc-hoje.png", "sizes": "1440x900", "type": "image/png", "form_factor": "wide", "label": "Painel do dia no computador" },
+    { "src": "assets/screenshots/pc-treino.png", "sizes": "1440x900", "type": "image/png", "form_factor": "wide", "label": "Treinos, fichas e evolução de carga" }
   ]
 }

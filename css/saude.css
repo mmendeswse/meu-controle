@@ -565,3 +565,37 @@ body { --cy: var(--marca); --laranja: var(--marca); background: var(--bg); font-
   .checklist li.recem, .checklist li.recem .check-ic, .dia-progresso.completo { animation: none; }
   .sd-valor, .dp-barra i { transition: none; }
 }
+
+/* =======================================================================
+   INSTALAR O APP
+   ======================================================================= */
+[data-instalar][hidden] { display: none !important; }
+.btn-instalar {
+  order: 8; display: flex; align-items: center; gap: 12px; width: 100%; margin-top: auto; padding: 10px 12px;
+  border-radius: 14px; text-align: left; color: var(--texto);
+  background: linear-gradient(135deg, rgba(255, 55, 95, .16), rgba(255, 159, 10, .16));
+  border: 1px solid rgba(255, 120, 60, .28);
+}
+.btn-instalar:not([hidden]) ~ .sidebar-rodape { margin-top: 0; }
+.btn-instalar:hover { background: linear-gradient(135deg, rgba(255, 55, 95, .24), rgba(255, 159, 10, .24)); }
+.btn-instalar svg { width: 30px; height: 30px; padding: 6px; flex: none; border-radius: 8px; color: #fff; background: linear-gradient(135deg, #FF375F, #FF9F0A); }
+.btn-instalar b { display: block; font-size: 14px; font-weight: 600; }
+.btn-instalar small { display: block; font-size: 12px; color: var(--dim); margin-top: 1px; }
+.it-instalar { --it: linear-gradient(135deg, #FF375F, #FF9F0A); }
+@media (max-width: 860px) { .btn-instalar { display: none !important; } }
+
+.passos-instalar { list-style: none; margin: 4px 0 14px; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.passos-instalar li { display: flex; gap: 12px; align-items: flex-start; line-height: 1.5; }
+.num-passo {
+  flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg, #FF375F, #FF9F0A);
+}
+.ico-passo { width: 18px; height: 18px; vertical-align: -3px; color: #0A84FF; }
+.aviso-instalar {
+  margin: 4px 0 6px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.5;
+  background: rgba(255, 159, 10, .1); border: 1px solid rgba(255, 159, 10, .3); color: var(--texto-2);
+}
+.aviso-instalar b { color: var(--texto); }
+.passos-instalar .ico-passo { display: inline-block !important; width: 18px !important; height: 18px !important; margin: 0 2px; vertical-align: -3px; }
+.btn.btn-cta-instalar { background: linear-gradient(135deg, #FF375F, #FF9F0A); color: #fff; border: none; }
+.btn.btn-cta-instalar svg { color: #fff; }

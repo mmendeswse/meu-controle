@@ -83,7 +83,8 @@
       return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Perfil, integração, alertas e seus dados</p></div></div>
         <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${integracao(d)}</div></div>
         <div class="grid"><div class="c5">${alertas(d)}</div><div class="c7">${backup(d)}</div></div>
-        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${privacidade(d)}</div></div>`;
+        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${privacidade(d)}</div></div>
+        ${window.Instalar ? `<div class="grid"><div class="c12">${window.Instalar.cartaoAjustes()}</div></div>` : ""}`;
     },
     depois(d, rota) {
       if (rota.param) { const el = document.getElementById("sec-" + rota.param); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("destaque"); } }

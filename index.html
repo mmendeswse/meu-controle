@@ -19,8 +19,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?v=2">
 <meta name="color-scheme" content="dark">
 <title>Meu Controle — Vida & Fitness</title>
-<link rel="stylesheet" href="css/style.css?v=2.5.0">
-<link rel="stylesheet" href="css/saude.css?v=2.5.0">
+<link rel="stylesheet" href="css/style.css?v=2.6.0">
+<link rel="stylesheet" href="css/saude.css?v=2.6.0">
 </head>
 <body>
 
@@ -53,6 +53,8 @@
         <div class="dropdown" id="dropdownNotificacoes"></div>
     </div>
 
+    <button class="btn-instalar" data-instalar data-acao="instalar-app" hidden><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="10" height="15" rx="2.2"/><path d="M10 6v6M7.5 9.5L10 12l2.5-2.5"/><path d="M8.5 15h3"/></svg><span><b>Instalar app</b><small>ícone, tela cheia e offline</small></span></button>
+
     <div class="sidebar-rodape">100% local · seus dados não saem do navegador</div>
   </aside>
 
@@ -78,6 +80,7 @@
   <button data-secao="compras" class="mais-item it-compras"><i><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2 9h8l2-6H6"/><circle cx="8" cy="16" r="1.2"/><circle cx="14" cy="16" r="1.2"/></svg></i><span><b>Compras</b><small>Lista, estoque e gastos com comida</small></span></button>
   <button data-secao="metas" class="mais-item it-metas"><i><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r=".6" fill="currentColor"/></svg></i><span><b>Metas</b><small>Peso, calorias, treinos e mais</small></span></button>
   <button data-secao="relatorios" class="mais-item it-relatorios"><i><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h7l3 3v11H5z"/><path d="M12 3v3h3"/><path d="M7.5 10h5M7.5 13h5"/></svg></i><span><b>Relatórios</b><small>Insights e resumos do período</small></span></button>
+  <button data-instalar data-acao="instalar-app" class="mais-item it-instalar" hidden><i><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="10" height="15" rx="2.2"/><path d="M10 6v6M7.5 9.5L10 12l2.5-2.5"/><path d="M8.5 15h3"/></svg></i><span><b>Instalar app</b><small>Ícone na tela de início e abre sem internet</small></span></button>
   <button data-secao="configuracoes" class="mais-item it-configuracoes"><i><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="2.6"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.4 1.4M13.6 13.6L15 15M15 5l-1.4 1.4M6.4 13.6L5 15"/></svg></i><span><b>Ajustes</b><small>Perfil, backup e preferências</small></span></button>
 </div>
 
@@ -94,27 +97,28 @@
 <script src="js/vendor/chart.umd.min.js"></script>
 
 <!-- módulos do sistema — a ordem importa: regras → interface → páginas -->
-<script src="js/nucleo.js?v=2.5.0"></script>
-<script src="js/armazenamento.js?v=2.5.0"></script>
-<script src="js/demo.js?v=2.5.0"></script>
-<script src="js/alimentacao.js?v=2.5.0"></script>
-<script src="js/compras.js?v=2.5.0"></script>
-<script src="js/fitness.js?v=2.5.0"></script>
-<script src="js/metas.js?v=2.5.0"></script>
-<script src="js/insights.js?v=2.5.0"></script>
-<script src="js/relatorios.js?v=2.5.0"></script>
-<script src="js/graficos.js?v=2.5.0"></script>
-<script src="js/ui.js?v=2.5.0"></script>
-<script src="js/app.js?v=2.5.0"></script>
-<script src="js/formularios.js?v=2.5.0"></script>
-<script src="js/paginas/dashboard.js?v=2.5.0"></script>
-<script src="js/paginas/alimentacao.js?v=2.5.0"></script>
-<script src="js/paginas/compras.js?v=2.5.0"></script>
-<script src="js/paginas/academia.js?v=2.5.0"></script>
-<script src="js/paginas/evolucao.js?v=2.5.0"></script>
-<script src="js/paginas/metas.js?v=2.5.0"></script>
-<script src="js/paginas/relatorios.js?v=2.5.0"></script>
-<script src="js/paginas/configuracoes.js?v=2.5.0"></script>
+<script src="js/nucleo.js?v=2.6.0"></script>
+<script src="js/armazenamento.js?v=2.6.0"></script>
+<script src="js/demo.js?v=2.6.0"></script>
+<script src="js/alimentacao.js?v=2.6.0"></script>
+<script src="js/compras.js?v=2.6.0"></script>
+<script src="js/fitness.js?v=2.6.0"></script>
+<script src="js/metas.js?v=2.6.0"></script>
+<script src="js/insights.js?v=2.6.0"></script>
+<script src="js/relatorios.js?v=2.6.0"></script>
+<script src="js/graficos.js?v=2.6.0"></script>
+<script src="js/ui.js?v=2.6.0"></script>
+<script src="js/app.js?v=2.6.0"></script>
+<script src="js/instalar.js?v=2.6.0"></script>
+<script src="js/formularios.js?v=2.6.0"></script>
+<script src="js/paginas/dashboard.js?v=2.6.0"></script>
+<script src="js/paginas/alimentacao.js?v=2.6.0"></script>
+<script src="js/paginas/compras.js?v=2.6.0"></script>
+<script src="js/paginas/academia.js?v=2.6.0"></script>
+<script src="js/paginas/evolucao.js?v=2.6.0"></script>
+<script src="js/paginas/metas.js?v=2.6.0"></script>
+<script src="js/paginas/relatorios.js?v=2.6.0"></script>
+<script src="js/paginas/configuracoes.js?v=2.6.0"></script>
 <script>
   // registra o service worker (só funciona via http/https — no celular, depois de publicado)
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
