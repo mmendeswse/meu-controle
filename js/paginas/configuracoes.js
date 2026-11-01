@@ -80,14 +80,23 @@
   App.registrarPagina("configuracoes", {
     titulo: "Ajustes",
     render(d) {
-      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Perfil, integração, alertas e seus dados</p></div></div>
-        <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${integracao(d)}</div></div>
-        <div class="grid"><div class="c5">${alertas(d)}</div><div class="c7">${backup(d)}</div></div>
-        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${privacidade(d)}</div></div>
-        ${window.Instalar ? `<div class="grid"><div class="c12">${window.Instalar.cartaoAjustes()}</div></div>` : ""}`;
+      const PZ = window.Personalizar, LB = window.Lembretes;
+      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Aparência, rotina, lembretes, perfil e seus dados</p></div>
+          <nav class="atalhos-ajustes">${[["aparencia", "🎨 Aparência"], ["rotina", "🕒 Rotina"], ["lembretes", "🔔 Lembretes"], ["alertas", "⚠️ Alertas"], ["instalar", "📲 Instalar"]].map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
+        <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${PZ.cartaoRotina(d)}</div></div>
+        <div class="grid"><div class="c6">${LB.cartaoAjustes(d)}</div><div class="c6">${perfil(d)}</div></div>
+        <div class="grid"><div class="c5">${alertas(d)}</div><div class="c7">${integracao(d)}</div></div>
+        <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${privacidade(d)}</div></div>
+        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${window.Instalar ? window.Instalar.cartaoAjustes() : ""}</div></div>`;
     },
     depois(d, rota) {
-      if (rota.param) { const el = document.getElementById("sec-" + rota.param); if (el) { el.scrollIntoView({ block: "start" }); el.classList.add("destaque"); } }
+      if (rota.param) {
+        const el = document.getElementById("sec-" + rota.param);
+        if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.classList.add("destaque"); setTimeout(() => el.classList.remove("destaque"), 1800); }
+        // rola uma vez só: os próximos redesenhos (a cada ajuste salvo) ficam onde estão
+        rota.param = null;
+        history.replaceState(null, "", "#/configuracoes");
+      }
     }
   });
 

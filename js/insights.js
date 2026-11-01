@@ -129,6 +129,39 @@
     const baixo = C.estoqueBaixo(d);
     if (baixo.length) add("atencao", "📦", `${baixo.length} ${baixo.length === 1 ? "alimento está" : "alimentos estão"} abaixo do estoque mínimo.`, "estoque", 5);
 
+    // bem-estar
+    const BE = global.BemEstar;
+    if (BE) {
+      const sono = BE.media(d, "sono", N.hoje(-6), hj);
+      if (sono.dias >= 4) {
+        const alvo = BE.metaDe(d, "sono") || 7;
+        const h = BE.fmtHoras(sono.media);
+        if (sono.media >= alvo - 0.1) add("positivo", "😴", `Você dormiu em média ${h} por noite nos últimos 7 dias — dentro da meta.`, "bemestar", 6);
+        else add("atencao", "😴", `Sua média de sono foi ${h} nos últimos 7 dias, abaixo de ${BE.fmtHoras(alvo)}.`, "bemestar", 7);
+      }
+      const h1 = BE.media(d, "humor", N.hoje(-6), hj), h0 = BE.media(d, "humor", N.hoje(-13), N.hoje(-7));
+      if (h1.dias >= 4 && h0.dias >= 4 && Math.abs(h1.media - h0.media) >= 0.5) {
+        add(h1.media > h0.media ? "positivo" : "atencao", h1.media > h0.media ? "😊" : "🫂", `Seu humor médio ${h1.media > h0.media ? "melhorou" : "caiu"} esta semana (${n1(h0.media)} → ${n1(h1.media)} de 5).`, "bemestar", 6);
+      }
+      const rel = BE.relacoes(d)[0];
+      if (rel) add(rel.bom ? "positivo" : "info", rel.icone, rel.texto, "bemestar", 5);
+      BE.habitosAtivos(d).forEach((h) => {
+        const sq = BE.sequencia(d, h);
+        if (sq.atual >= 7) add("positivo", h.emoji || "🌱", `${sq.atual} dias seguidos em “${h.nome}”${sq.atual >= sq.melhor && sq.atual > 7 ? " — o seu recorde!" : ""}.`, "bemestar/habitos", 5);
+        const ds = BE.desafio(d, h);
+        if (ds && ds.estado === "ativo" && ds.restantes <= 3 && ds.restantes > 0) add("info", "🏆", `Faltam ${ds.restantes} ${ds.restantes === 1 ? "dia" : "dias"} para concluir o desafio “${h.nome}”.`, "bemestar/habitos", 6);
+      });
+      if (d.remedios.length) {
+        const ad = BE.adesao(d, N.hoje(-6), hj);
+        if (ad.previstas >= 5) {
+          if (ad.pct >= 95) add("positivo", "💊", `Você tomou ${Math.round(ad.pct)}% das doses previstas nos últimos 7 dias.`, "bemestar/remedios", 5);
+          else if (ad.pct < 80) add("atencao", "💊", `Nos últimos 7 dias você tomou ${ad.tomadas} de ${ad.previstas} doses (${Math.round(ad.pct)}%). Lembretes podem ajudar — Ajustes → Lembretes.`, "bemestar/remedios", 7);
+        }
+      }
+      const ej = BE.estatJejum(d, 30);
+      if (ej.total >= 3) add(ej.pct >= 70 ? "positivo" : "info", "⏳", `${ej.total} jejuns nos últimos 30 dias, com média de ${BE.fmtHoras(ej.media)} (${ej.atingidos} ${ej.atingidos === 1 ? "atingiu" : "atingiram"} a meta).`, "bemestar/jejum", 4);
+    }
+
     return out.sort((a, b) => b.peso - a.peso);
   }
 
@@ -210,6 +243,28 @@
     if (sm.length >= 2) {
       const a = sm[sm.length - 2], b = sm[sm.length - 1];
       if (Math.abs(b.valor - a.valor) >= 0.8 && N.diasEntre(b.data, hj) <= 14) add("mudancaRelevante", b.valor > a.valor ? "sucesso" : "aviso", "Massa muscular", `Sua massa muscular foi de ${n1(a.valor)} kg para ${n1(b.valor)} kg entre ${dataCurta(a.data)} e ${dataCurta(b.data)}.`, "evolucao", "m:" + b.data);
+    }
+
+    // bem-estar: doses, estoque de remédios, jejum e check-in
+    const BE = global.BemEstar;
+    if (BE) {
+      BE.dosesDoDia(d, hj).forEach((x) => {
+        if (x.extra || x.status !== "Pendente") return;
+        const atraso = BE.atrasoMin(x.horario);
+        if (atraso >= 30) add("remedioAtrasado", "perigo", "Remédio atrasado", `${x.remedio.nome} (${x.remedio.dose || "dose"}) era às ${x.horario}.`, "bemestar/remedios", x.remedio.id + ":" + hj + ":" + x.horario);
+        else if (atraso >= -10) add("remedioAtrasado", "aviso", "Hora do remédio", `${x.remedio.nome} às ${x.horario} · ${x.remedio.dose || ""}`.trim(), "bemestar/remedios", x.remedio.id + ":" + hj + ":" + x.horario + ":agora");
+      });
+      BE.remediosAtivos(d).forEach((r) => {
+        const e = BE.estoque(r);
+        if (e && e.baixo) add("remedioEstoque", "perigo", "Remédio acabando", `${r.nome}: restam ${n1(e.qtd, e.qtd % 1 ? 1 : 0)} ${BE.unidade(e.qtd, r.unidadeDose || "")}${e.dias != null ? ` (≈ ${e.dias} ${e.dias === 1 ? "dia" : "dias"})` : ""}.`, "bemestar/remedios", r.id + ":" + Math.floor(e.qtd));
+      });
+      const jj = BE.jejumAtivo(d);
+      if (jj && BE.horasJejum(jj) >= Number(jj.metaHoras)) add("jejumMeta", "sucesso", "Jejum concluído", `Você completou ${BE.fmtHoras(BE.horasJejum(jj))} de jejum (meta ${BE.fmtHoras(jj.metaHoras)}). Encerre quando fizer a próxima refeição.`, "bemestar/jejum", jj.id);
+      const P = global.Personalizar;
+      if (P && d.bemEstar.length >= 3) {
+        const hc = P.horario(d, "checkin"), c = BE.checkin(d, hj);
+        if (hc && N.horaAgora() >= hc && (!c || c.humor == null)) add("checkinPendente", "info", "Check-in do dia", "Como foi o seu dia? Registre humor, energia e estresse.", "bemestar", hj);
+      }
     }
 
     // backup

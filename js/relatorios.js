@@ -222,7 +222,8 @@
     const abas = [];
     const nomes = { usuarios: "Perfil", alimentos: "Alimentos", refeicoes: "Refeições", refeicaoItens: "Itens das refeições", favoritas: "Favoritas", agua: "Água",
       compras: "Compras", estoque: "Estoque", fichas: "Fichas", exercicios: "Exercícios das fichas", treinos: "Treinos", series: "Séries", planoSemanal: "Plano semanal",
-      pesagens: "Pesagens", medidas: "Medidas", metas: "Metas" };
+      pesagens: "Pesagens", medidas: "Medidas", metas: "Metas", bemEstar: "Check-ins", habitos: "Hábitos", habitoRegistros: "Marcações de hábitos",
+      remedios: "Remédios", doses: "Doses", jejuns: "Jejuns" };
     Object.keys(nomes).forEach((k) => {
       const lista = d[k] || [];
       const cols = [];

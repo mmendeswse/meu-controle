@@ -15,6 +15,8 @@
  *              — média dos últimos 7 dias; também é a meta do diário
  *   frequencia (treinos por semana) — média das últimas 4 semanas
  *   limite     (gastos do mês, orçamento da lista de compras)
+ *   bem-estar  (sono, passos e minutos ativos por dia) — média dos últimos
+ *              7 dias com check-in (fonte: bemestar.js)
  * -----------------------------------------------------------------------
  */
 (function (global) {
@@ -37,6 +39,9 @@
     gorduras: { rotulo: "Gorduras por dia", un: "g", modo: "diaria", chave: "gordura", alvo: "faixa", tol: 0.15, casas: 0, icone: "🥑" },
     fibras: { rotulo: "Fibras por dia", un: "g", modo: "diaria", chave: "fibra", alvo: "minimo", casas: 0, icone: "🥦" },
     agua: { rotulo: "Água por dia", un: "ml", modo: "diaria", chave: "agua", alvo: "minimo", casas: 0, icone: "💧" },
+    sono: { rotulo: "Horas de sono por noite", un: "h", modo: "diaria", fonte: "bemestar", chave: "sono", alvo: "minimo", casas: 1, icone: "😴" },
+    passos: { rotulo: "Passos por dia", un: "passos", modo: "diaria", fonte: "bemestar", chave: "passos", alvo: "minimo", casas: 0, icone: "👟" },
+    minutosAtivos: { rotulo: "Minutos ativos por dia", un: "min", modo: "diaria", fonte: "bemestar", chave: "minutosAtivos", alvo: "minimo", casas: 0, icone: "🏃" },
     gastos: { rotulo: "Gastos com alimentação no mês", un: "R$", modo: "limite", casas: 2, icone: "💰" },
     compras: { rotulo: "Orçamento da lista de compras", un: "R$", modo: "limiteLista", casas: 2, icone: "🛒" }
   };
@@ -73,11 +78,20 @@
     const t = TIPOS[tipo];
     if (!t) return null;
     if (t.modo === "resultado") { const a = F.atual(d, t.metrica); return a ? a.valor : null; }
-    if (t.modo === "diaria") return AL.mediaNutriente(d, t.chave, N.hoje(-7), N.hoje(-1)).media;
+    if (t.modo === "diaria") return mediaDiaria(d, t, N.hoje(-7), N.hoje(-1)).media;
     if (t.modo === "frequencia") return frequenciaSemanal(d).media;
     if (t.modo === "limite") return C.gastoNoMes(d);
     if (t.modo === "limiteLista") return C.totalEstimadoPendente(d);
     return null;
+  }
+  // média de uma meta diária: nutrição/água (alimentacao.js) ou bem-estar (bemestar.js)
+  function mediaDiaria(d, t, ini, fim) {
+    if (t.fonte === "bemestar") return global.BemEstar ? global.BemEstar.media(d, t.chave, ini, fim) : { media: null, dias: 0 };
+    return AL.mediaNutriente(d, t.chave, ini, fim);
+  }
+  function hojeDiaria(d, t, hj) {
+    if (t.fonte === "bemestar") return global.BemEstar ? global.BemEstar.doDia(d, t.chave, hj) : null;
+    return t.chave === "agua" ? AL.aguaDoDia(d, hj) : AL.consumoDoDia(d, hj)[t.chave];
   }
   function frequenciaSemanal(d) {
     const ini = F.inicioUso(d);
@@ -164,12 +178,14 @@
     }
 
     if (t.modo === "diaria") {
-      const med = AL.mediaNutriente(d, t.chave, N.hoje(-7), N.hoje(-1));
-      r.hoje = t.chave === "agua" ? AL.aguaDoDia(d, hj) : AL.consumoDoDia(d, hj)[t.chave];
+      const be = t.fonte === "bemestar";
+      // sono é registrado de manhã: a noite de hoje já conta; os outros usam até ontem
+      const med = mediaDiaria(d, t, be && t.chave === "sono" ? N.hoje(-6) : N.hoje(-7), be && t.chave === "sono" ? hj : N.hoje(-1));
+      r.hoje = hojeDiaria(d, t, hj);
       if (med.dias < 2) {
         r.atual = med.media;
-        r.explicacao = "É preciso registrar " + (t.chave === "agua" ? "a água" : "refeições realizadas") + " em pelo menos 2 dos últimos 7 dias para avaliar a média.";
-        r.progresso = alvo ? N.limitar((r.hoje / alvo) * 100, 0, 100) : null;
+        r.explicacao = "É preciso registrar " + (be ? (t.chave === "sono" ? "o sono no check-in" : t.chave === "passos" ? "os passos no check-in" : "os minutos ativos no check-in") : t.chave === "agua" ? "a água" : "refeições realizadas") + " em pelo menos 2 dos últimos 7 dias para avaliar a média.";
+        r.progresso = alvo && r.hoje != null ? N.limitar((r.hoje / alvo) * 100, 0, 100) : null;
         return r;
       }
       r.atual = med.media; r.diasAvaliados = med.dias;
@@ -220,5 +236,5 @@
 
   function avaliarTodas(d) { return metasAtivas(d).map((m) => avaliar(d, m)); }
 
-  global.Metas = { TIPOS, STATUS, fmt, fmtRitmo, metasAtivas, metaDoTipo, valorAtual, frequenciaSemanal, avaliar, avaliarTodas };
+  global.Metas = { TIPOS, STATUS, fmt, fmtRitmo, metasAtivas, metaDoTipo, valorAtual, mediaDiaria, frequenciaSemanal, avaliar, avaliarTodas };
 })(window);

@@ -222,6 +222,84 @@
     meta("fibras", 30);
     meta("agua", 3000);
     meta("gastos", 1100);
+    meta("sono", 7.5);
+    meta("passos", 8000);
+
+    // ---------------------------------------------------------------
+    // bem-estar: 60 dias de check-in, coerentes com treinos e água
+    // (quem dorme mais acorda com mais energia; dias de treino têm
+    // humor um pouco melhor)
+    // ---------------------------------------------------------------
+    const treinou = {};
+    d.treinos.forEach((t) => { if (t.status === "Realizado") treinou[t.data] = true; });
+    const SINT = ["Dor de cabeça", "Dor muscular", "Cansaço", "Ansiedade"];
+    for (let i = 59; i >= 0; i--) {
+      if (rnd() < 0.12 && i > 0) continue; // alguns dias sem check-in
+      const dia = H(-i), dow = N.diaSemana(dia);
+      const fds = dow >= 6;
+      const sono = N.arred(Math.max(4.8, Math.min(9.2, (fds ? 7.9 : 6.9) + (rnd() - 0.5) * 2.2)), 2);
+      const acordaMin = (fds ? 8 * 60 + 10 : 6 * 60 + 25) + Math.round((rnd() - 0.5) * 40);
+      const dormeMin = acordaMin - Math.round(sono * 60) + 24 * 60;
+      const hhmm = (m) => String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, "0") + ":" + String(((m % 60) + 60) % 60).padStart(2, "0");
+      const t = !!treinou[dia];
+      const base = 2.6 + (sono - 6) * 0.55 + (t ? 0.45 : 0) + (rnd() - 0.5) * 1.2;
+      const energia = Math.max(1, Math.min(5, Math.round(base)));
+      const humor = Math.max(1, Math.min(5, Math.round(base + 0.3 + (fds ? 0.3 : 0) + (rnd() - 0.5))));
+      const estresse = Math.max(1, Math.min(5, Math.round(3.6 - (sono - 6) * 0.4 - (t ? 0.5 : 0) - (fds ? 0.8 : 0) + (rnd() - 0.5) * 1.4)));
+      const passos = Math.round((t ? 9400 : fds ? 6200 : 7300) + (rnd() - 0.5) * 4200);
+      const reg = { id: id(), usuarioId: eu, data: dia, dormiu: hhmm(dormeMin), acordou: hhmm(acordaMin), sonoHoras: null,
+        sonoQualidade: Math.max(1, Math.min(5, Math.round(2 + (sono - 6) * 0.9 + (rnd() - 0.5)))),
+        humor, energia, estresse, passos: Math.max(1200, passos), minutosAtivos: t ? 50 + Math.round(rnd() * 25) : Math.round(10 + rnd() * 25),
+        sintomas: rnd() < 0.1 ? [SINT[Math.floor(rnd() * SINT.length)]] : [], obs: "" };
+      if (i === 0) { reg.humor = null; reg.energia = null; reg.estresse = null; reg.passos = null; reg.minutosAtivos = null; } // hoje: só o sono, por enquanto
+      d.bemEstar.push(reg);
+    }
+
+    // hábitos e um desafio em andamento
+    function habito(o) { const h = Object.assign({ id: id(), usuarioId: eu, ativo: true, criadoEm: new Date(Date.now() - 40 * 86400000).toISOString(), ordem: d.habitos.length, inicio: H(-40), dias: [1, 2, 3, 4, 5, 6, 7], horario: "", meta: null, unidade: "", duracao: null, obs: "" }, o); d.habitos.push(h); return h; }
+    const ler = habito({ nome: "Ler 10 páginas", emoji: "📖", tipo: "quantidade", meta: 10, unidade: "páginas", horario: "22:15", cor: "#BF5AF2", obs: "Um livro por mês" });
+    const medit = habito({ nome: "Meditar", emoji: "🧘", tipo: "sim", horario: "06:45", cor: "#0A84FF", dias: [1, 2, 3, 4, 5] });
+    const fio = habito({ nome: "Fio dental", emoji: "🦷", tipo: "sim", cor: "#40C8E0" });
+    const acucar = habito({ nome: "Sem açúcar", emoji: "🍬", tipo: "sim", cor: "#FF9F0A", duracao: 21, inicio: H(-12), criadoEm: new Date(Date.now() - 12 * 86400000).toISOString(), obs: "Desafio com a família" });
+    for (let i = 40; i >= 1; i--) {
+      const dia = H(-i);
+      if (rnd() < 0.78) d.habitoRegistros.push({ id: id(), habitoId: ler.id, data: dia, valor: rnd() < 0.85 ? 10 + Math.round(rnd() * 8) : 5 });
+      if (N.diaSemana(dia) <= 5 && rnd() < 0.7) d.habitoRegistros.push({ id: id(), habitoId: medit.id, data: dia, valor: 1 });
+      if (i <= 9 || rnd() < 0.6) d.habitoRegistros.push({ id: id(), habitoId: fio.id, data: dia, valor: 1 });
+      if (i <= 12 && i !== 7) d.habitoRegistros.push({ id: id(), habitoId: acucar.id, data: dia, valor: 1 });
+    }
+
+    // remédios e suplementos, com doses dos últimos 30 dias
+    const vitd = { id: id(), usuarioId: eu, nome: "Vitamina D 2000 UI", tipo: "Vitamina", qtdDose: 1, unidadeDose: "cápsula", porDose: 1, dose: "1 cápsula", frequencia: "diario", dias: [1, 2, 3, 4, 5, 6, 7], intervaloDias: 2,
+      horarios: ["08:00"], inicio: H(-60), fim: null, estoque: 4, estoqueMinimo: 5, instrucao: "Com comida", obs: "Exame de sangue em março", ativo: true, criadoEm: new Date(Date.now() - 60 * 86400000).toISOString() };
+    const creat = { id: id(), usuarioId: eu, nome: "Creatina", tipo: "Suplemento", qtdDose: 5, unidadeDose: "g", porDose: 5, dose: "5 g", frequencia: "diario", dias: [1, 2, 3, 4, 5, 6, 7], intervaloDias: 2,
+      horarios: ["19:30"], inicio: H(-60), fim: null, estoque: 210, estoqueMinimo: 50, instrucao: "Indiferente", obs: "", ativo: true, criadoEm: new Date(Date.now() - 60 * 86400000).toISOString() };
+    const omega = { id: id(), usuarioId: eu, nome: "Ômega 3", tipo: "Suplemento", qtdDose: 2, unidadeDose: "cápsula", porDose: 2, dose: "2 cápsulas", frequencia: "dias", dias: [1, 3, 5], intervaloDias: 2,
+      horarios: ["12:45"], inicio: H(-45), fim: null, estoque: 38, estoqueMinimo: 10, instrucao: "Depois de comer", obs: "", ativo: true, criadoEm: new Date(Date.now() - 45 * 86400000).toISOString() };
+    const dorflex = { id: id(), usuarioId: eu, nome: "Analgésico", tipo: "Remédio", qtdDose: 1, unidadeDose: "comprimido", porDose: 1, dose: "1 comprimido", frequencia: "sob-demanda", dias: [1, 2, 3, 4, 5, 6, 7], intervaloDias: 2,
+      horarios: [], inicio: H(-60), fim: null, estoque: 9, estoqueMinimo: 3, instrucao: "Depois de comer", obs: "Só se tiver dor de cabeça forte", ativo: true, criadoEm: new Date(Date.now() - 60 * 86400000).toISOString() };
+    d.remedios.push(vitd, creat, omega, dorflex);
+    for (let i = 30; i >= 1; i--) {
+      const dia = H(-i), dow = N.diaSemana(dia);
+      if (rnd() < 0.92) d.doses.push({ id: id(), remedioId: vitd.id, data: dia, horario: "08:00", status: "Tomado", hora: "08:" + String(Math.floor(rnd() * 40)).padStart(2, "0") });
+      if (rnd() < 0.85) d.doses.push({ id: id(), remedioId: creat.id, data: dia, horario: "19:30", status: rnd() < 0.95 ? "Tomado" : "Pulado", hora: "19:" + String(30 + Math.floor(rnd() * 29)).padStart(2, "0") });
+      if ([1, 3, 5].indexOf(dow) !== -1 && rnd() < 0.9) d.doses.push({ id: id(), remedioId: omega.id, data: dia, horario: "12:45", status: "Tomado", hora: "13:0" + Math.floor(rnd() * 9) });
+    }
+    d.doses.push({ id: id(), remedioId: dorflex.id, data: H(-9), horario: "15:20", status: "Tomado", hora: "15:20", extra: true });
+    d.doses.push({ id: id(), remedioId: vitd.id, data: H(0), horario: "08:00", status: "Tomado", hora: "08:12" });
+
+    // jejuns: 16:8 algumas vezes por semana nas últimas semanas
+    for (let i = 26; i >= 1; i--) {
+      if (rnd() > 0.45) continue;
+      const ini = new Date(); ini.setDate(ini.getDate() - i); ini.setHours(20, Math.floor(rnd() * 50), 0, 0);
+      const meta = rnd() < 0.8 ? 16 : 14;
+      const dur = meta + (rnd() - 0.65) * 3;
+      d.jejuns.push({ id: id(), usuarioId: eu, inicio: ini.toISOString(), fim: new Date(ini.getTime() + dur * 3600000).toISOString(), metaHoras: meta, obs: "" });
+    }
+    const ontem = new Date(); ontem.setDate(ontem.getDate() - 1); ontem.setHours(20, 40, 0, 0);
+    if (Date.now() - ontem.getTime() < 20 * 3600000) d.jejuns.push({ id: id(), usuarioId: eu, inicio: ontem.toISOString(), fim: null, metaHoras: 16, obs: "" });
+
+    d.config.aparencia = Object.assign({}, d.config.aparencia, { avatar: "😎", avatarCor: "azul" });
     return d;
   }
 

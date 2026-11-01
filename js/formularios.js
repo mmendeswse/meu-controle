@@ -976,7 +976,7 @@
           <div class="campo"><label for="f_alvo">${t.modo === "limite" || t.modo === "limiteLista" ? "Limite" : "Objetivo"} (${unid})</label><input id="f_alvo" type="number" step="any" min="0" value="${mt ? mt.valorAlvo : ""}"></div>
           <div class="campo"><label for="f_prazo">Prazo ${t.modo === "resultado" ? "" : "(opcional)"}</label><input id="f_prazo" type="date" value="${esc(mt ? mt.prazo || "" : "")}"></div>
         </div>
-        ${t.modo === "diaria" ? `<p class="ajuda">Esta meta também é usada como objetivo diário no diário de Alimentação e na tela Hoje.</p>` : ""}`;
+        ${t.modo === "diaria" ? `<p class="ajuda">${t.fonte === "bemestar" ? "Avaliada pela média dos check-ins dos últimos 7 dias. Também aparece na tela Bem-estar." : "Esta meta também é usada como objetivo diário no diário de Alimentação e na tela Hoje."}</p>` : ""}`;
     };
     campos();
     m.querySelector("#f_tipo").addEventListener("change", () => {

@@ -1,0 +1,363 @@
+/**
+ * extras.css — Meu Controle 3.0
+ * -----------------------------------------------------------------------
+ * Carregado depois do saude.css. Traz:
+ *   - a cor da área Bem-estar e as preferências de Aparência
+ *     (tamanho da letra, animações, avatar)
+ *   - os componentes novos: check-in, hábitos, remédios, jejum,
+ *     conquistas e os cartões de Ajustes
+ *   - o tema claro (html[data-tema="claro"])
+ * -----------------------------------------------------------------------
+ */
+
+:root { --c-bem: #00C7BE; --zoom: 1; }
+body[data-secao="bemestar"] { --marca: var(--c-bem); }
+.nav button[data-secao="bemestar"] { --ic: var(--c-bem); }
+.it-bemestar { --it: var(--c-bem); }
+
+/* tamanho da letra: a interface inteira cresce junto */
+.zoom-ativo body { zoom: var(--zoom); }
+.zoom-ativo .sidebar { height: calc(100vh / var(--zoom)); }
+@media (max-width: 860px) { .zoom-ativo .sidebar { height: auto; } }
+
+/* sem animações */
+.sem-animacao *, .sem-animacao *::before, .sem-animacao *::after { animation: none !important; transition: none !important; }
+
+/* avatar com cor e emoji */
+.avatar { background: linear-gradient(135deg, var(--av, #5E5CE6), color-mix(in srgb, var(--av, #BF5AF2) 55%, #000)); }
+.avatar .av-emoji { font-size: 25px; line-height: 1; }
+.avatar.grande { width: 64px; height: 64px; font-size: 26px; }
+.avatar.grande .av-emoji { font-size: 36px; }
+
+.cab-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.botoes-linha { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.botoes-linha.centro { justify-content: center; margin: 12px 0 4px; }
+.botoes-linha.fim { justify-content: flex-end; margin: 0 0 14px; }
+.kpi-row.compacta { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+/* =======================================================================
+   AJUSTES — aparência, rotina, lembretes
+   ======================================================================= */
+.atalhos-ajustes { display: flex; gap: 6px; flex-wrap: wrap; }
+.atalhos-ajustes button { padding: 7px 12px; border-radius: 999px; background: var(--painel); font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.atalhos-ajustes button:hover { background: var(--painel-2); }
+.ajustes-ap, .ajustes-rotina { display: flex; flex-direction: column; gap: 4px; }
+.ap-perfil { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.ap-perfil b { display: block; font-size: 17px; }
+.ap-perfil small { display: block; color: var(--dim); font-size: 13px; margin-bottom: 2px; }
+.ap-bloco { padding: 12px 0; border-top: 1px solid var(--linha); display: flex; flex-direction: column; gap: 10px; }
+.ap-rot { font-size: 13px; font-weight: 700; color: var(--dim); margin-top: 10px; }
+.ap-bloco .ap-rot { margin-top: 0; }
+.ap-avatares { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 6px; max-height: 148px; overflow-y: auto; padding: 2px; }
+.ap-av { height: 40px; border-radius: 12px; background: var(--painel-2); font-size: 22px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--texto); }
+.ap-av:hover { background: var(--painel-3); }
+.ap-av.ativo { box-shadow: 0 0 0 2px var(--marca); background: color-mix(in srgb, var(--marca) 18%, var(--painel-2)); }
+.ap-cores { display: flex; flex-wrap: wrap; gap: 10px; }
+.ap-cor { width: 34px; height: 34px; border-radius: 50%; background: var(--c); position: relative; flex: none; }
+.ap-cores.pequenas .ap-cor { width: 26px; height: 26px; }
+.ap-cor.ativo { box-shadow: 0 0 0 3px var(--painel), 0 0 0 5px var(--c); }
+.ap-cor.ativo::after { content: "✓"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 15px; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.ap-cores.pequenas .ap-cor.ativo::after { font-size: 12px; }
+.seg-opcoes { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 3px; border-radius: 12px; background: var(--painel-2); max-width: 100%; }
+.seg-opcoes button { padding: 7px 12px; border-radius: 9px; font-size: 13.5px; font-weight: 600; color: var(--texto-2); }
+.seg-opcoes button.ativo { background: var(--marca); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--marca) 35%, transparent); }
+.linha-sel { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; }
+.linha-sel b { display: block; font-size: 14px; }
+.linha-sel small { display: block; color: var(--dim); font-size: 12.5px; }
+.linha-campos { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.horas-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); gap: 8px; }
+.hora-campo span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hora-campo { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 12px; border-radius: 12px; background: var(--painel-2); font-size: 13.5px; font-weight: 600; }
+.hora-campo input { width: 96px; padding: 6px 8px; border-radius: 9px; background: var(--painel-3); border: none; color: var(--texto); font: inherit; font-variant-numeric: tabular-nums; }
+.lista-interruptores { display: flex; flex-direction: column; gap: 12px; }
+.rodape-card { margin: 12px 0 0; }
+.ajustes-rotina .chips { margin-top: 4px; }
+
+/* =======================================================================
+   CHECK-IN, HÁBITOS, REMÉDIOS, JEJUM — formulários
+   ======================================================================= */
+.ck-bloco { padding: 14px 0 6px; border-top: 1px solid var(--linha); margin-top: 6px; }
+.ck-tit { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.ck-tit small { font-weight: 500; font-size: 12.5px; }
+.ck-rot { display: block; font-size: 12.5px; font-weight: 700; color: var(--dim); margin: 10px 0 6px; }
+.escala { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.escala button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 6px; border-radius: 14px; background: var(--painel-2); border: 2px solid transparent; transition: transform .1s; }
+.escala button span { font-size: 26px; line-height: 1.1; filter: grayscale(.6); opacity: .75; }
+.escala button small { font-size: 10.5px; color: var(--dim); font-weight: 600; text-align: center; line-height: 1.15; }
+.escala button:active { transform: scale(.95); }
+.escala button.ativo { border-color: var(--marca); background: color-mix(in srgb, var(--marca) 16%, var(--painel-2)); }
+.escala button.ativo span { filter: none; opacity: 1; }
+.escala button.ativo small { color: var(--texto); }
+.campo-emoji { font-size: 22px; text-align: center; }
+.emoji-sugestoes { display: flex; flex-wrap: wrap; gap: 4px; margin: -4px 0 12px; }
+.emoji-sugestoes button { width: 36px; height: 36px; border-radius: 10px; background: var(--painel-2); font-size: 19px; }
+.emoji-sugestoes button:hover { background: var(--painel-3); }
+.dias-chips .chip span { min-width: 46px; text-align: center; }
+.horas-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.hora-item { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 4px; border-radius: 10px; background: var(--painel-2); }
+.hora-item input { width: 104px; border: none; background: transparent; }
+.hora-item .btn svg { width: 14px; height: 14px; }
+.protocolos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.protocolo { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; border-radius: 14px; background: var(--painel-2); border: 2px solid transparent; }
+.protocolo b { font-size: 18px; font-family: var(--display); }
+.protocolo small { font-size: 11.5px; color: var(--dim); text-align: center; }
+.protocolo.ativo, .protocolo:hover { border-color: var(--marca); }
+.modelos-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; margin: 8px 0 4px; }
+.modelo-card { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--painel-2); text-align: left; }
+.modelo-card:hover { box-shadow: inset 0 0 0 2px var(--c); }
+.mc-ic { width: 42px; height: 42px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 22px; background: color-mix(in srgb, var(--c) 22%, transparent); }
+.modelo-card b { display: block; font-size: 14.5px; }
+.modelo-card small { display: block; font-size: 12.5px; color: var(--dim); line-height: 1.35; }
+.mc-dur { margin-left: auto; flex: none; font-size: 12px; font-weight: 700; color: var(--c); }
+.qtd-habito { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 14px 0 12px; }
+.qtd-habito .btn { width: 52px; height: 52px; border-radius: 50%; font-size: 26px; padding: 0; justify-content: center; }
+.qh-valor { text-align: center; min-width: 110px; }
+.qh-valor b { display: block; font-size: 40px; font-family: var(--display); line-height: 1; }
+.qh-valor small { color: var(--dim); font-size: 13px; }
+
+/* =======================================================================
+   TELA BEM-ESTAR
+   ======================================================================= */
+.ck-vazio p { margin: 0 0 12px; color: var(--texto-2); font-size: 14px; }
+.ck-resumo { display: flex; flex-direction: column; gap: 2px; }
+.ck-linha { display: grid; grid-template-columns: 92px 1fr; align-items: baseline; gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--linha); font-size: 14px; }
+.ck-linha > span { color: var(--dim); font-weight: 600; }
+.ck-linha > small { grid-column: 2; color: var(--dim); font-size: 12.5px; }
+.ck-linha .tag { margin: 2px 2px 0 0; }
+.ck-obs { margin: 10px 0 4px; font-style: italic; color: var(--texto-2); font-size: 14px; }
+.ck-resumo .botoes-linha { margin-top: 10px; }
+
+.cal-h-semana, .cal-h-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.cal-h-semana span { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--dim); padding-bottom: 4px; }
+.cal-h { aspect-ratio: 1; border-radius: 10px; background: var(--painel-2); display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; font-size: 11.5px; font-weight: 600; color: var(--dim); min-height: 34px; }
+.cal-h[style*="--h"] { background: color-mix(in srgb, var(--h) 28%, var(--painel-2)); color: var(--texto); }
+.cal-h i { font-style: normal; font-size: 15px; line-height: 1; }
+.cal-h span { line-height: 1; }
+.cal-h[style*="--h"] span { font-size: 9.5px; opacity: .8; }
+.cal-h.vazio { background: none; }
+.cal-h.futuro { opacity: .35; }
+.cal-h.hoje { box-shadow: inset 0 0 0 2px var(--marca); }
+.cal-h-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; font-size: 13px; color: var(--texto-2); }
+.cal-h-leg span { display: inline-flex; align-items: center; gap: 5px; }
+.cal-h-leg i { width: 10px; height: 10px; border-radius: 3px; background: var(--h); }
+.ins-linha { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; font-size: 14px; line-height: 1.45; }
+
+.hab-topo, .cq-topo { display: flex; align-items: center; gap: 16px; padding: 16px 18px; margin-bottom: 16px; flex-wrap: wrap; }
+.ht-prog { position: relative; width: 64px; height: 64px; flex: none; }
+.ht-prog svg { width: 64px; height: 64px; transform: rotate(-90deg); }
+.ht-prog span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; font-family: var(--display); }
+.ht-txt { flex: 1; min-width: 200px; }
+.ht-txt b { display: block; font-size: 17px; }
+.ht-txt small { display: block; color: var(--dim); font-size: 13px; margin-top: 2px; }
+.hab-grade, .rem-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.hab-card, .rem-card { background: var(--painel); border-radius: var(--raio); padding: 16px; display: flex; flex-direction: column; gap: 12px; border-top: 3px solid var(--hc, var(--marca)); }
+.rem-card { border-top-color: var(--c-bem); }
+.hab-card.pausado, .rem-card.pausado { opacity: .6; }
+.rem-card.baixo { border-top-color: var(--down); }
+.hab-card header, .rem-card header { display: flex; align-items: center; gap: 12px; }
+.hab-ic, .rem-ic { width: 42px; height: 42px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 22px; background: color-mix(in srgb, var(--hc, var(--c-bem)) 20%, transparent); }
+.hab-tit, .rem-card header > div { flex: 1; min-width: 0; }
+.hab-tit b, .rem-card header b { display: block; font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hab-tit small, .rem-card header small { display: block; font-size: 12.5px; color: var(--dim); }
+.hab-folga { font-size: 12.5px; }
+.hab-check { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2.5px solid var(--hc); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 800; position: relative; transition: transform .12s, background .15s; }
+.hab-check:active { transform: scale(.9); }
+.hab-check.feito { background: var(--hc); }
+.hab-check.qtd { border: none; }
+.hab-check.qtd svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.hc-trilho { fill: none; stroke: color-mix(in srgb, var(--hc) 25%, transparent); stroke-width: 4; }
+.hc-valor { fill: none; stroke: var(--hc); stroke-width: 4; stroke-linecap: round; transition: stroke-dashoffset .5s; }
+.hab-check.qtd span { position: relative; font-size: 11px; color: var(--texto); }
+.hab-check.qtd.feito { background: var(--hc); }
+.hab-check.qtd.feito span { color: #fff; font-size: 20px; }
+.hab-desafio { display: flex; flex-direction: column; gap: 6px; }
+.hd-topo { display: flex; justify-content: space-between; font-size: 13px; color: var(--texto-2); }
+.hab-mapa { display: grid; grid-template-columns: repeat(14, 1fr); gap: 3px; }
+.hab-mapa i { aspect-ratio: 1; border-radius: 3px; background: var(--painel-2); }
+.hab-mapa i.parcial { background: color-mix(in srgb, var(--hc) 45%, var(--painel-2)); }
+.hab-mapa i.ok { background: var(--hc); }
+.hab-mapa i.perdido { background: color-mix(in srgb, var(--down) 18%, var(--painel-2)); }
+.hab-mapa i.fora { background: transparent; box-shadow: inset 0 0 0 1px var(--linha); }
+.hab-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--dim); }
+.hab-stats b { color: var(--texto); }
+.hab-motivo { margin: 0; font-size: 13px; color: var(--texto-2); font-style: italic; }
+.hab-card footer, .rem-card footer { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+.sec-pausados { margin: 0 0 16px; }
+.sec-pausados summary { cursor: pointer; font-weight: 600; color: var(--dim); padding: 8px 2px; }
+.sec-pausados .hab-grade, .sec-pausados .rem-grade { margin-top: 10px; }
+
+.rem-obs { margin: -4px 0 0; font-size: 13px; color: var(--texto-2); }
+.rem-dados { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rem-dados > div { background: var(--painel-2); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.rem-dados small { font-size: 11.5px; color: var(--dim); }
+.rem-dados b { font-size: 16px; font-family: var(--display); }
+.rem-dados b small { font-size: 11px; font-family: var(--ui); }
+.doses { list-style: none; margin: 0; padding: 4px 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.dose { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; }
+.dose:hover { background: color-mix(in srgb, var(--texto) 4%, transparent); }
+.dose-check { width: 30px; height: 30px; flex: none; border-radius: 50%; border: 2px solid var(--linha-2); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #000; }
+.dose.st-tomado .dose-check { background: var(--c-treino); border-color: var(--c-treino); }
+.dose.st-pulado .dose-check { border-color: var(--down); color: var(--down); }
+.dose.atrasada .dose-check { border-color: var(--down); box-shadow: 0 0 0 3px color-mix(in srgb, var(--down) 25%, transparent); }
+.dose-info { flex: 1; min-width: 0; }
+.dose-info b { display: block; font-size: 14.5px; }
+.dose-info small { display: block; font-size: 12.5px; color: var(--dim); }
+.dose.atrasada .dose-info small { color: var(--down); }
+.dose.st-tomado .dose-info b { opacity: .7; }
+.rem-semana td, .rem-semana th { text-align: center; }
+.rem-semana td:first-child { text-align: left; white-space: nowrap; }
+.rs-ok { color: var(--up); font-weight: 800; }
+.rs-falta { color: var(--down); font-weight: 800; }
+.rs-pulado, .rs-pend { color: var(--dim); }
+.rs-parcial { color: var(--acc); font-weight: 700; }
+
+.jj-anel { position: relative; width: min(240px, 80%); margin: 4px auto 12px; }
+.jj-anel svg { width: 100%; height: auto; transform: rotate(-90deg); display: block; }
+.jj-trilho { fill: none; stroke: color-mix(in srgb, var(--marca) 18%, transparent); stroke-width: 16; }
+.jj-valor { fill: none; stroke: var(--marca); stroke-width: 16; stroke-linecap: round; transition: stroke-dashoffset .8s; }
+.jj-centro { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.jj-centro small { font-size: 13px; color: var(--dim); }
+.jj-centro b { font-size: 44px; font-family: var(--display); letter-spacing: -.03em !important; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.jj-horas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+.jj-horas div { background: var(--painel-2); border-radius: 12px; padding: 8px 4px; }
+.jj-horas small { display: block; font-size: 11.5px; color: var(--dim); }
+.jj-horas b { font-size: 14px; }
+.jj-inicio p { margin: 0 0 12px; color: var(--texto-2); font-size: 14px; }
+
+/* jejum no topo da tela Hoje */
+.banner-jejum { display: flex; align-items: center; gap: 14px; padding: 12px 16px; margin-bottom: 16px; border-radius: var(--raio); background: color-mix(in srgb, var(--c-bem) 14%, var(--painel)); flex-wrap: wrap; }
+.bj-info { display: flex; align-items: center; gap: 12px; text-align: left; flex: 1; min-width: 200px; }
+.bj-ic { font-size: 26px; }
+.bj-info small { display: block; font-size: 12.5px; color: var(--dim); }
+.bj-info b { font-size: 22px; font-family: var(--display); font-variant-numeric: tabular-nums; }
+.bj-info b + small { display: inline; margin-left: 6px; }
+.bj-barra { flex: 1; min-width: 120px; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--c-bem) 22%, transparent); overflow: hidden; }
+.bj-barra i { display: block; height: 100%; background: var(--c-bem); border-radius: 999px; }
+
+/* roteiro do dia: cor do hábito e itens atrasados */
+.checklist li[style*="--item"]:not(.feito) .check-ic { border-color: var(--item); }
+.checklist li.feito[style*="--item"] .check-ic { background: var(--item); border-color: var(--item); }
+.checklist li.atrasado .check-txt small { color: var(--down); }
+.checklist li.atrasado .check-ic { border-color: var(--down); }
+
+/* =======================================================================
+   CONQUISTAS
+   ======================================================================= */
+.cq-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.cq { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 16px 12px 14px; border-radius: var(--raio); background: var(--painel); }
+.cq:disabled { cursor: default; }
+.cq-ic { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; background: var(--painel-2); filter: grayscale(1); opacity: .5; margin-bottom: 4px; }
+.cq.ok .cq-ic { filter: none; opacity: 1; background: radial-gradient(circle at 30% 30%, #FFE680, #FFB800 70%); box-shadow: 0 6px 18px rgba(255, 184, 0, .35); }
+.cq b { font-size: 14.5px; }
+.cq small { font-size: 12px; color: var(--dim); line-height: 1.35; }
+.cq-ok { margin-top: 4px; font-size: 12px; font-weight: 700; color: #FFB800; }
+.cq-prog { width: 100%; margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.cq-prog small { font-size: 11.5px; }
+.cq.ok:hover { box-shadow: inset 0 0 0 2px #FFB800; }
+.sechead small { font-weight: 600; opacity: .7; margin-left: 4px; }
+
+#conquistaPop { position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 14px); z-index: 120; transform: translate(-50%, -140%); transition: transform .45s cubic-bezier(.2, .9, .3, 1.25); max-width: calc(100vw - 24px); }
+#conquistaPop.on { transform: translate(-50%, 0); }
+#conquistaPop button { display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 12px; border-radius: 20px; background: var(--painel-2); box-shadow: 0 16px 40px rgba(0, 0, 0, .45); text-align: left; border: 1px solid rgba(255, 184, 0, .45); }
+.cp-ic { width: 48px; height: 48px; border-radius: 50%; flex: none; display: flex; align-items: center; justify-content: center; font-size: 26px; background: radial-gradient(circle at 30% 30%, #FFE680, #FFB800 70%); animation: cqGira .8s cubic-bezier(.2, .9, .3, 1.4); }
+#conquistaPop small { display: block; font-size: 11.5px; font-weight: 700; color: #FFB800; text-transform: uppercase !important; letter-spacing: .04em !important; }
+#conquistaPop b { display: block; font-size: 16px; }
+#conquistaPop em { display: block; font-style: normal; font-size: 12.5px; color: var(--dim); }
+@keyframes cqGira { from { transform: scale(.3) rotate(-90deg); } to { transform: none; } }
+
+@media (max-width: 860px) {
+  .rem-dados { grid-template-columns: 1fr 1fr 1fr; }
+  .hab-grade, .rem-grade { grid-template-columns: 1fr; }
+  .cq-grade { grid-template-columns: repeat(2, 1fr); }
+  .protocolos { grid-template-columns: repeat(3, 1fr); }
+  .escala button small { font-size: 9.5px; }
+}
+
+/* =======================================================================
+   TEMA CLARO
+   ======================================================================= */
+html[data-tema="claro"] {
+  color-scheme: light;
+  --bg: #F2F2F7;
+  --painel: #FFFFFF;
+  --painel-2: #F2F2F7;
+  --painel-3: #E5E5EA;
+  --linha: rgba(60, 60, 67, .14);
+  --linha-2: rgba(60, 60, 67, .26);
+  --dim: #6C6C70;
+  --texto: #000000;
+  --texto-2: #3A3A3C;
+  --creme: #000000;
+}
+html[data-tema="claro"] body { background: var(--bg); color: var(--texto); }
+html[data-tema="claro"] .card, html[data-tema="claro"] .kpi, html[data-tema="claro"] .tile-saude,
+html[data-tema="claro"] .hab-card, html[data-tema="claro"] .rem-card, html[data-tema="claro"] .cq,
+html[data-tema="claro"] .meta-card { box-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 1px 1px rgba(0, 0, 0, .03); }
+html[data-tema="claro"] .sidebar { background: #FFFFFF; }
+@media (max-width: 860px) {
+  html[data-tema="claro"] .sidebar { background: rgba(255, 255, 255, .82); }
+  html[data-tema="claro"] .tabbar { background: rgba(249, 249, 249, .9); }
+}
+html[data-tema="claro"] .nav button:hover, html[data-tema="claro"] .anel-leg:hover, html[data-tema="claro"] .rw:hover,
+html[data-tema="claro"] .checklist li:hover, html[data-tema="claro"] .btn.fantasma:hover { background: rgba(0, 0, 0, .04); }
+html[data-tema="claro"] .nav button.ativo, html[data-tema="claro"] .mais-item.ativo, html[data-tema="claro"] .mais-item:active { background: rgba(0, 0, 0, .07) !important; }
+html[data-tema="claro"] .tile-saude:hover { background: #F7F7FA; }
+html[data-tema="claro"] .sd-dia.hoje { background: rgba(0, 0, 0, .05); }
+html[data-tema="claro"] .sd-dia.futuro .sd-trilho { stroke: rgba(0, 0, 0, .1); }
+html[data-tema="claro"] .progresso, html[data-tema="claro"] .barlist-trilho { background: rgba(0, 0, 0, .08); }
+html[data-tema="claro"] .gauge-fundo { stroke: rgba(0, 0, 0, .08); }
+html[data-tema="claro"] .abas button b { background: rgba(0, 0, 0, .06); }
+html[data-tema="claro"] .abas button.ativo { background: #FFFFFF; box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+html[data-tema="claro"] .abas { background: var(--painel-3); }
+html[data-tema="claro"] .bv-passos button { background: rgba(255, 255, 255, .6); }
+html[data-tema="claro"] .ins-ic { background: rgba(0, 0, 0, .05); }
+html[data-tema="claro"] .scrim { background: rgba(0, 0, 0, .35); }
+html[data-tema="claro"] .modal, html[data-tema="claro"] .fab-menu, html[data-tema="claro"] .mais-sheet, html[data-tema="claro"] .dropdown { box-shadow: 0 20px 50px rgba(0, 0, 0, .18); }
+html[data-tema="claro"] .toast { background: #1C1C1E; color: #fff; }
+html[data-tema="claro"] .card-aneis { background: radial-gradient(120% 90% at 0% 0%, rgba(255, 55, 95, .07), transparent 55%), var(--painel); }
+html[data-tema="claro"] .hora-campo input { background: #FFFFFF; }
+html[data-tema="claro"] .escala button.ativo { background: color-mix(in srgb, var(--marca) 12%, #FFFFFF); }
+html[data-tema="claro"] #conquistaPop button { background: #FFFFFF; box-shadow: 0 16px 40px rgba(0, 0, 0, .18); }
+html[data-tema="claro"] .ap-cor.ativo { box-shadow: 0 0 0 3px #FFFFFF, 0 0 0 5px var(--c); }
+/* textos que no tema escuro tinham cor clara fixa */
+html[data-tema="claro"] :is(.sb-meta-nome, .status-vivo, .barlist-nome, .alerta-card p, .dicas, .bv-texto p, .ref-item-kcal, .texto-integ, .ficha-ex b, .meta-exp, .modal-texto,
+  details.grupo-campos summary, .imc-previa, .it-kcal, .dropdown-item p, .hd) { color: var(--texto-2); }
+html[data-tema="claro"] :is(.checklist li.dim-item .check-txt b, .favorita p, .comp-exp, .linha-compra.st-tenho .nm, .linha-compra.st-comprado .nm) { color: var(--dim); }
+html[data-tema="claro"] :is(.kpi-valor, .donut-rotulo b, .mini-valor) { color: var(--texto); }
+html[data-tema="claro"] .nav button { color: var(--texto-2); }
+html[data-tema="claro"] input, html[data-tema="claro"] select, html[data-tema="claro"] textarea { color-scheme: light; }
+html[data-tema="claro"] .dose-check, html[data-tema="claro"] .checklist li.feito .check-ic { color: #fff; }
+html[data-tema="claro"] .agua-btn { background: rgba(10, 132, 255, .12) !important; color: #0A7AE0 !important; }
+html[data-tema="claro"] .checklist li .btn { background: rgba(10, 132, 255, .1); color: #0A7AE0; }
+
+/* tabelas das telas novas (histórico de check-ins, jejuns, remédios da semana) */
+.tabela-wrap { overflow-x: auto; padding: 0 8px 10px; }
+.tabela { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabela th { text-align: left; font-size: 12.5px; font-weight: 700; color: var(--dim); padding: 8px 10px; border-bottom: 1px solid var(--linha); white-space: nowrap; }
+.tabela td { padding: 9px 10px; border-bottom: 1px solid var(--linha); white-space: nowrap; vertical-align: middle; }
+.tabela tr:last-child td { border-bottom: none; }
+.tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabela td:last-child { text-align: right; width: 1%; }
+.tabela th small { font-weight: 500; }
+.hab-topo.card, .cq-topo.card { flex-direction: row; align-items: center; text-align: left; justify-content: flex-start; }
+.hab-topo .botoes-linha { margin-left: auto; }
+:root { --c-conq: #FFD60A; }
+html[data-tema="claro"] { --c-conq: #D4A000; --amarelo: #C99400; --amarelo-status: #B88600; --acc: #E08600; }
+html[data-tema="claro"] .status-meta.atencao { color: #A87A00; }
+html[data-tema="claro"] .cq-ok { color: #B07D00; }
+/* em Ajustes a cor da seção é cinza: os controles ativos usam a cor do app */
+body[data-secao="configuracoes"] .seg-opcoes button.ativo { background: var(--c-hoje); box-shadow: 0 2px 8px color-mix(in srgb, var(--c-hoje) 35%, transparent); }
+body[data-secao="configuracoes"] .ap-av.ativo { box-shadow: 0 0 0 2px var(--c-hoje); background: color-mix(in srgb, var(--c-hoje) 18%, var(--painel-2)); }
+body[data-secao="configuracoes"] .chip input:checked + span, body[data-secao="configuracoes"] .interruptor input:checked + .int-trilho { background: var(--c-hoje); border-color: var(--c-hoje); }
+
+/* 6 cartões de destaque: 3 por linha quando ficam embaixo dos anéis */
+@media (max-width: 1280px) and (min-width: 861px) { .tiles-saude { grid-template-columns: repeat(3, 1fr); } }
+/* letra aumentada no computador: a tela "encolhe" — empilha anéis e cartões */
+@media (min-width: 861px) and (max-width: 1800px) {
+  .zoom-ativo .grid-hoje > .c7, .zoom-ativo .grid-hoje > .c5 { grid-column: span 12; }
+  .zoom-ativo .tiles-saude { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 861px) and (max-width: 1500px) {
+  html.zoom-ativo[style*="--zoom: 1.22"] .grid > .c5, html.zoom-ativo[style*="--zoom: 1.22"] .grid > .c7,
+  html.zoom-ativo[style*="--zoom: 1.22"] .grid > .c6 { grid-column: span 12; }
+}

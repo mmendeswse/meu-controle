@@ -23,6 +23,12 @@
  *   pesagens        weight_records     data + peso
  *   medidas         body_measurements  composição corporal e medidas
  *   metas           goals              tipo, valor inicial, alvo, prazo
+ *   bemEstar        (check-in diário)  sono, humor, energia, estresse, passos
+ *   habitos         (hábitos próprios) nome, emoji, dias, horário, meta, desafio
+ *   habitoRegistros (marcações)        habitoId + data + valor
+ *   remedios        (remédios/suplem.) dose, horários, dias, estoque
+ *   doses           (doses do dia)     remedioId + data + horário + status
+ *   jejuns          (jejum)            início, fim, meta em horas
  *   notificacoes    notifications      estado (lida) dos alertas gerados
  *   config          settings           preferências, alertas, integração
  *
@@ -65,8 +71,31 @@
     aguaAbaixo: "Água abaixo da meta",
     proteinaAbaixo: "Proteína abaixo da meta",
     mudancaRelevante: "Mudança relevante nas métricas",
-    backupAntigo: "Backup antigo"
+    backupAntigo: "Backup antigo",
+    remedioAtrasado: "Remédio no horário ou atrasado",
+    remedioEstoque: "Remédio acabando",
+    jejumMeta: "Jejum atingiu a meta",
+    checkinPendente: "Check-in do dia pendente",
+    conquistaNova: "Nova conquista desbloqueada"
   };
+  // horários do dia (Ajustes → Rotina): usados no roteiro "Seu dia",
+  // nos horários sugeridos dos formulários e nos lembretes
+  function rotinaPadrao() {
+    return {
+      horarios: {
+        acordar: "06:30", "Café da manhã": "07:30", "Lanche da manhã": "10:00", "Almoço": "12:30",
+        "Lanche da tarde": "16:00", "Jantar": "20:00", "Ceia": "22:00", treino: "18:00", checkin: "21:00", dormir: "23:00"
+      },
+      refeicoesDoDia: ["Café da manhã", "Almoço", "Lanche da tarde", "Jantar"],
+      mostrar: { peso: "diario", diaPesagem: 1, agua: true, treino: true, sono: true, humor: true, remedios: true, habitos: true, jejum: true }
+    };
+  }
+  function aparenciaPadrao() {
+    return { tema: "escuro", cor: "rosa", corUnica: false, fonte: "normal", avatar: "", avatarCor: "roxo", vibrar: true, animacoes: true };
+  }
+  function lembretesPadrao() {
+    return { ativos: false, remedios: true, habitos: true, checkin: true, agua: false, aguaIntervalo: 2 };
+  }
   function configPadrao() {
     const alertas = {};
     Object.keys(TIPOS_ALERTA).forEach((k) => { alertas[k] = true; });
@@ -81,7 +110,12 @@
         listaAutomatica: true,        // planejamento + estoque mínimo geram a lista
         diasPlanejamento: 7           // quantos dias à frente o planejamento olha
       },
-      boasVindas: true
+      boasVindas: true,
+      aparencia: aparenciaPadrao(),
+      rotina: rotinaPadrao(),
+      lembretes: lembretesPadrao(),
+      conquistasVistas: null, // null = ainda não comparou (não celebra o que já existia)
+      jejumPadrao: 16
     };
   }
   function esquemaVazio() {
@@ -94,12 +128,13 @@
       fichas: [], exercicios: [], treinos: [], series: [], planoSemanal: [],
       pesagens: [], medidas: [],
       metas: [],
+      bemEstar: [], habitos: [], habitoRegistros: [], remedios: [], doses: [], jejuns: [],
       notificacoes: [],
       config: configPadrao(),
       atualizadoEm: null
     };
   }
-  const COLECOES = ["alimentos", "refeicoes", "refeicaoItens", "favoritas", "agua", "compras", "estoque", "fichas", "exercicios", "treinos", "series", "planoSemanal", "pesagens", "medidas", "metas", "notificacoes"];
+  const COLECOES = ["alimentos", "refeicoes", "refeicaoItens", "favoritas", "agua", "compras", "estoque", "fichas", "exercicios", "treinos", "series", "planoSemanal", "pesagens", "medidas", "metas", "bemEstar", "habitos", "habitoRegistros", "remedios", "doses", "jejuns", "notificacoes"];
 
   function perfil(d) { return d.usuarios[0]; }
 
@@ -225,6 +260,14 @@
     d.config = Object.assign({}, cfg, d.config || {});
     d.config.alertas = Object.assign({}, cfg.alertas, (d.config && d.config.alertas) || {});
     d.config.integracao = Object.assign({}, cfg.integracao, (d.config && d.config.integracao) || {});
+    d.config.aparencia = Object.assign({}, cfg.aparencia, (d.config && d.config.aparencia) || {});
+    d.config.lembretes = Object.assign({}, cfg.lembretes, (d.config && d.config.lembretes) || {});
+    const r = (d.config && d.config.rotina) || {};
+    d.config.rotina = {
+      horarios: Object.assign({}, cfg.rotina.horarios, r.horarios || {}),
+      refeicoesDoDia: Array.isArray(r.refeicoesDoDia) ? r.refeicoesDoDia : cfg.rotina.refeicoesDoDia,
+      mostrar: Object.assign({}, cfg.rotina.mostrar, r.mostrar || {})
+    };
     d.versao = VERSAO;
     return d;
   }
@@ -304,7 +347,11 @@
     fichas: { rotulo: "Fichas e plano semanal", colecoes: ["fichas", "exercicios", "planoSemanal"], ajuda: "Fichas de treino e o calendário semanal." },
     corpo: { rotulo: "Peso e medidas", colecoes: ["pesagens", "medidas"], ajuda: "Pesagens, composição corporal e medidas." },
     metas: { rotulo: "Metas", colecoes: ["metas"], ajuda: "Todas as metas cadastradas." },
-    alimentos: { rotulo: "Cadastro de alimentos", colecoes: ["alimentos", "refeicaoItens", "favoritas", "estoque"], ajuda: "Os alimentos e tudo que depende deles (itens das refeições, favoritas e estoque)." }
+    alimentos: { rotulo: "Cadastro de alimentos", colecoes: ["alimentos", "refeicaoItens", "favoritas", "estoque"], ajuda: "Os alimentos e tudo que depende deles (itens das refeições, favoritas e estoque)." },
+    bemEstar: { rotulo: "Sono, humor e passos", colecoes: ["bemEstar"], ajuda: "Os check-ins diários de sono, humor, energia, estresse e passos." },
+    habitos: { rotulo: "Hábitos e desafios", colecoes: ["habitos", "habitoRegistros"], ajuda: "Os hábitos cadastrados e todas as marcações." },
+    remedios: { rotulo: "Remédios e doses", colecoes: ["remedios", "doses"], ajuda: "Os remédios e suplementos cadastrados e o histórico de doses." },
+    jejuns: { rotulo: "Jejuns", colecoes: ["jejuns"], ajuda: "O histórico de jejuns." }
   };
   function apagarGrupo(d, chave) {
     const g = GRUPOS_EXCLUSAO[chave];
@@ -366,7 +413,7 @@
     VERSAO, COLECOES, TIPOS_ALERTA, GRUPOS_EXCLUSAO,
     carregarDados, salvarDados, substituir, resetCompleto, limparRegistros, apagarGrupo,
     perfil, carregarExemplo, exportarDados, importarDados, validarBackup, baixarArquivo, usoArmazenamento,
-    esquemaVazio, configPadrao, migrarV1, normalizar,
+    esquemaVazio, configPadrao, rotinaPadrao, aparenciaPadrao, lembretesPadrao, migrarV1, normalizar,
     novoId: N.novoId, hoje: N.hoje, isoLocal: N.isoLocal, aoMudar
   };
 })(window);

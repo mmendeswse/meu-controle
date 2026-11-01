@@ -1,7 +1,7 @@
 # Meu Controle — Vida & Fitness
 
-Sistema pessoal de alimentação, compras, gastos com comida, treinos e
-evolução do peso — 100% local, sem servidor, sem cadastro e sem
+Sistema pessoal de alimentação, compras, gastos com comida, treinos,
+evolução do peso, sono, humor, hábitos, remédios e jejum — 100% local, sem servidor, sem cadastro e sem
 mensalidade. Feito com HTML5, CSS3 e JavaScript puro (mais o Chart.js,
 incluído no projeto para funcionar offline).
 
@@ -103,20 +103,58 @@ O menu segue a ordem do dia (o mesmo vale para o botão **+**):
    plano da semana), **Calendário** (o mês) e **Carga** (evolução por
    exercício, recorde e 1RM estimado). Registro de séries/repetições/carga/RPE
    com "última vez".
-5. **Compras**, em três abas: **Lista mensal** (barra com ano + JAN…DEZ +
+5. **Bem-estar**, em quatro abas: **Resumo** (check-in de sono, humor,
+   energia, estresse, passos e sintomas; gráficos de sono e humor,
+   calendário do humor e "o que influencia o seu bem-estar", comparando
+   sono × energia, treino × humor, água × disposição…), **Hábitos** (sim/não
+   ou quantidade com meta, dias da semana, horário, sequência 🔥, mapa dos
+   últimos 28 dias e **desafios** com duração — há 10 desafios prontos),
+   **Remédios** (remédios, vitaminas e suplementos com dose, horários,
+   frequência, estoque que desconta a cada dose, adesão e "pôr na lista de
+   compras" quando estiver acabando) e **Jejum** (protocolos 12:12 a 24 h,
+   contador ao vivo, estatísticas e histórico).
+6. **Compras**, em três abas: **Lista mensal** (barra com ano + JAN…DEZ +
    Novo; cada mês tem sua lista e cada item tem a situação **Falta comprar /
    Já tenho / Comprado**, com totais no topo que também filtram; "Copiar mês
    anterior", aviso de pendentes de meses passados com "Trazer para este
    mês" e itens automáticos), **Em casa** (estoque, mínimo, validade e
    alertas) e **Gastos** (pela mesma barra do mês, por categoria e mercado, extrato e
    histórico de preços).
-6. **Metas**: atual, objetivo, prazo e % concluído, avaliadas pela tendência.
-7. **Relatórios**: diário, semanal, mensal e trimestral comparando com o
+7. **Metas** e **Conquistas**: metas avaliadas pela tendência (agora também
+   sono, passos e minutos ativos) e 35 medalhas calculadas pelos registros,
+   com o quanto falta para as próximas e opção de compartilhar com a família.
+8. **Relatórios**: diário, semanal, mensal e trimestral comparando com o
    período anterior; exportação em **PDF**, **CSV** e **Excel**; e, no fim,
    todos os insights.
-8. **Ajustes**: perfil, integração, alertas, backup/restauração, exportação
-   completa em Excel, exclusão parcial e reset completo (sempre com
-   confirmação; o reset exige digitar APAGAR).
+9. **Ajustes**: **Aparência** (avatar com emoji e cor, tema escuro, claro ou
+   automático, cor do app, mesma cor em todas as telas, tamanho da letra,
+   vibração, animações e tamanho do copo de água), **Rotina do dia**
+   (horários de acordar, refeições, treino, check-in e dormir; quais
+   refeições aparecem; pesagem diária, semanal ou nenhuma; o que entra no
+   roteiro "Seu dia"), **Lembretes**, perfil, integração, alertas,
+   backup/restauração, exportação completa em Excel, exclusão parcial e reset
+   completo (sempre com confirmação; o reset exige digitar APAGAR).
+
+O roteiro **Seu dia** (tela Hoje) junta tudo na ordem dos horários da sua
+rotina: sono, peso, refeições, cada dose de remédio, hábitos, treino, "como
+foi o dia", água e o jejum em andamento.
+
+## Lembretes
+
+- **Notificações** (Ajustes → Lembretes): remédios, hábitos com horário,
+  check-in e água. Aparecem enquanto o app está aberto ou minimizado — um
+  app sem servidor não consegue acordar o celular sozinho. No iPhone/iPad,
+  só funcionam com o app instalado.
+- **Calendário** (Bem-estar → Remédios → Pôr no calendário, ou Ajustes):
+  gera um arquivo `.ics` com os horários dos remédios e hábitos, com alarme.
+  Aberto no celular, entra no app de calendário e avisa mesmo com o Meu
+  Controle fechado.
+
+## Para a família
+
+Cada pessoa instala no próprio aparelho e personaliza do seu jeito (avatar,
+cor, tema, letra, rotina, o que aparece no dia). Os dados de cada um ficam
+no seu aparelho. As conquistas podem ser compartilhadas no grupo da família.
 
 Os **alertas** (treino não feito, peso sem registro, estoque baixo, meta
 atrasada, água e proteína abaixo da meta, backup antigo…) ficam no sino, e
@@ -140,7 +178,9 @@ estimar — nada é inventado.
 meu-controle/
 ├── index.html               # estrutura da página (menu, botão +, modal)
 ├── sw.js                    # funciona offline depois de publicado
-├── css/style.css            # tema visual
+├── css/style.css            # tema visual (base)
+├── css/saude.css            # visual de app de saúde
+├── css/extras.css           # telas novas e tema claro
 └── js/
     ├── nucleo.js            # datas, unidades (g↔kg, ml↔L, un↔dz), estatística, listas fixas
     ├── armazenamento.js     # salvar/carregar, esquema v2, migração da v1, backup
@@ -148,14 +188,19 @@ meu-controle/
     ├── alimentacao.js       # alimentos, nutrição, refeições, água, favoritas, planejamento
     ├── compras.js           # lista, gastos, estoque e a integração entre eles
     ├── fitness.js           # peso, composição, medidas, fichas, treinos, calendário, cargas
+    ├── bemestar.js          # check-in, hábitos, remédios e jejum (regras)
     ├── metas.js             # metas e avaliação por tendência
+    ├── conquistas.js        # medalhas calculadas pelos registros
     ├── insights.js          # insights e alertas
     ├── relatorios.js        # relatórios + exportação CSV / XLSX / PDF
     ├── graficos.js          # todos os gráficos (Chart.js)
     ├── ui.js                # componentes de interface (cards, KPIs, modal, dicas…)
     ├── app.js               # rotas, menu, botão +, notificações, delegação de eventos
     ├── instalar.js          # botão Instalar app, guia do iPhone e atalhos do ícone
-    ├── formularios.js       # todos os formulários (modais)
+    ├── personalizar.js      # aparência e rotina do dia
+    ├── lembretes.js         # notificações e calendário (.ics)
+    ├── formularios.js       # formulários (modais)
+    ├── formularios-saude.js # check-in, hábitos, remédios e jejum
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```
@@ -189,8 +234,14 @@ uma cópia do original fica guardada em `meuControle:v1:antes-da-v2`.
 | `pesagens`      | weight_records     | data + peso                                            |
 | `medidas`       | body_measurements  | composição corporal e medidas                          |
 | `metas`         | goals              | tipo, inicial, alvo, prazo                             |
+| `bemEstar`      | —                  | check-in do dia: sono, humor, energia, estresse, passos |
+| `habitos`       | —                  | hábitos e desafios (tipo, meta, dias, horário, duração) |
+| `habitoRegistros` | —                | marcações (hábito + data + valor)                      |
+| `remedios`      | —                  | dose, frequência, horários, período, estoque           |
+| `doses`         | —                  | dose do dia: tomado / pulado (e doses extras)          |
+| `jejuns`        | —                  | início, fim e meta em horas                            |
 | `notificacoes`  | notifications      | quais alertas já foram vistos                          |
-| `config`        | settings           | alertas ligados, integração, backup                    |
+| `config`        | settings           | alertas, integração, backup, aparência, rotina, lembretes |
 
 Relações por id, sem copiar dados. Peso atual, IMC, calorias do dia, gastos,
 frequência, sequências, progresso de metas etc. são sempre **calculados**.

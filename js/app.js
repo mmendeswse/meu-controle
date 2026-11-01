@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "2.6.0";
+  const VERSAO_APP = "3.0.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -36,13 +36,16 @@
   const estado = {}; // estado de interface por página (filtros, datas…) — não é salvo
 
   // menu na ordem do dia: o roteiro de hoje, depois cada área na ordem em que é usada
-  const MENU = ["dashboard", "evolucao", "alimentacao", "academia", "compras", "metas", "relatorios", "configuracoes"];
+  const MENU = ["dashboard", "evolucao", "alimentacao", "academia", "bemestar", "compras", "metas", "relatorios", "configuracoes"];
   // telas antigas que viraram abas (links salvos e alertas continuam funcionando)
-  const ALIAS = { refeicoes: ["alimentacao", "semana"], estoque: ["compras", "estoque"] };
+  const ALIAS = { refeicoes: ["alimentacao", "semana"], estoque: ["compras", "estoque"], habitos: ["bemestar", "habitos"], remedios: ["bemestar", "remedios"],
+    jejum: ["bemestar", "jejum"], conquistas: ["metas", "conquistas"] };
+  const POS_SALVAR = []; // funções chamadas depois de cada salvamento (lembretes, conquistas…)
 
   function registrarPagina(id, def) { PAGINAS[id] = def; }
   function registrarAcoes(mapa) { Object.assign(ACOES, mapa); }
   function registrarMudancas(mapa) { Object.assign(MUDANCAS, mapa); }
+  function aoSalvar(fn) { POS_SALVAR.push(fn); }
 
   // ---------------------------------------------------------------------
   // dados
@@ -54,6 +57,7 @@
     A.salvarDados(DADOS, true);
     renderizar();
     if (mensagem) UI.toast(mensagem, opc.desfazer);
+    POS_SALVAR.forEach((fn) => { try { fn(DADOS); } catch (e) { console.error(e); } });
   }
   // executa uma alteração oferecendo "Desfazer" no aviso
   function comDesfazer(mensagem, alteracao) {
@@ -61,12 +65,13 @@
     alteracao();
     salvar(mensagem, { desfazer: () => { DADOS = A.substituir(JSON.parse(antes)); renderizar(); UI.toast("Alteração desfeita."); } });
   }
-  function substituirDados(novo) { DADOS = novo; renderizar(); }
+  function substituirDados(novo) { DADOS = novo; if (window.Personalizar) window.Personalizar.aplicar(DADOS); renderizar(); POS_SALVAR.forEach((fn) => { try { fn(DADOS); } catch (e) { console.error(e); } }); }
 
   // ---------------------------------------------------------------------
   // rotas
   // ---------------------------------------------------------------------
   function ir(secao, param, opc) {
+    if (secao && secao.indexOf("/") !== -1 && !param) { const p = secao.split("/"); secao = p[0]; param = p.slice(1).join("/"); }
     if (ALIAS[secao]) { param = ALIAS[secao][1]; secao = ALIAS[secao][0]; }
     if (!PAGINAS[secao]) secao = "dashboard";
     ROTA = { secao, param: param || null };
@@ -83,6 +88,7 @@
   function rota() { return ROTA; }
 
   function renderizar() {
+    if (window.Personalizar) window.Personalizar.aplicar(DADOS);
     const pag = PAGINAS[ROTA.secao] || PAGINAS.dashboard;
     const secaoMenu = pag.menu || ROTA.secao;
     document.querySelectorAll("#navPrincipal button, #tabBar button[data-secao], #maisSheet button[data-secao]").forEach((b) => b.classList.toggle("ativo", b.dataset.secao === secaoMenu));
@@ -162,6 +168,8 @@
     { acao: "rapido-refeicao", icone: "🍽️", rotulo: "Refeição" },
     { acao: "rapido-agua", icone: "💧", rotulo: "Água" },
     { acao: "rapido-treino", icone: "🏋️", rotulo: "Treino" },
+    { acao: "rapido-checkin", icone: "🙂", rotulo: "Check-in: sono, humor, passos" },
+    { acao: "rapido-jejum", icone: "⏳", rotulo: "Jejum" },
     { acao: "rapido-compra", icone: "🛒", rotulo: "Item na lista de compras" },
     { acao: "rapido-alimento", icone: "🥦", rotulo: "Novo alimento" }
   ];
@@ -221,6 +229,7 @@
     "ir": (el) => ir(el.dataset.secao, el.dataset.param || el.dataset.id),
     "fechar-modal": () => UI.fecharModal(),
     "ocultar-demo": () => { estado.demoOculto = true; renderizar(); },
+    "abrir-mais": () => abrirMais(),
     "remover-demo": () => UI.confirmar({
       titulo: "Apagar dados de exemplo", texto: "Todos os registros fictícios serão apagados e o sistema começa do zero, pronto para os seus dados.",
       rotulo: "Apagar exemplo", aoConfirmar: () => { DADOS = A.resetCompleto(); DADOS.config.boasVindas = true; A.salvarDados(DADOS, true); ir("dashboard"); UI.toast("Pronto! Sistema zerado."); }
@@ -258,7 +267,7 @@
   }
 
   // menu "Mais" da barra de abas (seções que não cabem nas 4 abas)
-  const SECOES_MAIS = ["compras", "metas", "relatorios", "configuracoes"];
+  const SECOES_MAIS = ["bemestar", "compras", "metas", "relatorios", "configuracoes"];
   function abrirMais() {
     document.body.classList.add("mais-aberto");
     const b = document.querySelector("#tabBar [data-mais]");
@@ -393,8 +402,12 @@
     window.addEventListener("hashchange", () => { const h = lerHash(); if (h && (h.secao !== ROTA.secao || h.param !== ROTA.param)) ir(h.secao, h.param); });
     const h = lerHash();
     ir(h && (PAGINAS[h.secao] || ALIAS[h.secao]) ? h.secao : "dashboard", h && h.param);
+    POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } });
+    // a página pode ficar aberta de um dia para o outro: redesenha quando o dia muda
+    let diaAberto = N.hoje(0);
+    setInterval(() => { if (N.hoje(0) !== diaAberto) { diaAberto = N.hoje(0); renderizar(); POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } }); } }, 60000);
   }
 
-  window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, fecharFab };
+  window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, aoSalvar, fecharFab };
   document.addEventListener("DOMContentLoaded", iniciar);
 })();

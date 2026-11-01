@@ -7,6 +7,7 @@
   "use strict";
 
   const N = window.Nucleo, UI = window.UI, AL = window.Alimentacao, C = window.Compras, F = window.Fitness, M = window.Metas, I = window.Insights, G = window.Graficos;
+  const BE = window.BemEstar, P = window.Personalizar;
   const esc = UI.esc;
 
   function semRegistros(d) {
@@ -56,6 +57,10 @@
       const refs = AL.refeicoesNoDia(d, dia);
       if (refs.length) partes.push(refs.filter((r) => r.status === "Realizada").length / refs.length);
     }
+    const doses = BE.dosesDoDia(d, dia).filter((x) => !x.extra);
+    if (doses.length) partes.push(doses.filter((x) => x.status === "Tomado").length / doses.length);
+    const habs = BE.habitosDoDia(d, dia);
+    if (habs.length) partes.push(N.media(habs, (h) => BE.progressoNoDia(d, h, dia)));
     return partes.length ? partes.reduce((a, b) => a + b, 0) / partes.length : null;
   }
   function semanaRotina(d) {
@@ -85,19 +90,32 @@
     const b = e.target.closest(".check-btn[data-chave]");
     if (!b || b.disabled) return;
     window.__mcUltimoCheck = b.dataset.chave;
-    if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* sem suporte */ } }
+    const ap = (window.App.dados() || {}).config ? window.App.dados().config.aparencia || {} : {};
+    if (ap.vibrar !== false && navigator.vibrate) { try { navigator.vibrate(12); } catch (err) { /* sem suporte */ } }
   }, true);
 
   // ------------------------------------------------------------------
   // Roteiro de hoje: peso → refeições → treino → água, por horário
   // ------------------------------------------------------------------
-  const PRINCIPAIS = ["Café da manhã", "Almoço", "Lanche da tarde", "Jantar"];
   function roteiro(d) {
     const hj = N.hoje(0);
     const itens = [];
+    const mostrar = d.config.rotina.mostrar;
+    const hAcordar = P.horario(d, "acordar");
+
+    // pesagem: todo dia, uma vez por semana ou não mostrar
     const p = F.pesagemDoDia(d, hj);
-    itens.push(p ? { hora: "06:00", feito: true, texto: "Peso: " + UI.kg(p.peso), sub: "registrado", acao: `data-acao="registrar-corpo" data-data="${hj}"` }
-      : { hora: "06:00", texto: "Peso", sub: "em jejum, ao acordar (opcional)", acao: `data-acao="rapido-peso"`, opcional: true });
+    const diaDePeso = mostrar.peso === "diario" || (mostrar.peso === "semanal" && N.diaSemana(hj) === Number(mostrar.diaPesagem || 1));
+    if (p) itens.push({ hora: hAcordar, feito: true, texto: "⚖️ Peso: " + UI.kg(p.peso), sub: "registrado", acao: `data-acao="registrar-corpo" data-data="${hj}"` });
+    else if (diaDePeso) itens.push({ hora: hAcordar, texto: "⚖️ Peso", sub: mostrar.peso === "semanal" ? "dia da pesagem semanal" : "em jejum, ao acordar (opcional)", acao: `data-acao="rapido-peso"`, opcional: mostrar.peso !== "semanal" });
+
+    // sono da noite (check-in)
+    const ck = BE.checkin(d, hj);
+    if (mostrar.sono !== false) {
+      const hs = BE.horasSono(ck);
+      itens.push(hs != null ? { hora: hAcordar, feito: true, texto: "😴 Sono: " + BE.fmtHoras(hs), sub: ck.sonoQualidade ? BE.emoji("sonoQualidade", ck.sonoQualidade) + " " + BE.nivel("sonoQualidade", ck.sonoQualidade).r.toLowerCase() : "registrado", acao: `data-acao="checkin" data-data="${hj}" data-foco="sono"` }
+        : { hora: hAcordar, texto: "😴 Sono da noite", sub: "como você dormiu?", acao: `data-acao="checkin" data-data="${hj}" data-foco="sono"` });
+    }
 
     const refs = AL.refeicoesNoDia(d, hj);
     refs.forEach((r) => {
@@ -106,23 +124,62 @@
         sub: (n.kcal ? Math.round(n.kcal) + " kcal" : AL.itensDe(d, r.id).length + " itens") + (feito ? "" : r.status === "Pulada" ? " · pulada" : " · planejada"),
         acao: `data-acao="ciclar-refeicao" data-id="${r.id}" title="${feito ? "Desmarcar" : "Marcar como realizada"}"` });
     });
-    PRINCIPAIS.filter((t) => !refs.some((r) => r.tipo === t)).forEach((t) => {
+    (d.config.rotina.refeicoesDoDia || []).filter((t) => !refs.some((r) => r.tipo === t)).forEach((t) => {
       itens.push({ hora: N.HORARIO_SUGERIDO[t], texto: N.EMOJI_REFEICAO[t] + " " + t, sub: "registrar", vazio: true, acao: `data-acao="nova-refeicao" data-data="${hj}" data-tipo="${t}" data-status="Realizada"` });
     });
 
-    const th = F.treinoDeHoje(d);
-    if (th && th.origem === "descanso") itens.push({ hora: "18:00", feito: true, texto: "😴 Descanso", sub: "dia de descanso no plano" });
-    else if (th) {
-      const feito = th.status === "Realizado";
-      itens.push({ hora: th.horario || (th.treino && th.treino.horario) || "18:00", feito, texto: "🏋️ " + th.nome, sub: feito ? "realizado" : th.origem === "plano" ? "previsto no plano — toque para iniciar" : "planejado",
-        acao: th.origem === "treino" ? `data-acao="ir" data-secao="treino" data-id="${th.treino.id}"` : `data-acao="rapido-treino"` });
-    } else itens.push({ hora: "18:00", texto: "🏋️ Treino", sub: "nada planejado", vazio: true, opcional: true, acao: `data-acao="rapido-treino"` });
+    if (mostrar.treino !== false) {
+      const hTreino = P.horario(d, "treino");
+      const th = F.treinoDeHoje(d);
+      if (th && th.origem === "descanso") itens.push({ hora: hTreino, feito: true, texto: "😴 Descanso", sub: "dia de descanso no plano" });
+      else if (th) {
+        const feito = th.status === "Realizado";
+        itens.push({ hora: th.horario || (th.treino && th.treino.horario) || hTreino, feito, texto: "🏋️ " + th.nome, sub: feito ? "realizado" : th.origem === "plano" ? "previsto no plano — toque para iniciar" : "planejado",
+          acao: th.origem === "treino" ? `data-acao="ir" data-secao="treino" data-id="${th.treino.id}"` : `data-acao="rapido-treino"` });
+      } else itens.push({ hora: hTreino, texto: "🏋️ Treino", sub: "nada planejado", vazio: true, opcional: true, acao: `data-acao="rapido-treino"` });
+    }
 
-    itens.sort((a, b) => a.hora.localeCompare(b.hora));
+    // remédios: cada dose no horário
+    if (mostrar.remedios !== false) BE.dosesDoDia(d, hj).forEach((x) => {
+      const r = x.remedio, atraso = x.status === "Pendente" ? BE.atrasoMin(x.horario) : null;
+      itens.push({ hora: x.horario, feito: x.status === "Tomado", pulado: x.status === "Pulado", texto: (BE.EMOJI_REMEDIO[r.tipo] || "💊") + " " + r.nome,
+        sub: (r.dose || "") + (x.status === "Tomado" && x.dose && x.dose.hora ? " · tomado às " + x.dose.hora : x.status === "Pulado" ? " · pulada" : atraso != null && atraso > 30 ? " · atrasado" : r.instrucao && r.instrucao !== "Indiferente" ? " · " + r.instrucao.toLowerCase() : ""),
+        acao: `data-acao="dose-alternar" data-id="${r.id}" data-data="${hj}" data-hora="${x.horario}"`, chave: "dose-" + r.id + "-" + x.horario, atrasado: atraso != null && atraso > 30 });
+    });
 
-    const metaAgua = AL.metaDiaria(d, "agua"), agua = AL.aguaDoDia(d, hj);
-    itens.push({ hora: "", feito: metaAgua ? agua >= metaAgua : false, texto: "💧 Água: " + (agua ? UI.litros(agua) : "0 L"), sub: metaAgua ? "meta " + UI.litros(metaAgua) + " · ao longo do dia" : "ao longo do dia",
-      acao: `data-acao="agua" data-data="${hj}"`, extra: `<button class="btn pequeno" data-acao="agua-rapida" data-data="${hj}" title="Somar um copo">+${d.config.copoAgua || 250} ml</button>` });
+    // hábitos previstos para hoje (com horário, entram na ordem do dia)
+    if (mostrar.habitos !== false) BE.habitosDoDia(d, hj).forEach((h) => {
+      const feito = BE.cumpridoNoDia(d, h, hj), v = BE.valorNoDia(d, h, hj), seq = BE.sequencia(d, h), ds = BE.desafio(d, h);
+      itens.push({ hora: h.horario || "", feito, texto: (h.emoji || "✅") + " " + h.nome,
+        sub: (h.tipo === "quantidade" ? `${UI.numAuto(v, 1)} de ${UI.numAuto(h.meta, 1)} ${h.unidade || ""}` : feito ? "feito" : "toque quando fizer") + (ds && ds.estado === "ativo" ? ` · dia ${ds.dia}/${h.duracao}` : seq.atual >= 2 ? ` · 🔥 ${seq.atual}` : ""),
+        acao: `data-acao="habito-alternar" data-id="${h.id}" data-data="${hj}"`, chave: "hab-" + h.id, cor: h.cor });
+    });
+
+    // como foi o dia (humor, energia, estresse)
+    if (mostrar.humor !== false) {
+      const ok = ck && ck.humor != null;
+      itens.push({ hora: P.horario(d, "checkin"), feito: ok, texto: ok ? `${BE.emoji("humor", ck.humor)} Dia: ${BE.nivel("humor", ck.humor).r.toLowerCase()}` : "🙂 Como foi o dia", sub: ok ? [ck.energia ? "energia " + BE.emoji("energia", ck.energia) : "", ck.estresse ? "estresse " + BE.emoji("estresse", ck.estresse) : ""].filter(Boolean).join(" · ") || "registrado" : "humor, energia e estresse",
+        acao: `data-acao="checkin" data-data="${hj}" data-foco="humor"`, chave: "humor" });
+    }
+
+    itens.sort((a, b) => (a.hora || "99").localeCompare(b.hora || "99"));
+
+    if (mostrar.agua !== false) {
+      const metaAgua = AL.metaDiaria(d, "agua"), agua = AL.aguaDoDia(d, hj);
+      itens.push({ hora: "", feito: metaAgua ? agua >= metaAgua : false, texto: "💧 Água: " + (agua ? UI.litros(agua) : "0 L"), sub: metaAgua ? "meta " + UI.litros(metaAgua) + " · ao longo do dia" : "ao longo do dia",
+        acao: `data-acao="agua" data-data="${hj}"`, extra: `<button class="btn pequeno" data-acao="agua-rapida" data-data="${hj}" title="Somar um copo">+${d.config.copoAgua || 250} ml</button>` });
+    }
+    // jejum em andamento: termina hoje no horário previsto, ou fica "ao longo do dia"
+    const jj = mostrar.jejum !== false ? BE.jejumAtivo(d) : null;
+    if (jj) {
+      const fim = new Date(new Date(jj.inicio).getTime() + Number(jj.metaHoras) * 3600000), atingiu = Date.now() >= fim.getTime();
+      const hFim = N.isoLocal(fim) === hj ? String(fim.getHours()).padStart(2, "0") + ":" + String(fim.getMinutes()).padStart(2, "0") : "";
+      itens.push({ hora: hFim, feito: atingiu, opcional: !atingiu, texto: atingiu ? "⏳ Jejum: meta atingida" : "⏳ Jejum em andamento", sub: atingiu ? `${BE.fmtHoras(BE.horasJejum(jj))} · encerre na próxima refeição` : `${BE.fmtHoras(BE.horasJejum(jj))} de ${BE.fmtHoras(jj.metaHoras)}${hFim ? "" : " · termina " + fim.toLocaleString("pt-BR", { weekday: "short", hour: "2-digit", minute: "2-digit" })}`,
+        acao: `data-acao="ir" data-secao="bemestar" data-id="jejum"`, chave: "jejum" });
+    }
+    // os sem horário (hábitos do dia todo) ficam junto da água
+    const semHora = itens.filter((l) => !l.hora);
+    itens.splice(0, itens.length, ...itens.filter((l) => l.hora).sort((a, b) => a.hora.localeCompare(b.hora)), ...semHora);
 
     // chave estável de cada item: permite animar o que acabou de ser marcado
     itens.forEach((l) => { l.chave = l.chave || (l.acao || l.texto).replace(/\W+/g, "-").slice(0, 60); });
@@ -141,7 +198,7 @@
       { k: "dia", r: "Ao longo do dia", ic: "💧", teste: (h) => !h }
     ];
     const ultimo = window.__mcUltimoCheck; window.__mcUltimoCheck = null;
-    const linha = (l) => `<li class="${l.feito ? "feito" : ""}${l.vazio || l.opcional ? " dim-item" : ""}${l.pulado ? " pulado" : ""}${l === proximo ? " proximo" : ""}${ultimo && ultimo === l.chave ? " recem" : ""}">
+    const linha = (l) => `<li class="${l.feito ? "feito" : ""}${l.vazio || l.opcional ? " dim-item" : ""}${l.pulado ? " pulado" : ""}${l.atrasado ? " atrasado" : ""}${l === proximo ? " proximo" : ""}${ultimo && ultimo === l.chave ? " recem" : ""}"${l.cor ? ` style="--item:${l.cor}"` : ""}>
         <button class="check-btn" data-chave="${esc(l.chave)}" ${l.acao || "disabled"}><span class="check-ic">${l.feito ? "✓" : l.pulado ? "–" : ""}</span><span class="check-txt"><b>${l.hora ? `<span class="check-hora">${l.hora}</span>` : ""}${esc(l.texto)}</b><small>${esc(l.sub || "")}</small></span>
         ${l === proximo ? `<span class="chip-proximo">${esc(quandoFalta(l.hora))}</span>` : ""}</button>
         ${l.extra || ""}</li>`;
@@ -216,8 +273,24 @@
     gasto: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h2.5l2.4 10.5h9.6L20 8H6.6"/><circle cx="9.5" cy="19.5" r="1.3"/><circle cx="16.5" cy="19.5" r="1.3"/></svg>',
     estoque: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>'
   };
+  // jejum em andamento: contador ao vivo no topo da tela Hoje
+  function bannerJejum(d) {
+    const j = BE.jejumAtivo(d);
+    if (!j) return "";
+    const h = BE.horasJejum(j), meta = Number(j.metaHoras) || 16, p = N.limitar(h / meta, 0, 1);
+    return `<section class="banner-jejum" data-jejum-vivo="${esc(j.inicio)}" data-jejum-meta="${meta}">
+      <button class="bj-info" data-acao="ir" data-secao="bemestar" data-param="jejum"><span class="bj-ic">⏳</span>
+        <span><small>${p >= 1 ? "Jejum — meta atingida 🎉" : "Em jejum"}</small><b data-jj="tempo">${BE.fmtHoras(h)}</b> <small data-jj="resta">${p >= 1 ? "+" + BE.fmtHoras(h - meta) + " além da meta" : "faltam " + BE.fmtHoras(meta - h)}</small></span></button>
+      <span class="bj-barra"><i style="width:${(p * 100).toFixed(1)}%"></i></span>
+      <button class="btn pequeno" data-acao="jejum-encerrar">Encerrar</button>
+    </section>`;
+  }
+  const IC_SONO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
+  const IC_TROFEU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>';
   function destaques(d) {
     const sem = F.semanaAtual(d), seq = F.sequencias(d), rc = C.resumo(d);
+    const sono = BE.media(d, "sono", N.hoje(-6), N.hoje(0)), noite = BE.doDia(d, "sono", N.hoje(0)), mSono = BE.metaDe(d, "sono");
+    const cq = window.Conquistas.calcular(d), cqOk = cq.filter((x) => x.ok).length, prox = cq.filter((x) => !x.ok && x.atual > 0).sort((a, b) => b.pct - a.pct)[0];
     const s = F.serie(d, "peso");
     const atu = s.length ? s[s.length - 1] : null;
     const ant = s.length > 1 ? s.filter((x) => N.diasEntre(x.data, atu.data) >= 7).pop() || s[0] : null;
@@ -227,6 +300,8 @@
       ${tile({ rota: "evolucao", cor: "#BF5AF2", icone: IC.peso, rotulo: "Peso", valor: atu ? `${UI.num(atu.valor, 1)}<small> kg</small>` : `<small>sem registro</small>`, sub: dp != null ? `${UI.sinal(dp, 1, "kg")} desde ${UI.dataCurta(ant.data)}` : atu ? "registrado em " + UI.dataCurta(atu.data) : "Toque para registrar" })}
       ${tile({ rota: "compras", cor: "#40C8E0", icone: IC.gasto, rotulo: "Gasto no mês", valor: `${UI.brl(rc.gastoMes)}`, sub: rc.pendentes ? `${rc.pendentes} ${UI.plural(rc.pendentes, "item", "itens")} na lista · ${UI.brl(rc.totalEstimado)}` : "Lista em dia" })}
       ${tile({ rota: "estoque", cor: "#FF9F0A", icone: IC.estoque, rotulo: "Estoque baixo", valor: `${rc.estoqueBaixo}<small> ${UI.plural(rc.estoqueBaixo, "item", "itens")}</small>`, sub: rc.estoqueBaixo ? "abaixo do mínimo" : d.estoque.length ? "tudo em ordem" : "não controlado" })}
+      ${tile({ rota: "bemestar", cor: "var(--c-bem)", icone: IC_SONO, rotulo: "Sono", valor: noite != null ? `${BE.fmtHoras(noite)}<small> esta noite</small>` : sono.media != null ? `${BE.fmtHoras(sono.media)}<small> média</small>` : `<small>sem registro</small>`, barra: mSono && (noite != null || sono.media != null) ? ((noite != null ? noite : sono.media) / mSono) * 100 : null, sub: sono.media != null ? `média de 7 dias: ${BE.fmtHoras(sono.media)}` : "Registre no check-in" })}
+      ${tile({ rota: "conquistas", cor: "var(--c-conq)", icone: IC_TROFEU, rotulo: "Conquistas", valor: `${cqOk}<small> de ${cq.length}</small>`, barra: (cqOk / cq.length) * 100, sub: prox ? `próxima: ${prox.t}` : "veja as medalhas" })}
     </div>`;
   }
 
@@ -290,8 +365,9 @@
             <h1>${saud}${nome ? ", " + esc(nome) : ""}</h1>
             ${f ? `<p class="cab-frase">${f}</p>` : ""}</div>
           <div class="cab-direita">${seqAtual ? `<button class="pill-seq" data-acao="ir" data-secao="academia" title="Dias seguidos cumprindo o plano de treino">🔥 <b>${seqAtual}</b></button>` : ""}
-          <button class="avatar" data-acao="ir" data-secao="configuracoes" title="Perfil e ajustes">${esc((nome || "Eu").charAt(0).toUpperCase())}</button></div>
+          ${P.avatarHTML(d)}</div>
         </header>
+        ${bannerJejum(d)}
         ${semanaRotina(d)}
         <div class="grid grid-hoje">
           <div class="c7">${aneisDoDia(d)}</div>

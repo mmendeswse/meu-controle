@@ -17,11 +17,19 @@
 
   // paleta no estilo dos apps de saúde; "cy" (cor principal dos gráficos)
   // acompanha a cor da seção aberta (laranja em Alimentação, verde em Treino…)
-  const COR_SECAO = { dashboard: "#FF375F", evolucao: "#BF5AF2", alimentacao: "#FF9F0A", academia: "#30D158", compras: "#40C8E0", metas: "#FF375F", relatorios: "#5E5CE6", configuracoes: "#8E8E93" };
+  // a cor principal vem da variável --marca (cor da seção ou a escolhida em Aparência)
+  const claro = () => document.documentElement.dataset.tema === "claro";
+  function corMarca() {
+    const v = document.body ? getComputedStyle(document.body).getPropertyValue("--marca").trim() : "";
+    return /^#[0-9a-f]{6}$/i.test(v) ? v : "#FF375F";
+  }
   const CORES = {
-    get cy() { return COR_SECAO[document.body && document.body.dataset.secao] || "#FF375F"; },
+    get cy() { return corMarca(); },
     up: "#30D158", down: "#FF453A", azul: "#0A84FF", vi: "#BF5AF2", acc: "#FF9F0A",
-    dim: "#8E8E93", grade: "rgba(142,142,147,0.16)", texto: "#8E8E93", painel: "#1C1C1E"
+    dim: "#8E8E93",
+    get grade() { return claro() ? "rgba(60,60,67,0.12)" : "rgba(142,142,147,0.16)"; },
+    get texto() { return claro() ? "#6C6C70" : "#8E8E93"; },
+    get painel() { return claro() ? "#FFFFFF" : "#1C1C1E"; }
   };
   const PALETA_CATEGORIAS = ["#FF9F0A", "#BF5AF2", "#30D158", "#0A84FF", "#8E8E93"];
 
@@ -37,7 +45,7 @@
   function ctxOf(id) { const el = document.getElementById(id); return el ? el.getContext("2d") : null; }
   function tooltip(extra) {
     return Object.assign({
-      backgroundColor: "#2C2C2E", borderColor: "#3A3A3C", borderWidth: 1, titleColor: "#FFFFFF", bodyColor: "#EBEBF5",
+      backgroundColor: claro() ? "#FFFFFF" : "#2C2C2E", borderColor: claro() ? "#D1D1D6" : "#3A3A3C", borderWidth: 1, titleColor: claro() ? "#000000" : "#FFFFFF", bodyColor: claro() ? "#1C1C1E" : "#EBEBF5",
       padding: 10, cornerRadius: 10, titleFont: fonte(11), bodyFont: fonte(11), displayColors: true, boxPadding: 4, mode: "index", intersect: false
     }, extra || {});
   }
@@ -103,7 +111,7 @@
       data: { labels: datas.map(dataCurta), datasets: ds },
       options: Object.assign({}, BASE, {
         plugins: { legend: legenda(ds.length > 1), tooltip: tooltip({ callbacks: { label: (c) => " " + c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmtNum(c.parsed.y, opc.casas) + un) } }) },
-        scales: { x: eixoX(), y: eixoY({ ticks: { color: CORES.texto, font: fonte(10.5), maxTicksLimit: 6, callback: (v) => fmtNum(v, 1) + un } }) }
+        scales: { x: eixoX(), y: eixoY({ min: opc.min, max: opc.max, ticks: { color: CORES.texto, font: fonte(10.5), maxTicksLimit: 6, stepSize: opc.passo, callback: (v) => fmtNum(v, 1) + un } }) }
       })
     });
   }
@@ -119,7 +127,7 @@
       type: "bar",
       data: { labels: itens.map((i) => i.rotulo), datasets: ds },
       options: Object.assign({}, BASE, {
-        plugins: { legend: legenda(!!opc.meta), tooltip: tooltip({ callbacks: { label: (c) => " " + c.dataset.label + ": " + fmtNum(c.parsed.y, 0) + un } }) },
+        plugins: { legend: legenda(!!opc.meta), tooltip: tooltip({ callbacks: { label: (c) => " " + c.dataset.label + ": " + fmtNum(c.parsed.y, opc.casas || 0) + un } }) },
         scales: { x: eixoX(), y: eixoY({ beginAtZero: true }) }
       })
     });

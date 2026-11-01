@@ -1,11 +1,10 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v11";
-const V = "?v=2.6.0";
-const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "metas", "insights", "relatorios", "graficos", "ui", "app", "instalar", "formularios",
-  "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
+const CACHE = "meu-controle-v12";
+const V = "?v=3.0.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "instalar", "lembretes", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
-  "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
+  "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
   "./js/vendor/chart.umd.min.js",
   "./assets/icons/icon-192.png", "./assets/icons/icon-512.png",
   "./apple-touch-icon.png", "./apple-touch-icon-180.png", "./apple-touch-icon-167.png", "./apple-touch-icon-152.png", "./apple-touch-icon-precomposed.png"
@@ -21,4 +20,15 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request).then((resp) => { const cp = resp.clone(); caches.open(CACHE).then((c) => c.put(e.request, cp)); return resp; })));
+});
+// toque numa notificação de lembrete: abre (ou traz para a frente) o app na tela certa
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const rota = (e.notification.data && e.notification.data.rota) || "dashboard";
+  const alvo = new URL("./index.html#/" + rota, self.registration.scope).href;
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((lista) => {
+    const aberto = lista.find((c) => c.url.indexOf(self.registration.scope) === 0);
+    if (aberto) { aberto.navigate ? aberto.navigate(alvo).catch(() => {}) : null; return aberto.focus(); }
+    return self.clients.openWindow(alvo);
+  }));
 });
