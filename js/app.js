@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "3.3.1";
+  const VERSAO_APP = "3.3.2";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -250,7 +250,7 @@
     "abrir-mais": () => abrirMais(),
     "remover-demo": () => UI.confirmar({
       titulo: "Apagar dados de exemplo", texto: "Todos os registros fictícios serão apagados e o sistema começa do zero, pronto para os seus dados.",
-      rotulo: "Apagar exemplo", aoConfirmar: () => { DADOS = A.resetCompleto(); DADOS.config.boasVindas = true; A.salvarDados(DADOS, true); ir("dashboard"); UI.toast("Pronto! Sistema zerado."); }
+      rotulo: "Apagar exemplo", aoConfirmar: () => { DADOS = A.resetCompleto(); DADOS.config.boasVindas = true; A.salvarDados(DADOS, true); ir("dashboard"); UI.toast("Pronto! Sistema zerado."); setTimeout(() => window.PrimeiroUso && window.PrimeiroUso.abrir(), 400); }
     }),
     "carregar-demo": () => UI.confirmar({
       titulo: "Carregar dados de exemplo", texto: "Os dados de exemplo SUBSTITUEM todos os dados atuais deste navegador. Exporte um backup antes se quiser guardar o que já registrou.",

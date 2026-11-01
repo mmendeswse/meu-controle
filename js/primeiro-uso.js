@@ -13,7 +13,7 @@
   const N = global.Nucleo, UI = global.UI, A = global.Armazenamento;
   const esc = UI.esc;
   const App = () => global.App;
-  let passo = 0;
+  let passo = 0, refazendo = false;
   const escolha = { nome: "", avatar: "🙂", img: null, cor: "azul", perfil: "completo", acordar: "06:30", dormir: "23:00", tema: "escuro" };
 
   function deveMostrar(d) {
@@ -38,7 +38,7 @@
       <div class="campo"><input id="pu_nome" value="${esc(escolha.nome)}" placeholder="Seu nome ou apelido" autocomplete="given-name" maxlength="40"></div>
       <span class="ap-rot">Seu avatar</span>
       <div class="pu-avatar"><button class="avatar gigante${escolha.img ? " com-img" : ""}" data-acao="pu-galeria" style="--av:${P.corHex(escolha.cor)}" aria-label="Escolher avatar">${escolha.img ? `<img src="${esc(escolha.img.src)}" alt="" referrerpolicy="no-referrer" style="object-position:${esc(escolha.img.foco || "50% 30%")}">` : `<span class="av-emoji">${escolha.avatar}</span>`}<i class="pu-lapis">✎</i></button></div>
-      <button class="btn primario pu-galeria" data-acao="pu-galeria">🎨 Personagens de anime, ilustrações ou sua foto</button>
+      <button class="btn primario pu-galeria" data-acao="pu-galeria">🎨 Personagens de anime ou sua foto</button>
       <div class="pu-emojis">${P.AVATARES.slice(0, 12).map((e) => `<button class="ap-av${!escolha.img && escolha.avatar === e ? " ativo" : ""}" data-acao="pu-avatar" data-k="${e}">${e}</button>`).join("")}</div>
       ${rodape()}</div>`;
     if (passo === 2) return `<div class="pu">${pontos()}
@@ -56,7 +56,8 @@
       ${rodape(true)}</div>`;
   }
   function rodape(ultimo) {
-    return `<div class="pu-rodape"><button class="btn" data-acao="pu-voltar">Voltar</button><button class="btn primario" data-acao="${ultimo ? "pu-concluir" : "pu-proximo"}">${ultimo ? "Concluir" : "Continuar"}</button></div>`;
+    const cancelar = refazendo && passo <= 1;
+    return `<div class="pu-rodape"><button class="btn" data-acao="${cancelar ? "fechar-modal" : "pu-voltar"}">${cancelar ? "Cancelar" : "Voltar"}</button><button class="btn primario" data-acao="${ultimo ? "pu-concluir" : "pu-proximo"}">${ultimo ? "Concluir" : "Continuar"}</button></div>`;
   }
   function desenhar() {
     const m = document.getElementById("modal");
@@ -75,11 +76,22 @@
     const d = App().dados();
     if (!d.config.onboardingFeito) { d.config.onboardingFeito = true; A.salvarDados(d, true, true); }
   }
-  function abrir() { passo = 0; desenhar(); }
+  // refazer = aberto por Ajustes: já vem preenchido com o que a pessoa escolheu antes
+  function abrir(refazer) {
+    refazendo = refazer === true;
+    if (refazendo) {
+      const d = App().dados(), ap = d.config.aparencia, h = d.config.rotina.horarios, nome = d.usuarios[0].nome || "";
+      Object.assign(escolha, { nome: nome === "Eu" ? "" : nome, avatar: ap.avatar || "🙂", img: ap.avatarImg || null, cor: ap.avatarCor || "azul",
+        perfil: d.config.perfilUso || "completo", acordar: h.acordar || "06:30", dormir: h.dormir || "23:00", tema: ap.tema || "escuro" });
+    }
+    if (UI.modalAberto()) UI.fecharModal();
+    passo = refazendo ? 1 : 0;
+    UI.aposVoltar(desenhar);
+  }
 
   App().registrarAcoes({
     "pu-proximo": () => { lerCampos(); if (passo === 1 && !escolha.nome.trim()) { UI.toast("Diga como quer ser chamado."); return; } passo = Math.min(3, passo + 1); desenhar(); },
-    "pu-voltar": () => { lerCampos(); passo = Math.max(0, passo - 1); desenhar(); },
+    "pu-voltar": () => { lerCampos(); passo = Math.max(refazendo ? 1 : 0, passo - 1); desenhar(); },
     "pu-avatar": (el) => { escolha.avatar = el.dataset.k; escolha.img = null; desenhar(); },
     "pu-galeria": () => {
       const n = document.getElementById("pu_nome"); if (n) escolha.nome = n.value;
@@ -106,10 +118,11 @@
       d.config.onboardingFeito = true;
       passo = -1;
       UI.fecharModal();
+      refazendo = false;
       App().salvar(`Tudo pronto, ${escolha.nome.trim().split(" ")[0]}! Comece pelo seu dia aqui embaixo.`, { semIntegracao: true });
       App().ir("dashboard");
     },
-    "primeiro-uso": abrir
+    "primeiro-uso": () => abrir(true)
   });
 
   App().aoSalvar((d, abertura) => { if (abertura && deveMostrar(d)) setTimeout(abrir, 300); });

@@ -70,7 +70,7 @@
       const PZ = window.Personalizar, LB = window.Lembretes, AR = window.Areas;
       const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["backup", "🛟 Backup"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"]];
       return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div>
-          <nav class="atalhos-ajustes">${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
+          <nav class="atalhos-ajustes"><button data-acao="primeiro-uso">✨ Configuração inicial</button>${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
         <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${AR.cartaoAreas(d)}</div></div>
         <div class="grid"><div class="c6">${PZ.cartaoRotina(d)}</div><div class="c6">${AR.cartaoHoje(d)}</div></div>
         <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${LB.cartaoAjustes(d)}</div></div>
@@ -123,7 +123,7 @@
         aoConfirmar: () => App.comDesfazer(g.rotulo + " excluídos.", () => A.apagarGrupo(d, el.dataset.k)) });
     },
     "reset-completo": () => UI.confirmar({ titulo: "Resetar o sistema", html: "Isso apaga <b>TODOS</b> os dados deste navegador: perfil, registros, metas e configurações. Não há como desfazer. Faça um backup antes se quiser guardar alguma coisa.", rotulo: "Apagar tudo", digitar: "APAGAR",
-      aoConfirmar: () => { App.substituirDados(A.resetCompleto()); App.ir("dashboard"); UI.toast("Sistema resetado."); } })
+      aoConfirmar: () => { App.substituirDados(A.resetCompleto()); App.ir("dashboard"); UI.toast("Sistema resetado."); setTimeout(() => window.PrimeiroUso && window.PrimeiroUso.abrir(), 400); } })
   });
   App.registrarMudancas({
     "alerta-toggle": (el) => { App.dados().config.alertas[el.dataset.k] = el.checked; App.salvar(null, { semIntegracao: true }); },
