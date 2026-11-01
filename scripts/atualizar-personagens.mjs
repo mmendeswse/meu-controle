@@ -2,7 +2,7 @@
 // Roda no GitHub Actions (toda semana ou à mão) para o app não depender da
 // velocidade das APIs de anime na hora de abrir a galeria.
 // Fonte: AniList (https://anilist.co), com o id do MyAnimeList de cada anime.
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const SERIES = [
   [20, "Naruto"], [1735, "Naruto Shippuden"], [21, "One Piece"], [813, "Dragon Ball Z"], [38000, "Demon Slayer"],
@@ -52,6 +52,7 @@ async function main() {
   try { antigo = await readFile("dados/personagens.json", "utf8"); } catch (e) { /* primeiro */ }
   const semData = (s) => s.replace(/"atualizado":"[^"]*"/, "");
   if (semData(antigo) === semData(novo)) { console.log("sem mudanças"); return; }
+  await mkdir("dados", { recursive: true });
   await writeFile("dados/personagens.json", novo);
   console.log("gravado:", saida.top.length, "populares,", saida.series.length, "animes,", novo.length, "bytes");
 }
