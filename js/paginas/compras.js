@@ -10,7 +10,7 @@
 
   const N = window.Nucleo, UI = window.UI, AL = window.Alimentacao, C = window.Compras, G = window.Graficos, App = window.App;
   const esc = UI.esc;
-  const st = App.estado.compras = { status: "Pendente", cat: "", mercado: "", busca: "", mes: N.hoje(0).slice(0, 7) };
+  const st = App.estado.compras = { status: "todos", cat: "", mercado: "", busca: "", mes: N.hoje(0).slice(0, 7) };
   const ABAS = [{ k: "lista", r: "Lista" }, { k: "estoque", r: "Em casa" }, { k: "gastos", r: "Gastos" }];
   const PASSO = { kg: 0.1, g: 100, L: 0.5, ml: 250, un: 1, dz: 1 };
   const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
@@ -38,62 +38,77 @@
   // ------------------------------------------------------------------
   // LISTA
   // ------------------------------------------------------------------
+  // status de cada item da lista do mês, na ordem em que aparecem
+  const STATUS = [
+    { k: "Pendente", r: "Falta comprar", curto: "Falta", cls: "falta", ic: "🛒" },
+    { k: "Tenho", r: "Já tenho", curto: "Tenho", cls: "tenho", ic: "🏠" },
+    { k: "Comprado", r: "Comprado", curto: "Comprei", cls: "comprado", ic: "✓" }
+  ];
+  const ORDEM_ST = { Pendente: 0, Tenho: 1, Comprado: 2, Cancelado: 3 };
   function filtrar(d) {
     const b = st.busca.trim().toLowerCase();
-    let lista = st.status === "Pendente" ? C.pendentes(d).filter((c) => C.mesDaCompra(c) === st.mes) : C.doMes(d, st.mes).filter((c) => st.status === "todos" || c.status === st.status)
-      .sort((a, b2) => (b2.dataCompra || b2.criadoEm || "").localeCompare(a.dataCompra || a.criadoEm || ""));
-    return lista.filter((c) => (!st.cat || c.categoria === st.cat) && (!st.mercado || c.mercado === st.mercado) && (!b || c.nome.toLowerCase().indexOf(b) !== -1));
+    const prio = { Alta: 0, Normal: 1, Baixa: 2 };
+    return C.doMes(d, st.mes)
+      .filter((c) => (st.status === "todos" ? c.status !== "Cancelado" : c.status === st.status) && (!st.mercado || c.mercado === st.mercado) && (!b || c.nome.toLowerCase().indexOf(b) !== -1))
+      .sort((x, y) => (ORDEM_ST[x.status] - ORDEM_ST[y.status]) || ((prio[x.prioridade] || 1) - (prio[y.prioridade] || 1)) || x.nome.localeCompare(y.nome, "pt-BR"));
   }
+  const GR = "grid-template-columns:minmax(190px,1.6fr) 96px 262px minmax(90px,.8fr) 110px 64px";
   function linhaItem(d, c) {
-    const comprado = c.status === "Comprado", cancelado = c.status === "Cancelado";
     const a = c.alimentoId ? AL.alimento(d, c.alimentoId) : null;
     const tags = [];
     if (c.prioridade === "Alta" && c.status === "Pendente") tags.push(`<span class="tag tag-alta">alta</span>`);
-    if (c.prioridade === "Baixa" && c.status === "Pendente") tags.push(`<span class="tag">baixa</span>`);
-    if (c.auto && c.status === "Pendente") tags.push(`<span class="tag tag-auto" title="${esc(c.motivo || "")}">auto · ${c.origem === "planejamento" ? "planejamento" : "estoque"}</span>`);
-    return `<div class="item-compra ${comprado ? "comprado" : ""} ${cancelado ? "cancelado" : ""}">
-      <button class="chk-compra" data-acao="alternar-comprado" data-id="${c.id}" aria-label="${comprado ? "Desmarcar compra de " : "Marcar como comprado: "}${esc(c.nome)}" title="${comprado ? "Desmarcar" : "Marcar como comprado"}">${comprado ? "✓" : ""}</button>
-      <button class="ic-corpo" data-acao="editar-compra" data-id="${c.id}">
-        <span class="ic-nome">${AL.emojiAlimento(a || { categoria: c.categoria })} ${esc(c.nome)} ${tags.join("")}</span>
-        <span class="ic-sub">${N.qtdLegivel(c.quantidade, c.unidade)}${c.mercado ? " · " + esc(c.mercado) : ""}${comprado && c.dataCompra ? " · " + UI.dataCurta(c.dataCompra) : ""}${c.auto && c.motivo ? ` · <span class="dim">${esc(c.motivo)}</span>` : ""}</span>
-      </button>
-      <span class="ic-precos">
-        ${comprado ? `<b>${UI.brl(C.valorPago(c))}</b>${N.temValor(c.precoEstimado) && Math.abs(c.precoEstimado - C.valorPago(c)) >= 0.01 ? `<small class="${C.valorPago(c) <= c.precoEstimado ? "up" : "down"}">est. ${UI.brl(c.precoEstimado)}</small>` : ""}`
-          : `<b>${N.temValor(c.precoEstimado) ? UI.brl(c.precoEstimado) : `<span class="dim">—</span>`}</b><small>estimado</small>`}
-      </span>
-      <span class="cel-botoes">${!comprado && !cancelado ? UI.botaoIcone("status-compra", "fechar", "Cancelar item", `data-id="${c.id}" data-status="Cancelado"`) : cancelado ? UI.botaoIcone("status-compra", "voltar", "Voltar para pendente", `data-id="${c.id}" data-status="Pendente"`) : ""}${UI.botaoIcone("excluir-compra", "excluir", "Excluir", `data-id="${c.id}"`, "perigo-txt")}</span>
+    if (c.auto && c.status === "Pendente") tags.push(`<span class="tag tag-auto" title="${esc(c.motivo || "")}">auto</span>`);
+    const e = a ? C.estoqueDoAlimento(d, a.id) : null;
+    const sub = [esc(c.categoria || "Outros")];
+    if (c.auto && c.motivo) sub.push(esc(c.motivo)); // o motivo já diz quanto há em casa
+    else if (e) sub.push("em casa " + N.qtdLegivel(e.quantidade, e.unidade));
+    if (c.status === "Comprado" && c.dataCompra) sub.push("comprado " + UI.dataCurta(c.dataCompra));
+    const valor = c.status === "Comprado" ? `<b class="down">−${UI.brl(C.valorPago(c))}</b>`
+      : c.status === "Tenho" ? `<span class="dim">—</span>`
+      : N.temValor(c.precoEstimado) ? `<b>${UI.brl(c.precoEstimado)}</b><small>estimado</small>` : `<span class="dim">—</span>`;
+    const seg = c.status === "Cancelado" ? `<span class="selo-tag selo-ruim">CANCELADO</span> ${UI.botaoIcone("status-compra", "voltar", "Voltar para a lista", `data-id="${c.id}" data-status="Pendente"`)}`
+      : `<span class="seg-compra" role="group" aria-label="Situação de ${esc(c.nome)}">${STATUS.map((x) => `<button class="${x.cls}${c.status === x.k ? " ativo" : ""}" data-acao="status-compra" data-id="${c.id}" data-status="${x.k}" aria-pressed="${c.status === x.k}" title="${x.r}">${x.curto}</button>`).join("")}</span>`;
+    return `<div class="rw linha-compra st-${(STATUS.find((x) => x.k === c.status) || { cls: "cancelado" }).cls}" style="${GR}">
+      <button class="lc-nome" data-acao="editar-compra" data-id="${c.id}"><span class="nm">${AL.emojiAlimento(a || { categoria: c.categoria })} ${esc(c.nome)} ${tags.join("")}</span><span class="sub">${sub.join(" · ")}</span></button>
+      <div class="r lc-qtd">${N.qtdLegivel(c.quantidade, c.unidade)}</div>
+      <div class="lc-seg">${seg}</div>
+      <div class="dim celula-texto lc-mercado">${esc(c.mercado || "—")}</div>
+      <div class="r lc-valor">${valor}</div>
+      <div class="r lc-botoes"><span class="cel-botoes">${UI.botaoIcone("editar-compra", "editar", "Editar", `data-id="${c.id}"`)}${UI.botaoIcone("excluir-compra", "excluir", "Excluir", `data-id="${c.id}"`, "perigo-txt")}</span></div>
     </div>`;
   }
   function lista(d) {
     const todas = C.doMes(d, st.mes);
     const itens = filtrar(d);
     const ant = C.mesAnterior(st.mes), doAnt = C.doMes(d, ant).filter((c) => c.status !== "Cancelado").length;
-    const contagem = { Pendente: todas.filter((c) => c.status === "Pendente").length, Comprado: todas.filter((c) => c.status === "Comprado").length, Cancelado: todas.filter((c) => c.status === "Cancelado").length };
+    const de = (k) => todas.filter((c) => c.status === k);
+    const falta = de("Pendente"), tenho = de("Tenho"), comprado = de("Comprado"), cancelados = de("Cancelado");
+    const previsto = N.soma(falta, C.valorEstimado), pago = N.soma(comprado, C.valorPago);
+    const pilula = (k, cls, rot, n, valor) => `<button class="pilula-st ${cls}${st.status === k ? " ativo" : ""}" data-acao="status-lista" data-k="${st.status === k ? "todos" : k}" title="${st.status === k ? "Mostrar todos" : "Mostrar só " + rot.toLowerCase()}">
+      <small>${rot}</small><b>${n}${valor != null ? ` · ${UI.brl(valor)}` : ""}</b></button>`;
+    const pilulas = `<div class="pilulas-st">${pilula("Pendente", "falta", "Falta comprar", falta.length, previsto)}${pilula("Tenho", "tenho", "Já tenho", tenho.length)}${pilula("Comprado", "comprado", "Comprado", comprado.length, pago)}${cancelados.length ? pilula("Cancelado", "cancelado", "Cancelados", cancelados.length) : ""}</div>`;
     const mercados = N.MERCADOS.concat(d.compras.map((c) => c.mercado).filter((m) => m && N.MERCADOS.indexOf(m) === -1)).filter((v, i, a) => a.indexOf(v) === i);
-    const filtros = `<div class="filtros-linha">
-      ${UI.abas([{ k: "Pendente", r: "Pendentes", n: contagem.Pendente }, { k: "Comprado", r: "Comprados", n: contagem.Comprado }, { k: "Cancelado", r: "Cancelados", n: contagem.Cancelado }, { k: "todos", r: "Todos" }], st.status, "status-lista")}
+    const filtros = `<div class="filtros-linha">${pilulas}
       <label class="busca">${UI.svg("buscar")}<input type="search" placeholder="Buscar" value="${esc(st.busca)}" data-digitar="busca-compra" aria-label="Buscar item"></label>
-      <select class="sel" data-mudar="mercado-compra" aria-label="Filtrar por mercado">${UI.opcoes(mercados, st.mercado, "Todos os mercados")}</select>
-    </div>
-    <div class="chips-filtro"><button class="${!st.cat ? "ativo" : ""}" data-acao="cat-compra" data-k="">Todas</button>${N.CATEGORIAS.map((c) => `<button class="${st.cat === c ? "ativo" : ""}" data-acao="cat-compra" data-k="${esc(c)}">${N.EMOJI_CATEGORIA[c]} ${esc(c)}</button>`).join("")}</div>`;
-    const copiar = doAnt ? `<button class="btn pequeno" data-acao="copiar-mes-compras" title="Repete os itens de ${nomeMes(ant)} como pendentes (sem duplicar)">${UI.svg("copiar")}Copiar ${nomeMes(ant)}</button>` : "";
+      <select class="sel" data-mudar="mercado-compra" aria-label="Filtrar por mercado">${UI.opcoes(mercados, st.mercado, "Todos os mercados")}</select></div>`;
+    const copiar = doAnt ? `<button class="btn pequeno" data-acao="copiar-mes-compras" title="Repete os itens de ${nomeMes(ant)} como “falta comprar” (sem duplicar) — depois é só marcar o que já tem">${UI.svg("copiar")}Copiar ${nomeMes(ant)}</button>` : "";
     let corpo;
     if (!todas.length) corpo = UI.vazio({ icone: "🛒", titulo: `A lista de ${nomeMes(st.mes)} está vazia.`,
-      texto: doAnt ? `Repita a lista de ${nomeMes(ant)} (${doAnt} ${UI.plural(doAnt, "item", "itens")}) ou adicione itens. Refeições planejadas e estoque mínimo também enchem a lista sozinhos.` : "Adicione itens — ou planeje refeições e defina estoques mínimos: o que faltar entra sozinho na lista.",
+      texto: doAnt ? `Repita a lista de ${nomeMes(ant)} (${doAnt} ${UI.plural(doAnt, "item", "itens")}) e marque o que já tem em casa — o resto é o que falta comprar.` : "Liste tudo o que precisa no mês e marque o que já tem em casa: o resto é o que falta comprar.",
       acao: doAnt ? "copiar-mes-compras" : "nova-compra", rotulo: doAnt ? `Copiar lista de ${nomeMes(ant)}` : "Adicionar item", dados: doAnt ? "" : `data-mes="${st.mes}"` });
-    else if (!itens.length) corpo = `<div class="vazio"><p>${st.status === "Pendente" && !st.cat && !st.busca && !st.mercado ? "Nada pendente — lista do mês em dia! 🎉" : "Nenhum item com esse filtro."}</p></div>`;
+    else if (!itens.length) corpo = `<div class="vazio"><p>${st.status === "Pendente" && !st.busca && !st.mercado ? "Nada faltando — lista do mês completa! 🎉" : "Nenhum item com esse filtro."}</p></div>`;
     else {
       const grupos = {};
       itens.forEach((c) => { (grupos[c.categoria || "Outros"] = grupos[c.categoria || "Outros"] || []).push(c); });
-      corpo = N.CATEGORIAS.concat(Object.keys(grupos).filter((k) => N.CATEGORIAS.indexOf(k) === -1)).filter((k) => grupos[k]).map((k) => `<div class="grupo-compra">
-        <div class="grupo-cab"><span>${N.EMOJI_CATEGORIA[k] || "📦"} ${esc(k)}</span><span class="dim">${grupos[k].length} · ${UI.brl(N.soma(grupos[k], (c) => c.status === "Comprado" ? C.valorPago(c) : C.valorEstimado(c)))}</span></div>
-        ${grupos[k].map((c) => linhaItem(d, c)).join("")}</div>`).join("");
+      corpo = `<div class="tabela-scroll tabela-compras"><div class="hd" style="${GR}"><i>Item</i><i class="r">Quantidade</i><i>Situação</i><i>Mercado</i><i class="r">Valor</i><i></i></div>` +
+        N.CATEGORIAS.concat(Object.keys(grupos).filter((k) => N.CATEGORIAS.indexOf(k) === -1)).filter((k) => grupos[k]).map((k) => {
+          const g = grupos[k], f = g.filter((c) => c.status === "Pendente").length;
+          return `<div class="grupo-cab"><span>${N.EMOJI_CATEGORIA[k] || "📦"} ${esc(k)}</span><span class="dim">${g.length} ${UI.plural(g.length, "item", "itens")}${f ? ` · <span class="acc-txt">${f} ${UI.plural(f, "falta", "faltam")}</span>` : " · ✓ completo"}</span></div>${g.map((c) => linhaItem(d, c)).join("")}`;
+        }).join("") + `</div>`;
     }
-    const previsto = N.soma(todas.filter((c) => c.status === "Pendente"), C.valorEstimado);
-    const pago = N.soma(todas, C.valorPago);
-    const feitos = contagem.Comprado, total = contagem.Pendente + contagem.Comprado;
-    return UI.card({ titulo: `Lista de ${nomeMes(st.mes)}`, sub: total ? `${feitos} de ${total} comprados · toque no quadrado para marcar` : "toque no quadrado para marcar como comprado",
-      acoes: copiar, corpo: (todas.length ? filtros : "") + `<div class="lista-compras">${corpo}</div>`,
+    const total = falta.length + tenho.length + comprado.length;
+    return UI.card({ titulo: `Lista de ${nomeMes(st.mes)}`, sub: total ? `${tenho.length + comprado.length} de ${total} garantidos · marque o que já tem e o que comprou` : "marque o que já tem e o que comprou",
+      acoes: copiar, corpo: (todas.length ? filtros : "") + corpo,
       rodape: todas.length ? `<span>Falta comprar <b>${UI.brl(previsto)}</b></span><span>Já pago <b>${UI.brl(pago)}</b></span>` : "" });
   }
   // pendentes de meses anteriores: aviso com "trazer para este mês"
@@ -105,19 +120,7 @@
       <p>${esc(lista.slice(0, 5).map((c) => c.nome).join(", "))}${lista.length > 5 ? "…" : ""}</p></div>
       <button class="btn pequeno" data-acao="trazer-atrasados">Trazer para ${nomeMes(st.mes)}</button></div><div class="espaco"></div>`;
   }
-  function lateralLista(d) {
-    const pend = C.pendentes(d).filter((c) => C.mesDaCompra(c) === st.mes);
-    const porMercado = {};
-    pend.forEach((c) => { porMercado[c.mercado || "—"] = (porMercado[c.mercado || "—"] || 0) + C.valorEstimado(c); });
-    const itens = Object.keys(porMercado).map((k) => ({ nome: k, valor: porMercado[k] })).sort((a, b) => b.valor - a.valor);
-    const integ = d.config.integracao;
-    return UI.card({ titulo: "Quanto vou gastar", sub: `pendentes de ${nomeMes(st.mes)} por mercado`, corpo: `<div class="pad">${UI.barList(itens, "var(--cy)")}</div>` }) +
-      `<div class="espaco"></div>` +
-      UI.card({ titulo: "Lista automática", dica: "O sistema soma o que está planejado nas refeições dos próximos dias e o estoque mínimo, desconta o que há em casa, e coloca o que faltar na lista (marcado como “auto”).",
-        corpo: `<div class="pad texto-integ">${integ.listaAutomatica ? `<p><span class="up">● Ligada.</span> Considera as refeições planejadas dos próximos <b>${integ.diasPlanejamento}</b> dias e os estoques mínimos.</p>` : `<p><span class="dim">● Desligada.</span> Use “Compras para o cardápio” em Alimentação → Semana e os botões da aba Em casa.</p>`}
-          <p>${integ.somarEstoqueAoComprar ? "Itens marcados como comprados <b>entram no estoque</b>." : "Itens comprados não alteram o estoque."}</p>
-          <button class="btn pequeno" data-acao="ir" data-secao="configuracoes" data-param="integracao">Configurar</button></div>` });
-  }
+
 
   // ------------------------------------------------------------------
   // GASTOS
@@ -231,7 +234,7 @@
       const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "lista";
       const pend = d.compras.filter((c) => c.status === "Pendente").length, baixo = C.estoqueBaixo(d).length;
       const abas = UI.abas(ABAS.map((x) => x.k === "lista" ? Object.assign({ n: pend }, x) : x.k === "estoque" && baixo ? Object.assign({ n: baixo }, x) : x), aba, "aba-compras");
-      const corpo = aba === "gastos" ? gastos(d) : aba === "estoque" ? emCasa(d) : `${barraMes(d)}${atrasados(d)}<div class="grid"><div class="c8">${lista(d)}</div><div class="c4">${lateralLista(d)}</div></div>`;
+      const corpo = aba === "gastos" ? gastos(d) : aba === "estoque" ? emCasa(d) : `${barraMes(d)}${atrasados(d)}<div class="grid"><div class="c12">${lista(d)}</div></div>`;
       return `<div class="cabecalho-pagina"><div><h1>Compras</h1><p class="sub">O que comprar, o que tem em casa e quanto gastou</p></div>${abas}</div>${corpo}`;
     },
     depois(d) {
@@ -262,7 +265,7 @@
       const d = App.dados(), ant = C.mesAnterior(st.mes);
       const n = C.copiarMes(JSON.parse(JSON.stringify(d)), ant, st.mes); // conta antes, para a mensagem
       if (!n) { UI.toast(`Os itens de ${nomeMes(ant)} já estão nesta lista.`); return; }
-      st.status = "Pendente";
+      st.status = "todos";
       App.comDesfazer(`${n} ${UI.plural(n, "item copiado", "itens copiados")} de ${nomeMes(ant)}.`, () => C.copiarMes(d, ant, st.mes));
     },
     "trazer-atrasados": () => {

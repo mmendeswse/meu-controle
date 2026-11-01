@@ -193,6 +193,9 @@
   // compra marcada/desmarcada como Comprada → entra/sai do estoque
   function aoMudarStatusCompra(d, c, statusAnterior) {
     const integra = d.config.integracao.somarEstoqueAoComprar;
+    // automático que deixa de ser pendente fica fixo na lista do mês em que estava
+    if (c.auto && !c.mes && statusAnterior === "Pendente") c.mes = mesAtual();
+    if (c.status === "Tenho") c.auto = false;
     if (c.status === "Comprado") {
       if (!c.dataCompra) c.dataCompra = N.hoje(0);
       if (!N.temValor(c.precoPago) && N.temValor(c.precoEstimado)) c.precoPago = Number(c.precoEstimado);
@@ -312,7 +315,10 @@
     const nec = necessidades(d);
     let criados = 0, removidos = 0;
     const precisa = {};
-    nec.forEach((n) => { if (n.faltaComprar > 0.0001) precisa[n.alimento.id] = n; });
+    // o que foi marcado como "já tenho" na lista deste mês não volta como automático
+    const temNoMes = {};
+    doMes(d, mesAtual()).forEach((c) => { if (c.status === "Tenho" && c.alimentoId) temNoMes[c.alimentoId] = true; });
+    nec.forEach((n) => { if (n.faltaComprar > 0.0001 && !temNoMes[n.alimento.id]) precisa[n.alimento.id] = n; });
     // atualiza ou remove os automáticos existentes
     d.compras = d.compras.filter((c) => {
       if (!(pendente(c) && c.auto)) return true;

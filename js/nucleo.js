@@ -169,7 +169,8 @@
   const EMOJI_CATEGORIA = { "Proteínas": "🍗", "Carboidratos": "🍚", "Frutas": "🍎", "Verduras": "🥬", "Legumes": "🥕", "Laticínios": "🥛", "Bebidas": "🥤", "Suplementos": "💊", "Outros": "📦" };
   const MERCADOS = ["Mercado", "Feira", "Açougue", "Padaria", "Atacado", "Online", "Farmácia"];
   const PRIORIDADES = ["Alta", "Normal", "Baixa"];
-  const STATUS_COMPRA = ["Pendente", "Comprado", "Cancelado"];
+  const STATUS_COMPRA = ["Pendente", "Tenho", "Comprado", "Cancelado"];
+  const ROTULO_STATUS_COMPRA = { Pendente: "Falta comprar", Tenho: "Já tenho", Comprado: "Comprado", Cancelado: "Cancelado" };
   const UNIDADES_ALIMENTO = ["g", "ml", "un", "fatia", "colher", "xícara", "porção"];
   const UNIDADES_COMPRA = ["kg", "g", "L", "ml", "un", "dz", "pct", "cx", "fatia", "colher", "xícara", "porção"];
 
@@ -199,7 +200,7 @@
     NOMES_DIA, DIA_CURTO,
     familia, compativeis, converter, unidadeCompraPadrao, qtdLegivel,
     arred, soma, media, limitar, temValor, numOuNulo, regressao, variacaoPct,
-    CATEGORIAS, EMOJI_CATEGORIA, MERCADOS, PRIORIDADES, STATUS_COMPRA, UNIDADES_ALIMENTO, UNIDADES_COMPRA,
+    CATEGORIAS, EMOJI_CATEGORIA, MERCADOS, PRIORIDADES, STATUS_COMPRA, ROTULO_STATUS_COMPRA, UNIDADES_ALIMENTO, UNIDADES_COMPRA,
     TIPOS_REFEICAO, TIPO_CURTO, EMOJI_REFEICAO, HORARIO_SUGERIDO, STATUS_REFEICAO,
     GRUPOS_MUSCULARES, STATUS_TREINO, STATUS_SERIE, OBJETIVOS, NUTRIENTES
   };

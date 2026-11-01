@@ -577,7 +577,7 @@
       <div class="grade-4">
         <div class="campo"><label for="f_mercado">Mercado</label><input id="f_mercado" list="lista_mercados2" value="${esc(ini.mercado || "")}"><datalist id="lista_mercados2">${N.MERCADOS.map((x) => `<option value="${esc(x)}">`).join("")}</datalist></div>
         <div class="campo"><label for="f_prio">Prioridade</label><select id="f_prio">${UI.opcoes(N.PRIORIDADES, ini.prioridade)}</select></div>
-        <div class="campo"><label for="f_status">Status</label><select id="f_status">${UI.opcoes(N.STATUS_COMPRA, ini.status)}</select></div>
+        <div class="campo"><label for="f_status">Status</label><select id="f_status">${UI.opcoes(N.STATUS_COMPRA.map((v) => ({ v, r: N.ROTULO_STATUS_COMPRA[v] })), ini.status)}</select></div>
         <div class="campo"><label for="f_dcompra">Data da compra</label><input id="f_dcompra" type="date" value="${esc(ini.dataCompra || "")}"></div>
       </div>
       <div class="par">
@@ -656,9 +656,10 @@
     const c = C.compra(d, id);
     if (!c) return;
     const antes = c.status;
+    if (antes === status) return;
     c.status = status;
     C.aoMudarStatusCompra(d, c, antes);
-    salvar(status === "Comprado" ? `${c.nome}: comprado${c.entradaEstoque ? " e somado ao estoque" : ""}.` : `${c.nome}: ${status.toLowerCase()}.`);
+    salvar(status === "Comprado" ? `${c.nome}: comprado${c.entradaEstoque ? " e somado ao estoque" : ""}.` : status === "Tenho" ? `${c.nome}: já tem em casa.` : status === "Pendente" ? `${c.nome}: falta comprar.` : `${c.nome}: ${status.toLowerCase()}.`);
   }
 
   // =====================================================================
