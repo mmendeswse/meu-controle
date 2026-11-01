@@ -117,6 +117,20 @@ aparece sem internet e vai junto no backup. As galerias precisam de
 internet; sem conexão, a tela avisa e os emojis e a foto continuam
 funcionando.
 
+## Bloqueio com PIN
+
+Em **Ajustes → Segurança** cada pessoa pode criar um PIN de 6 dígitos (e
+ligar Face ID ou digital, quando o aparelho tem). O app pede o PIN ao abrir
+e quando volta depois do tempo escolhido (ao sair, 1, 5 ou 15 min); nada
+aparece na tela antes disso. Depois de 5 tentativas erradas, há pausas cada
+vez maiores.
+
+O PIN não é guardado: fica só um resumo PBKDF2-SHA256 com sal aleatório,
+numa chave do próprio aparelho que **não vai no backup**. Se esquecer o PIN,
+"Esqueci o PIN" apaga os dados do aparelho (inclusive as cópias internas) e
+a pessoa restaura o último arquivo de backup. O bloqueio é uma tranca de
+tela, não criptografia: proteja também o celular com senha ou biometria.
+
 ## Onde ficam os seus dados
 
 Tudo é salvo no armazenamento local do seu próprio navegador
@@ -290,6 +304,7 @@ meu-controle/
     ├── avatar.js            # tela "Editar avatar" (foto, personagens de anime, emojis)
     ├── primeiro-uso.js      # boas-vindas guiadas
     ├── tutorial.js          # tutoriais de cada tela, botão ? e "o que há de novo"
+    ├── trava.js             # bloqueio com PIN / Face ID / digital
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```

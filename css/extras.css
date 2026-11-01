@@ -700,3 +700,59 @@ body.tour-on .fab-menu { display: none; }
 .nov-lista li > span > b { display: block; font-size: 15px; }
 .nov-lista small { display: block; font-size: 13.5px; color: var(--dim); line-height: 1.45; margin-top: 2px; }
 @media (pointer: coarse) { .tour-ajuda { width: 34px; height: 34px; font-size: 15px; } }
+
+/* ======================================================================
+   bloqueio com PIN (trava.js)
+   ====================================================================== */
+html.travado body { visibility: hidden; }
+html.travado #tour { display: none; }
+.trava { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background: radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--c-hoje, #FF375F) 22%, var(--bg, #000)), var(--bg, #000) 65%); color: var(--texto, #fff); font-family: var(--ui);
+  font-size: calc(15px * var(--zoom, 1)); -webkit-font-smoothing: antialiased; opacity: 0; transition: opacity .2s; overflow-y: auto; }
+html.travado .trava { opacity: 1; }
+.trava:empty { display: none; }
+.pin { display: flex; flex-direction: column; align-items: center; width: min(320px, 100%); margin: auto; padding: 24px 0; outline: none; }
+.trava-topo .avatar { width: 84px; height: 84px; border: 3px solid rgba(255, 255, 255, .9); box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.trava-topo .avatar .av-emoji { font-size: 44px; }
+.trava-cadeado { font-size: 44px; }
+.pin-titulo { margin-top: 16px; font-size: 1.6em; font-family: var(--display); font-weight: 800; text-align: center; }
+.pin-sub { margin: 6px 0 0; color: var(--dim, #8e8e93); font-size: .95em; text-align: center; line-height: 1.45; min-height: 1.4em; }
+.pin-pontos { display: flex; gap: 16px; margin: 26px 0 6px; }
+.pin-pontos i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--dim, #8e8e93); transition: background .12s, border-color .12s, transform .12s; }
+.pin-pontos i.on { background: var(--texto, #fff); border-color: var(--texto, #fff); transform: scale(1.08); }
+.pin-pontos.errou { animation: pinTremer .4s; }
+.pin-pontos.errou i { border-color: var(--down, #FF453A); }
+@keyframes pinTremer { 20%, 60% { transform: translateX(-9px); } 40%, 80% { transform: translateX(9px); } }
+.pin-erro { margin: 4px 0 0; min-height: 2.6em; color: var(--down, #FF453A); font-size: .87em; font-weight: 600; text-align: center; }
+.pin-teclas { display: grid; grid-template-columns: repeat(3, 74px); gap: 16px 26px; margin-top: 4px; }
+.pin-teclas button { width: 74px; height: 74px; border-radius: 50%; border: none; background: color-mix(in srgb, var(--texto, #fff) 12%, transparent); color: var(--texto, #fff); font: 500 30px/1 var(--ui); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .1s, transform .1s; }
+.pin-teclas button:active { background: color-mix(in srgb, var(--texto, #fff) 30%, transparent); transform: scale(.95); }
+.pin-teclas .pin-apagar, .pin-esq .pin-bio { background: none; font-size: 26px; }
+.pin-esq { display: flex; align-items: center; justify-content: center; }
+.pin-bio svg { width: 34px; height: 34px; }
+.pin-link { margin-top: 22px; background: none; border: none; color: var(--c-hoje, #FF375F); font: 600 .95em var(--ui); padding: 10px; cursor: pointer; }
+.pin-oculto { position: absolute; opacity: 0; pointer-events: none; width: 1px; height: 1px; }
+.trava-esqueci { position: fixed; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, .6); }
+.trava-esqueci-caixa { width: min(420px, 100%); background: var(--painel, #1c1c1e); border: 1px solid var(--linha-2, #333); border-radius: 18px; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+.trava-esqueci-caixa > b { font-size: 1.25em; font-family: var(--display); }
+.trava-esqueci-caixa p { margin: 0; font-size: .95em; line-height: 1.5; }
+.trava-esqueci-caixa .dim { color: var(--dim, #8e8e93); }
+.trava-esqueci-caixa label { display: flex; flex-direction: column; gap: 6px; font-size: .9em; margin-top: 4px; }
+.trava-esqueci-caixa input { padding: 11px 12px; border-radius: 10px; border: 1px solid var(--linha-2, #333); background: var(--painel-2, #2c2c2e); color: var(--texto, #fff); font: 600 16px var(--ui); letter-spacing: .08em; }
+.trava-esqueci-botoes { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.trava-esqueci-botoes .btn { min-height: 44px; padding: 10px 16px; font-size: .93em; }
+/* PIN dentro de um modal (Ajustes) */
+.modal.modal-pin { max-width: 400px; }
+.modal-pin .pin { padding: 6px 0 4px; }
+.modal-pin .pin-teclas { grid-template-columns: repeat(3, 66px); gap: 12px 22px; }
+.modal-pin .pin-teclas button { width: 66px; height: 66px; font-size: 26px; }
+@media (max-height: 640px) { .pin-teclas { gap: 10px 22px; } .pin-teclas button { width: 62px; height: 62px; font-size: 25px; } .pin-pontos { margin-top: 16px; } .trava-topo .avatar { width: 64px; height: 64px; } }
+/* cartão Segurança */
+.seg-status { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--painel-2); margin-bottom: 12px; }
+.seg-status > span { font-size: 24px; line-height: 1; }
+.seg-status b { display: block; font-size: 15px; }
+.seg-status small { display: block; color: var(--dim); font-size: 13px; line-height: 1.45; margin-top: 2px; }
+.seg-status.ok { background: color-mix(in srgb, var(--up, #30D158) 14%, var(--painel-2)); }
+#sec-seguranca .botoes-linha { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+#sec-seguranca .seg-opcoes { margin-bottom: 4px; }
+#travaBio:not(:empty) { margin-top: 12px; }

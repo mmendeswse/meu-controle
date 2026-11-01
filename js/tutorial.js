@@ -117,6 +117,7 @@
         { alvo: ".atalhos-ajustes", titulo: "Atalhos", texto: "Vá direto para a parte que quer mudar." },
         { alvo: "#sec-aparencia", titulo: "Aparência", texto: "Tema claro ou escuro, cor, tamanho da letra e o seu avatar." },
         { alvo: "#sec-areas", titulo: "O que você usa", texto: "Desligue o que não usa: o app fica mais simples e as abas se ajustam." },
+        { alvo: "#sec-seguranca", titulo: "Segurança", texto: "Crie um PIN de 6 dígitos (com Face ID ou digital, se o aparelho tiver) para ninguém abrir o app se pegar o seu celular.", opcional: true },
         { alvo: "#sec-backup", titulo: "Backup — importante!", texto: "Os dados ficam só neste aparelho. Ative o backup para não perder nada se trocar ou perder o celular." },
         { alvo: "#sec-tutoriais", titulo: "Tutoriais", texto: "Reveja qualquer explicação quando quiser.", opcional: true }
       ]
@@ -326,7 +327,7 @@
     return true;
   }
   function ocupado() {
-    return UI.modalAberto() || document.body.classList.contains("av-aberta") || document.querySelector(".abertura") || document.body.classList.contains("mais-aberto") || document.body.classList.contains("fab-aberto") || document.body.classList.contains("tour-on");
+    return document.documentElement.classList.contains("travado") || UI.modalAberto() || document.body.classList.contains("av-aberta") || document.querySelector(".abertura") || document.body.classList.contains("mais-aberto") || document.body.classList.contains("fab-aberto") || document.body.classList.contains("tour-on");
   }
   App().aoRenderizar((d, rota) => {
     const k = rota && rota.secao;
@@ -380,11 +381,11 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "3.4",
+    versao: "3.5",
     itens: [
+      ["🔒", "Bloqueio com PIN", "Em Ajustes → Segurança: o app pede um PIN (ou Face ID/digital) ao abrir, para ninguém ver seus dados se pegar o seu celular."],
+      ["⚡", "Avatares abrem na hora", "A lista de personagens agora vem junto com o app — sem esperar o servidor de anime."],
       ["❓", "Tutoriais em cada tela", "Na primeira visita a cada tela, um passo a passo mostra como ela funciona. O botão <b>?</b> ao lado do título mostra de novo."],
-      ["🎌", "Avatares de anime mais rápidos", "Personagens separados por anime (Naruto, One Piece, Demon Slayer…) e busca por nome do anime. Depois da primeira vez, abrem na hora."],
-      ["✅", "Escolher ficou mais fácil", "Ao tocar num personagem aparece a barra <b>Usar</b> embaixo — um toque e pronto."],
       ["📱", "Tablets e iPad", "Telas ajustadas para tablet, iPad e computador."]
     ]
   };
