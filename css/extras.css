@@ -351,11 +351,13 @@ body[data-secao="configuracoes"] .ap-av.ativo { box-shadow: 0 0 0 2px var(--c-ho
 body[data-secao="configuracoes"] .chip input:checked + span, body[data-secao="configuracoes"] .interruptor input:checked + .int-trilho { background: var(--c-hoje); border-color: var(--c-hoje); }
 
 /* 6 cartões de destaque: 3 por linha quando ficam embaixo dos anéis */
-@media (max-width: 1280px) and (min-width: 861px) { .tiles-saude { grid-template-columns: repeat(3, 1fr); } }
+/* destaques: 2 por linha quando dividem a tela com outra coluna; 3 quando ocupam a largura toda */
+.hoje-cols .tiles-saude:not(.n1):not(.n3) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1100px) and (min-width: 600px) { .hoje-cols .tiles-saude.n6, .hoje-cols .tiles-saude.n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 /* letra aumentada no computador: a tela "encolhe" — empilha anéis e cartões */
 @media (min-width: 861px) and (max-width: 1800px) {
   .zoom-ativo .grid-hoje > .c7, .zoom-ativo .grid-hoje > .c5 { grid-column: span 12; }
-  .zoom-ativo .tiles-saude { grid-template-columns: repeat(3, 1fr); }
+  .zoom-ativo .hoje-cols .tiles-saude.n6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (min-width: 861px) and (max-width: 1500px) {
   html.zoom-ativo[style*="--zoom: 1.22"] .grid > .c5, html.zoom-ativo[style*="--zoom: 1.22"] .grid > .c7,
@@ -371,7 +373,7 @@ body[data-secao="configuracoes"] .chip input:checked + span, body[data-secao="co
 
 #conteudo > .hoje-bloco { margin-bottom: 16px; }
 @media (max-width: 1100px) {
-  .hoje-cols { display: flex; flex-direction: column; }
+  .hoje-cols { display: flex; flex-direction: column; align-items: stretch; }
   .hoje-col { display: contents; }
 }
 .tiles-saude.n1, .tiles-saude.n2 { grid-template-columns: 1fr 1fr; height: auto; }
@@ -570,3 +572,44 @@ html[data-tema="claro"] .perfil-lateral:hover { background: rgba(0, 0, 0, .04); 
 .ab-nome { margin: 2px 0 0; font-size: 34px; font-weight: 800; font-family: var(--display); letter-spacing: -.02em !important; animation: abSubir .5s .2s ease both; }
 @keyframes abPop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes abSubir { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* =======================================================================
+   3.3.1 — responsivo (tablets, iPad, PC) e toque
+   ======================================================================= */
+/* colunas do grid nunca crescem além da tela por causa de uma tabela larga:
+   a tabela rola dentro do próprio cartão */
+.grid > *, .hoje-col, .hoje-bloco, .card, .card > .body { min-width: 0; }
+.tabela-wrap { max-width: 100%; }
+
+/* telas de toque (celular, tablet, iPad): alvos de pelo menos 40 px */
+@media (pointer: coarse) {
+  .link-acao { min-height: 40px; padding: 8px 6px; display: inline-flex; align-items: center; }
+  .checklist .mostrar-feitos .link-acao { min-height: 44px; padding: 10px 16px; }
+  .hab-card footer .link-acao, .rem-card footer .link-acao { padding: 8px 10px; }
+  .btn.pequeno { min-height: 36px; }
+  .estoque-qtd .btn, [data-acao="ajustar-estoque"], [data-acao^="estoque-"] { min-width: 40px; min-height: 40px; }
+  .ord-botoes .btn { width: 40px; height: 40px; }
+}
+.kpi-row.compacta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 1500px) { .kpi-row.compacta { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kpi { min-width: 0; }
+
+/* toque: abas, botões e filtros com altura confortável para o dedo */
+@media (pointer: coarse) {
+  .abas button, .seg-opcoes button, .chips-filtro button, .atalhos-ajustes button, .meses-barra button, .barra-meses button { min-height: 40px; }
+  .btn, .btn.pequeno { min-height: 40px; }
+  .btn.fantasma { min-width: 40px; }
+  .chip span { min-height: 38px; display: inline-flex; align-items: center; }
+}
+@media (pointer: coarse) { .dia-mais { min-height: 40px; width: 100%; } }
+@media (pointer: coarse) {
+  .ref-check, .dose-check { width: 36px; height: 36px; min-width: 36px; }
+  .chip-btn { min-height: 38px; }
+  [data-acao="status-compra"] { min-height: 36px; }
+  .ref-acoes .btn, .refeicao .btn.fantasma { min-width: 36px; min-height: 36px; }
+}
+
+/* calendário do humor: as 7 colunas sempre cabem no cartão */
+.cal-h-semana, .cal-h-grade { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-h { min-height: 0; }
+@media (max-width: 1100px) { .cal-h-grade, .cal-h-semana { gap: 4px; } .cal-h i { font-size: 13px; } }
