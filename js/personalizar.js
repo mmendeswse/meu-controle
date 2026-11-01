@@ -54,6 +54,25 @@
     const cs = document.querySelector('meta[name="color-scheme"]');
     if (cs) cs.content = tema === "claro" ? "light" : "dark";
     aplicarRotina(d);
+    atualizarAvatares(d);
+  }
+  // avatar fixo no topo (celular) e no rodapé da barra lateral (computador)
+  let assinaturaAvatar = "";
+  function atualizarAvatares(d) {
+    const ap = d.config.aparencia || {}, u = d.usuarios[0];
+    const nome = u.nome && u.nome !== "Eu" ? u.nome : "";
+    const ass = [ap.avatarImg && ap.avatarImg.src ? ap.avatarImg.src.length + ap.avatarImg.src.slice(-40) : "", ap.avatar, ap.avatarCor, nome].join("|");
+    if (ass === assinaturaAvatar) return;
+    assinaturaAvatar = ass;
+    const barra = document.getElementById("avatarBarra");
+    if (barra) {
+      barra.innerHTML = avatarConteudo(d);
+      barra.style.setProperty("--av", corHex(ap.avatarCor || "roxo"));
+      barra.classList.toggle("com-img", !!(ap.avatarImg && ap.avatarImg.src));
+    }
+    const lat = document.getElementById("perfilLateral");
+    if (lat) lat.innerHTML = `<span class="avatar${ap.avatarImg && ap.avatarImg.src ? " com-img" : ""}" style="--av:${corHex(ap.avatarCor || "roxo")}">${avatarConteudo(d)}</span>
+      <span class="pl-txt"><b>${esc(nome || "Seu perfil")}</b><small>Editar avatar</small></span>`;
   }
   // os horários da rotina viram os horários sugeridos dos formulários
   function aplicarRotina(d) {
@@ -115,6 +134,7 @@
         <div class="ap-cores">${CORES.map((c) => `<button class="ap-cor${ap.cor === c.k ? " ativo" : ""}" data-acao="ap-cor" data-k="${c.k}" style="--c:${c.c}" title="${c.r}" aria-label="${c.r}"></button>`).join("")}</div>
         ${interruptor("ap_unica", "Mesma cor em todas as telas", ap.corUnica, "Desligado, cada área tem a sua cor (Treino verde, Alimentação laranja…).", 'data-mudar="ap-cor-unica"')}
       </div>
+      <div class="ap-bloco">${interruptor("ap_abertura", "Abertura com o seu avatar", ap.abertura !== false, "Ao abrir o app, seu avatar e um “olá” aparecem por um instante, como nos apps de streaming.", 'data-mudar="ap-abertura"')}</div>
       <div class="ap-bloco"><span class="ap-rot">Tamanho da letra</span>${seg("ap-fonte", FONTES, ap.fonte)}</div>
       <div class="ap-bloco">
         ${interruptor("ap_vibrar", "Vibrar ao marcar itens", ap.vibrar !== false, "No celular, uma vibração curta ao concluir algo.", 'data-mudar="ap-vibrar"')}
@@ -175,6 +195,7 @@
   global.App.registrarMudancas({
     "ap-cor-unica": (el) => { App().dados().config.aparencia.corUnica = el.checked; salvarAp(); },
     "ap-vibrar": (el) => { App().dados().config.aparencia.vibrar = el.checked; salvarAp(); },
+    "ap-abertura": (el) => { App().dados().config.aparencia.abertura = el.checked; salvarAp(); },
     "ap-anim": (el) => { App().dados().config.aparencia.animacoes = el.checked; salvarAp(); },
     "ap-copo": (el) => { App().dados().config.copoAgua = Number(el.value) || 250; salvarAp(); },
     "rotina-hora": (el) => { if (!el.value) return; App().dados().config.rotina.horarios[el.dataset.k] = el.value; salvarAp(); },
@@ -183,5 +204,5 @@
     "rotina-mostrar": (el) => { App().dados().config.rotina.mostrar[el.dataset.k] = el.checked; salvarAp(); }
   });
 
-  global.Personalizar = { CORES, FONTES, TEMAS, AVATARES, corHex, temaEfetivo, aplicar, aplicarRotina, horario, mostrar, avatarHTML, cartaoAparencia, cartaoRotina, interruptor, seg };
+  global.Personalizar = { CORES, FONTES, TEMAS, AVATARES, corHex, temaEfetivo, aplicar, aplicarRotina, horario, mostrar, avatarHTML, avatarConteudo, atualizarAvatares, cartaoAparencia, cartaoRotina, interruptor, seg };
 })(window);

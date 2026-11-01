@@ -7,7 +7,6 @@
  *   Sua foto        — da galeria ou da câmera
  *   Personagens     — os mais populares do MyAnimeList (API Jikan) e busca
  *                     por nome ("Naruto", "Levi", "Frieren"…)
- *   Ilustrações     — arte de anime da API nekos.best (só conteúdo seguro)
  *   Emojis          — com a cor de fundo escolhida
  *
  * A imagem escolhida é reduzida para 256 px e guardada no próprio
@@ -22,13 +21,8 @@
   const UI = global.UI;
   const esc = UI.esc;
   const JIKAN = "https://api.jikan.moe/v4";
-  const NEKOS = "https://nekos.best/api/v2";
-  const CATEGORIAS = [
-    { k: "husbando", r: "Husbandos" }, { k: "waifu", r: "Waifus" },
-    { k: "neko", r: "Nekos" }, { k: "kitsune", r: "Kitsunes" }
-  ];
   const cacheApi = {}; // respostas da sessão (evita repetir pedidos)
-  const est = { aberto: false, escolha: null, original: null, aoConcluir: null, nome: "", cor: "roxo", top: [], topPagina: 0, topFim: false, busca: "", resultados: null, buscando: false, ilustr: {}, erro: {} };
+  const est = { aberto: false, escolha: null, original: null, aoConcluir: null, nome: "", cor: "roxo", top: [], topPagina: 0, topFim: false, busca: "", resultados: null, buscando: false, erro: {} };
 
   // ---------------------------------------------------------------------
   // APIs
@@ -75,16 +69,6 @@
         est.erro.busca = null;
       }).catch((e) => { est.erro.busca = msgErro(e); }).finally(() => { est.buscando = false; desenhar(true); });
     }, 450);
-  }
-  function carregarIlustr(cat) {
-    const s = est.ilustr[cat] = est.ilustr[cat] || { lista: [], carregando: false };
-    if (s.carregando) return;
-    s.carregando = true;
-    fetch(`${NEKOS}/${cat}?amount=12`).then((r) => { if (!r.ok) throw new Error("erro " + r.status); return r.json(); }).then((j) => {
-      const novos = (j.results || []).filter((x) => x.url).map((x) => ({ fonte: "nekos", url: x.url, nome: x.anime_name || "", credito: x.artist_name ? "Arte: " + x.artist_name : "", link: x.source_url || x.artist_href || "", foco: "50% 25%" }));
-      s.lista = s.lista.concat(novos.filter((n) => !s.lista.some((x) => x.url === n.url)));
-      est.erro[cat] = null;
-    }).catch((e) => { est.erro[cat] = msgErro(e); }).finally(() => { s.carregando = false; desenhar(); });
   }
   function msgErro(e) {
     if (!navigator.onLine) return "Sem internet agora. As imagens aparecem quando o aparelho estiver conectado.";
@@ -169,20 +153,13 @@
       ${listaTop.length ? grade(listaTop, "top", true) : est.erro.top ? "" : carregando(9)}
       ${est.erro.top ? aviso(est.erro.top, "av-tentar", "Tentar de novo", 'data-k="top"') : !est.topFim && listaTop.length ? `<button class="btn av-mais" data-acao="av-mais-top"${est.carregandoTop ? " disabled" : ""}>${est.carregandoTop ? "Carregando…" : "Ver mais personagens"}</button>` : ""}
     </section>`;
-    CATEGORIAS.forEach((c) => {
-      const s = est.ilustr[c.k] || { lista: [] };
-      html += `<section class="av-secao"><h3>${c.r} <small>ilustrações</small></h3>
-        ${s.lista.length ? grade(s.lista, c.k) : est.erro[c.k] ? "" : carregando(6)}
-        ${est.erro[c.k] ? aviso(est.erro[c.k], "av-tentar", "Tentar de novo", `data-k="${c.k}"`) : s.lista.length ? `<button class="btn av-mais" data-acao="av-mais-ilustr" data-k="${c.k}"${s.carregando ? " disabled" : ""}>${s.carregando ? "Carregando…" : "Mais " + c.r.toLowerCase()}</button>` : ""}
-      </section>`;
-    });
     html += `<section class="av-secao"><h3>Emojis</h3>
       <div class="av-grade emojis"><button class="av-op av-emoji-op${est.escolha && est.escolha.fonte === "inicial" ? " ativo" : ""}" data-acao="av-inicial" style="--av:${corHex(est.cor)}"><span>${esc((est.nome || "Eu").charAt(0).toUpperCase())}</span></button>
         ${P.AVATARES.map((e) => `<button class="av-op av-emoji-op${est.escolha && est.escolha.emoji === e ? " ativo" : ""}" data-acao="av-emoji" data-k="${e}" style="--av:${corHex(est.cor)}"><span>${e}</span></button>`).join("")}</div>
       <h3 class="av-sub">Cor de fundo</h3>
       <div class="ap-cores">${P.CORES.map((c) => `<button class="ap-cor${est.cor === c.k ? " ativo" : ""}" data-acao="av-cor" data-k="${c.k}" style="--c:${c.c}" aria-label="${c.r}"></button>`).join("")}</div>
     </section>
-    <p class="av-rodape">${online ? "" : "📴 Sem internet: as galerias de anime aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a> via Jikan · Ilustrações: <a href="https://nekos.best" target="_blank" rel="noopener">nekos.best</a>, com crédito ao artista. A imagem escolhida fica guardada só neste aparelho.</p>`;
+    <p class="av-rodape">${online ? "" : "📴 Sem internet: as galerias de anime aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a> via Jikan. A imagem escolhida fica guardada só neste aparelho.</p>`;
     return html;
   }
   function resultadosHTML() {
@@ -243,7 +220,6 @@
     desenhar();
     el.querySelector(".av-corpo").scrollTop = 0;
     if (!est.top.length) carregarTop();
-    CATEGORIAS.forEach((c) => { if (!est.ilustr[c.k] || !est.ilustr[c.k].lista.length) carregarIlustr(c.k); });
   }
   function fechar(peloVoltar) {
     const el = document.getElementById("avTela");
@@ -266,7 +242,7 @@
     const it = est.escolha;
     const btn = document.querySelector("#avTela [data-acao='av-pronto']");
     const terminar = (resultado) => { const fn = est.aoConcluir; fechar(); if (fn) fn(resultado); };
-    if (it && (it.fonte === "jikan" || it.fonte === "nekos")) {
+    if (it && it.fonte === "jikan") {
       if (btn) { btn.disabled = true; btn.textContent = "Salvando…"; }
       guardarLocal(it).then((x) => { if (btn) btn.textContent = "Pronto"; terminar({ img: limpar(x), emoji: "", cor: est.cor }); });
       return;
@@ -285,7 +261,7 @@
     if (g === "busca") return est.resultados || [];
     if (g === "foto") return est.escolha ? [est.escolha] : [];
     if (g === "foto-orig") return est.original ? [est.original] : [];
-    return (est.ilustr[g] || { lista: [] }).lista;
+    return [];
   }
 
   global.App.registrarAcoes({
@@ -305,9 +281,38 @@
     "av-inicial": () => { est.escolha = { fonte: "inicial" }; desenhar(); },
     "av-cor": (el) => { est.cor = el.dataset.k; desenhar(); },
     "av-mais-top": () => carregarTop(),
-    "av-mais-ilustr": (el) => carregarIlustr(el.dataset.k),
-    "av-tentar": (el) => { const k = el.dataset.k; est.erro[k] = null; if (k === "top") carregarTop(); else carregarIlustr(k); desenhar(); }
+    "av-tentar": () => { est.erro.top = null; carregarTop(); desenhar(); }
   });
+
+  // ---------------------------------------------------------------------
+  // abertura: o avatar e um "olá" por um instante ao abrir o app
+  // ---------------------------------------------------------------------
+  function abertura() {
+    const d = global.App.dados();
+    if (!d) return;
+    const ap = d.config.aparencia || {}, u = d.usuarios[0];
+    if (ap.abertura === false || !d.config.onboardingFeito && (u.nome || "Eu") === "Eu") return;
+    if (/[?&]acao=/.test(location.search)) return; // atalho do ícone: vai direto ao ponto
+    const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
+    const h = new Date().getHours(), saud = h < 5 ? "Boa noite" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+    const img = ap.avatarImg && ap.avatarImg.src;
+    const el = document.createElement("div");
+    el.className = "abertura";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML = `<div class="ab-fundo"${img ? ` style="--ab-bg:url('${img.replace(/'/g, "%27")}')"` : ` style="--ab-cor:${corHex(ap.avatarCor || "roxo")}"`}></div>
+      <div class="ab-conteudo"><span class="avatar gigante${img ? " com-img" : ""}" style="--av:${corHex(ap.avatarCor || "roxo")}">${global.Personalizar.avatarConteudo(d)}</span>
+        <p class="ab-saud">${saud}${nome ? "," : ""}</p>${nome ? `<p class="ab-nome">${esc(nome)}</p>` : ""}</div>`;
+    document.body.appendChild(el);
+    let saiu = false;
+    const sair = () => {
+      if (saiu) return; saiu = true;
+      el.classList.add("saindo");
+      setTimeout(() => el.remove(), 450);
+    };
+    el.addEventListener("click", sair);
+    setTimeout(sair, document.documentElement.classList.contains("sem-animacao") ? 700 : 1300);
+  }
+  document.addEventListener("DOMContentLoaded", abertura);
 
   global.Avatar = { abrir, fechar, guardarLocal, miniatura, estado: est };
 })(window);

@@ -77,15 +77,14 @@ celular e montar a tela Hoje (quais cartões, em que ordem). Desligar uma
 
 ## Avatar (estilo app de streaming)
 
-Toque no avatar (tela Hoje ou Ajustes → Aparência → **Editar avatar**) para
-abrir a galeria:
+O avatar fica sempre à vista: no topo da tela (celular) ou no rodapé da
+barra lateral (computador). Ao abrir o app, ele aparece grande com um "olá"
+por um instante (dá para desligar em Ajustes → Aparência). Toque nele para
+abrir **Editar avatar**:
 
 - **Sua foto** — da galeria ou da câmera;
 - **Buscar personagem** e **Personagens mais populares** — do MyAnimeList,
   pela API pública [Jikan](https://jikan.moe);
-- **Ilustrações** (husbandos, waifus, nekos, kitsunes) — da API
-  [nekos.best](https://nekos.best), que só tem conteúdo seguro, com crédito
-  ao artista;
 - **Emojis** com cor de fundo.
 
 A imagem escolhida é reduzida para 256 px e guardada no próprio aparelho:
@@ -263,7 +262,7 @@ meu-controle/
     ├── formularios-saude.js # check-in, hábitos, remédios e jejum
     ├── areas.js             # áreas, perfis prontos, abas do celular e tela Hoje
     ├── backup.js            # cópias automáticas, pasta automática e backup em 1 toque
-    ├── avatar.js            # tela "Editar avatar" (foto, anime, ilustrações, emojis)
+    ├── avatar.js            # tela "Editar avatar" (foto, personagens de anime, emojis)
     ├── primeiro-uso.js      # boas-vindas guiadas
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
