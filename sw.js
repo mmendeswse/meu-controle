@@ -1,8 +1,11 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v13";
-const V = "?v=3.1.0";
-const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "primeiro-uso", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
+const CACHE = "meu-controle-v14";
+const CACHE_IMG = "meu-controle-avatares";
+// guarda no máximo 150 imagens de avatar (as mais antigas saem)
+function limitarCacheImg(c) { return c.keys().then((ks) => Promise.all(ks.slice(0, Math.max(0, ks.length - 150)).map((k) => c.delete(k)))); }
+const V = "?v=3.2.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
   "./js/vendor/chart.umd.min.js",
@@ -10,10 +13,20 @@ const ARQUIVOS = [
   "./apple-touch-icon.png", "./apple-touch-icon-180.png", "./apple-touch-icon-167.png", "./apple-touch-icon-152.png", "./apple-touch-icon-precomposed.png"
 ].concat(MODULOS.map((m) => "./js/" + m + ".js" + V));
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ARQUIVOS)).then(() => self.skipWaiting())); });
-self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
+self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE && k !== CACHE_IMG).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  if (url.origin !== location.origin || e.request.method !== "GET") return;
+  if (e.request.method !== "GET") return;
+  // imagens de avatar (MyAnimeList / nekos.best): guardadas para aparecer sem internet
+  if (url.origin !== location.origin) {
+    if (e.request.destination === "image" && /(^|\.)(myanimelist\.net|nekos\.best)$/.test(url.hostname)) {
+      e.respondWith(caches.open(CACHE_IMG).then((c) => c.match(e.request).then((r) => r || fetch(e.request).then((resp) => {
+        if (resp && (resp.ok || resp.type === "opaque")) c.put(e.request, resp.clone()).then(() => limitarCacheImg(c));
+        return resp;
+      }))));
+    }
+    return;
+  }
   const ehPagina = e.request.mode === "navigate" || (e.request.destination === "document");
   if (ehPagina) {
     e.respondWith(fetch(e.request).then((resp) => { const cp = resp.clone(); caches.open(CACHE).then((c) => c.put(e.request, cp)); return resp; }).catch(() => caches.match(e.request).then((r) => r || caches.match("./index.html"))));

@@ -70,11 +70,18 @@
   }
 
   // avatar (emoji ou inicial) com a cor escolhida
-  function avatarHTML(d, classe) {
+  // avatar: imagem (anime, ilustração ou foto), emoji ou inicial do nome
+  function avatarConteudo(d) {
     const u = d.usuarios[0], ap = d.config.aparencia || {};
     const nome = u.nome && u.nome !== "Eu" ? u.nome : "";
-    const conteudo = ap.avatar ? `<span class="av-emoji">${esc(ap.avatar)}</span>` : esc((nome || "Eu").charAt(0).toUpperCase());
-    return `<button class="avatar ${classe || ""}" data-acao="ir" data-secao="configuracoes" data-param="aparencia" title="Perfil e aparência" style="--av:${corHex(ap.avatarCor || "roxo")}">${conteudo}</button>`;
+    const img = ap.avatarImg;
+    if (img && img.src) return `<img src="${esc(img.src)}" alt="" referrerpolicy="no-referrer" style="object-position:${esc(img.foco || "50% 30%")}" onerror="this.remove()">`;
+    return ap.avatar ? `<span class="av-emoji">${esc(ap.avatar)}</span>` : esc((nome || "Eu").charAt(0).toUpperCase());
+  }
+  function avatarHTML(d, classe, acao) {
+    const ap = d.config.aparencia || {};
+    const alvo = acao || `data-acao="ir" data-secao="configuracoes" data-param="aparencia"`;
+    return `<button class="avatar ${classe || ""}${ap.avatarImg && ap.avatarImg.src ? " com-img" : ""}" ${alvo} title="Perfil e avatar" style="--av:${corHex(ap.avatarCor || "roxo")}">${avatarConteudo(d)}</button>`;
   }
 
   if (window.matchMedia) {
@@ -99,13 +106,9 @@
     const ap = d.config.aparencia, u = d.usuarios[0];
     return UI.card({ titulo: "Aparência", sub: "cada pessoa deixa o app do seu jeito", id: "sec-aparencia", corpo: `<div class="pad ajustes-ap">
       <div class="ap-perfil">
-        ${avatarHTML(d, "grande")}
-        <div><b>${esc(u.nome && u.nome !== "Eu" ? u.nome : "Sem nome")}</b><small>${esc(u.objetivo || "")}</small>
-          <button class="link-acao" data-acao="editar-perfil">editar perfil</button></div>
-      </div>
-      <div class="ap-bloco"><span class="ap-rot">Avatar</span>
-        <div class="ap-avatares"><button class="ap-av${!ap.avatar ? " ativo" : ""}" data-acao="ap-avatar" data-k="" title="Inicial do nome">${esc(((u.nome && u.nome !== "Eu" ? u.nome : "Eu").charAt(0) || "E").toUpperCase())}</button>${AVATARES.map((e) => `<button class="ap-av${ap.avatar === e ? " ativo" : ""}" data-acao="ap-avatar" data-k="${e}">${e}</button>`).join("")}</div>
-        <div class="ap-cores pequenas">${CORES.map((c) => `<button class="ap-cor${(ap.avatarCor || "roxo") === c.k ? " ativo" : ""}" data-acao="ap-avatar-cor" data-k="${c.k}" style="--c:${c.c}" title="${c.r}" aria-label="Fundo do avatar ${c.r}"></button>`).join("")}</div>
+        ${avatarHTML(d, "grande", 'data-acao="av-abrir"')}
+        <div><b>${esc(u.nome && u.nome !== "Eu" ? u.nome : "Sem nome")}</b><small>${esc(ap.avatarImg && ap.avatarImg.nome && ap.avatarImg.fonte !== "foto" ? ap.avatarImg.nome : u.objetivo || "")}</small>
+          <span class="botoes-linha"><button class="btn pequeno primario" data-acao="av-abrir">Editar avatar</button><button class="btn pequeno" data-acao="editar-perfil">Perfil</button></span></div>
       </div>
       <div class="ap-bloco"><span class="ap-rot">Tema</span>${seg("ap-tema", TEMAS, ap.tema)}</div>
       <div class="ap-bloco"><span class="ap-rot">Cor do app</span>

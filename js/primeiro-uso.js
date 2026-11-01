@@ -14,7 +14,7 @@
   const esc = UI.esc;
   const App = () => global.App;
   let passo = 0;
-  const escolha = { nome: "", avatar: "🙂", cor: "azul", perfil: "completo", acordar: "06:30", dormir: "23:00", tema: "escuro" };
+  const escolha = { nome: "", avatar: "🙂", img: null, cor: "azul", perfil: "completo", acordar: "06:30", dormir: "23:00", tema: "escuro" };
 
   function deveMostrar(d) {
     const c = d.config;
@@ -36,10 +36,10 @@
     if (passo === 1) return `<div class="pu">${pontos()}
       <h3>Como você quer ser chamado?</h3>
       <div class="campo"><input id="pu_nome" value="${esc(escolha.nome)}" placeholder="Seu nome ou apelido" autocomplete="given-name" maxlength="40"></div>
-      <span class="ap-rot">Escolha um avatar</span>
-      <div class="pu-avatar"><span class="avatar grande" style="--av:${P.corHex(escolha.cor)}"><span class="av-emoji">${escolha.avatar}</span></span></div>
-      <div class="ap-avatares pu-avs">${P.AVATARES.map((e) => `<button class="ap-av${escolha.avatar === e ? " ativo" : ""}" data-acao="pu-avatar" data-k="${e}">${e}</button>`).join("")}</div>
-      <div class="ap-cores pequenas">${P.CORES.map((c) => `<button class="ap-cor${escolha.cor === c.k ? " ativo" : ""}" data-acao="pu-cor" data-k="${c.k}" style="--c:${c.c}" aria-label="${c.r}"></button>`).join("")}</div>
+      <span class="ap-rot">Seu avatar</span>
+      <div class="pu-avatar"><button class="avatar gigante${escolha.img ? " com-img" : ""}" data-acao="pu-galeria" style="--av:${P.corHex(escolha.cor)}" aria-label="Escolher avatar">${escolha.img ? `<img src="${esc(escolha.img.src)}" alt="" referrerpolicy="no-referrer" style="object-position:${esc(escolha.img.foco || "50% 30%")}">` : `<span class="av-emoji">${escolha.avatar}</span>`}<i class="pu-lapis">✎</i></button></div>
+      <button class="btn primario pu-galeria" data-acao="pu-galeria">🎨 Personagens de anime, ilustrações ou sua foto</button>
+      <div class="pu-emojis">${P.AVATARES.slice(0, 12).map((e) => `<button class="ap-av${!escolha.img && escolha.avatar === e ? " ativo" : ""}" data-acao="pu-avatar" data-k="${e}">${e}</button>`).join("")}</div>
       ${rodape()}</div>`;
     if (passo === 2) return `<div class="pu">${pontos()}
       <h3>O que você quer acompanhar?</h3>
@@ -80,7 +80,12 @@
   App().registrarAcoes({
     "pu-proximo": () => { lerCampos(); if (passo === 1 && !escolha.nome.trim()) { UI.toast("Diga como quer ser chamado."); return; } passo = Math.min(3, passo + 1); desenhar(); },
     "pu-voltar": () => { lerCampos(); passo = Math.max(0, passo - 1); desenhar(); },
-    "pu-avatar": (el) => { escolha.avatar = el.dataset.k; desenhar(); },
+    "pu-avatar": (el) => { escolha.avatar = el.dataset.k; escolha.img = null; desenhar(); },
+    "pu-galeria": () => {
+      const n = document.getElementById("pu_nome"); if (n) escolha.nome = n.value;
+      global.Avatar.abrir({ nome: escolha.nome, cor: escolha.cor, atual: escolha.img ? Object.assign({}, escolha.img) : { fonte: "emoji", emoji: escolha.avatar },
+        aoConcluir: (r) => { escolha.img = r.img; if (r.emoji) escolha.avatar = r.emoji; escolha.cor = r.cor; desenhar(); } });
+    },
     "pu-cor": (el) => { escolha.cor = el.dataset.k; desenhar(); },
     "pu-perfil": (el) => { escolha.perfil = el.dataset.k; desenhar(); },
     "pu-tema": (el) => {
@@ -94,7 +99,7 @@
       lerCampos();
       const d = App().dados();
       d.usuarios[0].nome = escolha.nome.trim() || "Eu";
-      Object.assign(d.config.aparencia, { avatar: escolha.avatar, avatarCor: escolha.cor, cor: escolha.cor === "grafite" ? "rosa" : escolha.cor, tema: escolha.tema });
+      Object.assign(d.config.aparencia, { avatar: escolha.img ? "" : escolha.avatar, avatarImg: escolha.img || null, avatarCor: escolha.cor, cor: escolha.cor === "grafite" ? "rosa" : escolha.cor, tema: escolha.tema });
       d.config.rotina.horarios.acordar = escolha.acordar;
       d.config.rotina.horarios.dormir = escolha.dormir;
       global.Areas.aplicarPerfil(escolha.perfil, true);

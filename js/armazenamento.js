@@ -91,7 +91,7 @@
     };
   }
   function aparenciaPadrao() {
-    return { tema: "escuro", cor: "rosa", corUnica: false, fonte: "normal", avatar: "", avatarCor: "roxo", vibrar: true, animacoes: true };
+    return { tema: "escuro", cor: "rosa", corUnica: false, fonte: "normal", avatar: "", avatarImg: null, avatarCor: "roxo", vibrar: true, animacoes: true };
   }
   // áreas do app que cada pessoa usa, abas do celular e a tela Hoje
   function areasPadrao() {

@@ -278,8 +278,12 @@
   }
   // executa agora, ou logo depois do "voltar" que um formulário fechado deixou pendente
   function aposVoltar(fn) { if (voltaPendente) filaVolta.push(fn); else fn(); }
+  // telas por cima do app (ex.: Editar avatar) tratam o "voltar" antes de todo o resto
+  const interceptadores = [];
+  function aoVoltar(fn) { interceptadores.push(fn); }
   window.addEventListener("popstate", (e) => {
     if (voltaPendente) { e.stopImmediatePropagation(); concluirVolta(); return; } // foi o próprio app que voltou
+    for (let i = 0; i < interceptadores.length; i++) if (interceptadores[i]()) { e.stopImmediatePropagation(); return; }
     if (modalAberto()) { e.stopImmediatePropagation(); fecharModal(true); }
   });
 
@@ -349,7 +353,7 @@
     esc, brl, num, numAuto, kg, litros, sinal, pct, dataBR, dataCurta, dataLonga, mesRotulo, rotuloRelativo, plural, opcoes,
     ICONES, svg, dica, card, gaugeSVG, kpi, deltaPill, mini, barra, macro, barList, vazio, SEM_DADOS, CLASSE_STATUS, selo, statusMeta, abas,
     botao, botaoIcone, linhaAcoes, navData,
-    toast, abrirModal, fecharModal, modalAberto, aposVoltar, confirmar, botoesModal,
+    toast, abrirModal, fecharModal, modalAberto, aposVoltar, aoVoltar, confirmar, botoesModal,
     valor, texto, numero, marcado, multiplos, chips, campoChips, campoAlimento
   };
 })(window);

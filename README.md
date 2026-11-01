@@ -75,6 +75,24 @@ Depois dá para ligar e desligar cada área, escolher as 4 abas da barra do
 celular e montar a tela Hoje (quais cartões, em que ordem). Desligar uma
 área só esconde: os dados continuam guardados.
 
+## Avatar (estilo app de streaming)
+
+Toque no avatar (tela Hoje ou Ajustes → Aparência → **Editar avatar**) para
+abrir a galeria:
+
+- **Sua foto** — da galeria ou da câmera;
+- **Buscar personagem** e **Personagens mais populares** — do MyAnimeList,
+  pela API pública [Jikan](https://jikan.moe);
+- **Ilustrações** (husbandos, waifus, nekos, kitsunes) — da API
+  [nekos.best](https://nekos.best), que só tem conteúdo seguro, com crédito
+  ao artista;
+- **Emojis** com cor de fundo.
+
+A imagem escolhida é reduzida para 256 px e guardada no próprio aparelho:
+aparece sem internet e vai junto no backup. As galerias precisam de
+internet; sem conexão, a tela avisa e os emojis e a foto continuam
+funcionando.
+
 ## Onde ficam os seus dados
 
 Tudo é salvo no armazenamento local do seu próprio navegador
@@ -245,6 +263,7 @@ meu-controle/
     ├── formularios-saude.js # check-in, hábitos, remédios e jejum
     ├── areas.js             # áreas, perfis prontos, abas do celular e tela Hoje
     ├── backup.js            # cópias automáticas, pasta automática e backup em 1 toque
+    ├── avatar.js            # tela "Editar avatar" (foto, anime, ilustrações, emojis)
     ├── primeiro-uso.js      # boas-vindas guiadas
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
