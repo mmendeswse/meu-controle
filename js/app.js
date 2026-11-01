@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "3.3.2";
+  const VERSAO_APP = "3.4.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -40,12 +40,14 @@
   // telas antigas que viraram abas (links salvos e alertas continuam funcionando)
   const ALIAS = { refeicoes: ["alimentacao", "semana"], estoque: ["compras", "estoque"], habitos: ["bemestar", "habitos"], remedios: ["bemestar", "remedios"],
     jejum: ["bemestar", "jejum"], conquistas: ["metas", "conquistas"] };
+  const POS_RENDER = []; // funções chamadas depois de cada tela desenhada (tutoriais…)
   const POS_SALVAR = []; // funções chamadas depois de cada salvamento (lembretes, conquistas…)
 
   function registrarPagina(id, def) { PAGINAS[id] = def; }
   function registrarAcoes(mapa) { Object.assign(ACOES, mapa); }
   function registrarMudancas(mapa) { Object.assign(MUDANCAS, mapa); }
   function aoSalvar(fn) { POS_SALVAR.push(fn); }
+  function aoRenderizar(fn) { POS_RENDER.push(fn); }
 
   // ---------------------------------------------------------------------
   // dados
@@ -85,8 +87,9 @@
       else history.replaceState(null, "", hash);
     });
     UI.fecharModal();
-    renderizar();
+    // volta ao topo antes de desenhar: a tela pode querer rolar até uma parte dela (ex.: Ajustes → Backup)
     if (!opc || !opc.manterRolagem) window.scrollTo(0, 0);
+    renderizar();
   }
   function lerHash() {
     const m = (location.hash || "").match(/^#\/([\w-]+)(?:\/(.+))?$/);
@@ -116,6 +119,7 @@
     }
     atualizarBadge();
     atualizarRodape();
+    POS_RENDER.forEach((fn) => { try { fn(DADOS, ROTA); } catch (e) { console.error(e); } });
   }
 
   function faixaDemo() {
@@ -428,6 +432,6 @@
     setInterval(() => { if (N.hoje(0) !== diaAberto) { diaAberto = N.hoje(0); renderizar(); POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } }); } }, 60000);
   }
 
-  window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, aoSalvar, fecharFab };
+  window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, aoSalvar, aoRenderizar, fecharFab };
   document.addEventListener("DOMContentLoaded", iniciar);
 })();

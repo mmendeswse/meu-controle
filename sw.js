@@ -1,11 +1,10 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v17";
-const CACHE_IMG = "meu-controle-avatares";
-// guarda no máximo 150 imagens de avatar (as mais antigas saem)
-function limitarCacheImg(c) { return c.keys().then((ks) => Promise.all(ks.slice(0, Math.max(0, ks.length - 150)).map((k) => c.delete(k)))); }
-const V = "?v=3.3.2";
-const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
+const CACHE = "meu-controle-v18";
+// a imagem do avatar escolhido (quando é um endereço) — o próprio app guarda aqui
+const CACHE_IMG = "meu-controle-avatar";
+const V = "?v=3.4.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "tutorial", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
   "./js/vendor/chart.umd.min.js",
@@ -17,13 +16,11 @@ self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) =
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  // imagens de avatar (MyAnimeList): guardadas para aparecer sem internet
+  // imagens de avatar (MyAnimeList): o avatar escolhido sai do cache (funciona sem
+  // internet); as da galeria vêm direto da rede, sem passar por aqui
   if (url.origin !== location.origin) {
     if (e.request.destination === "image" && /(^|\.)(myanimelist\.net)$/.test(url.hostname)) {
-      e.respondWith(caches.open(CACHE_IMG).then((c) => c.match(e.request).then((r) => r || fetch(e.request).then((resp) => {
-        if (resp && (resp.ok || resp.type === "opaque")) c.put(e.request, resp.clone()).then(() => limitarCacheImg(c));
-        return resp;
-      }))));
+      e.respondWith(caches.open(CACHE_IMG).then((c) => c.match(e.request.url)).then((r) => r || fetch(e.request)));
     }
     return;
   }

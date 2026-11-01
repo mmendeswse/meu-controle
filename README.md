@@ -73,7 +73,18 @@ Perfis prontos (Ajustes → O que você usa):
 
 Depois dá para ligar e desligar cada área, escolher as 4 abas da barra do
 celular e montar a tela Hoje (quais cartões, em que ordem). Desligar uma
-área só esconde: os dados continuam guardados.
+área só esconde: os dados continuam guardados. Para refazer essas
+perguntas: **Ajustes → ✨ Configuração inicial**.
+
+## Tutoriais
+
+Na primeira visita a cada tela (Hoje, Alimentação, Treino, Bem-estar,
+Compras, Corpo, Metas, Relatórios e Ajustes) aparece um convite rápido;
+aceitando, um passo a passo destaca as partes reais da tela, uma de cada
+vez. O botão **?** ao lado do título de cada tela mostra de novo, e em
+**Ajustes → Tutoriais** dá para rever qualquer um ou desligar os convites.
+Depois de uma atualização com mudanças visíveis, o app mostra uma vez o que
+há de novo.
 
 ## Avatar (estilo app de streaming)
 
@@ -83,9 +94,17 @@ por um instante (dá para desligar em Ajustes → Aparência). Toque nele para
 abrir **Editar avatar**:
 
 - **Sua foto** — da galeria ou da câmera;
-- **Buscar personagem** e **Personagens mais populares** — do MyAnimeList,
-  pela API pública [Jikan](https://jikan.moe);
+- **Buscar** — por personagem ("Luffy") ou por anime ("Naruto", que mostra
+  o elenco);
+- **Mais populares** e uma fileira por anime (Naruto, One Piece, Dragon
+  Ball Z, Demon Slayer, Jujutsu Kaisen…), que rolam para o lado — do
+  MyAnimeList, pela API pública [Jikan](https://jikan.moe);
 - **Emojis** com cor de fundo.
+
+Ao tocar num personagem aparece embaixo a barra **Usar**. As fileiras só
+são pedidas quando chegam perto da tela e ficam guardadas no aparelho por
+14 dias, então a galeria abre na hora a partir da segunda vez (e já vem
+pré-carregada ao abrir Ajustes ou o passo do avatar nas boas-vindas).
 
 A imagem escolhida é reduzida para 256 px e guardada no próprio aparelho:
 aparece sem internet e vai junto no backup. As galerias precisam de
@@ -264,6 +283,7 @@ meu-controle/
     ├── backup.js            # cópias automáticas, pasta automática e backup em 1 toque
     ├── avatar.js            # tela "Editar avatar" (foto, personagens de anime, emojis)
     ├── primeiro-uso.js      # boas-vindas guiadas
+    ├── tutorial.js          # tutoriais de cada tela, botão ? e "o que há de novo"
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```

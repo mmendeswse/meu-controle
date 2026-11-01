@@ -128,7 +128,10 @@
       hoje: hojePadrao(),
       perfilUso: null, // preenchido na primeira abertura (completo, saude, crianca, fitness)
       conquistasVistas: null, // null = ainda não comparou (não celebra o que já existia)
-      jejumPadrao: 16
+      jejumPadrao: 16,
+      tutoriais: {},      // explicações de cada tela já vistas (tela → data)
+      dicasAuto: true,    // mostrar a explicação na primeira visita a cada tela
+      novidadesVistas: null // última versão cujas novidades a pessoa já viu
     };
   }
   function esquemaVazio() {
@@ -278,6 +281,7 @@
     d.config.backup = Object.assign({}, cfg.backup, (d.config && d.config.backup) || {});
     d.config.areas = Object.assign({}, cfg.areas, (d.config && d.config.areas) || {});
     if (!Array.isArray(d.config.abas) || !d.config.abas.length) d.config.abas = cfg.abas;
+    if (!d.config.tutoriais || typeof d.config.tutoriais !== "object") d.config.tutoriais = {};
     const hj = (d.config && d.config.hoje) || {};
     d.config.hoje = Object.assign({}, cfg.hoje, hj);
     // cartões novos de versões futuras entram no fim da lista

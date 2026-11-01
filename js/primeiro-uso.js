@@ -64,6 +64,7 @@
     if (!UI.modalAberto()) UI.abrirModal(tela(), { largo: true, semFoco: true, aoFechar: () => { if (passo >= 0) marcarFeito(); } });
     else m.innerHTML = `<button class="modal-fechar" data-acao="fechar-modal" aria-label="Fechar">${UI.svg("fechar")}</button>` + tela();
     m.classList.add("modal-pu");
+    if (passo === 1 && global.Avatar) global.Avatar.preaquecer();
     const n = m.querySelector("#pu_nome");
     if (n) { n.addEventListener("input", () => { escolha.nome = n.value; }); if (window.matchMedia("(pointer: fine)").matches) setTimeout(() => n.focus(), 50); }
   }
@@ -74,7 +75,11 @@
   }
   function marcarFeito() {
     const d = App().dados();
-    if (!d.config.onboardingFeito) { d.config.onboardingFeito = true; A.salvarDados(d, true, true); }
+    if (!d.config.onboardingFeito) {
+      d.config.onboardingFeito = true;
+      if (global.Tutorial && !d.config.novidadesVistas) d.config.novidadesVistas = global.Tutorial.NOVIDADES.versao;
+      A.salvarDados(d, true, true);
+    }
   }
   // refazer = aberto por Ajustes: já vem preenchido com o que a pessoa escolheu antes
   function abrir(refazer) {
@@ -116,6 +121,7 @@
       d.config.rotina.horarios.dormir = escolha.dormir;
       global.Areas.aplicarPerfil(escolha.perfil, true);
       d.config.onboardingFeito = true;
+      if (global.Tutorial && !refazendo) d.config.novidadesVistas = global.Tutorial.NOVIDADES.versao; // quem chegou agora já começa com tudo
       passo = -1;
       UI.fecharModal();
       refazendo = false;

@@ -68,17 +68,20 @@
     titulo: "Ajustes",
     render(d) {
       const PZ = window.Personalizar, LB = window.Lembretes, AR = window.Areas;
-      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["backup", "🛟 Backup"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"]];
+      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["backup", "🛟 Backup"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"], ["tutoriais", "❓ Tutoriais"]];
       return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div>
           <nav class="atalhos-ajustes"><button data-acao="primeiro-uso">✨ Configuração inicial</button>${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
         <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${AR.cartaoAreas(d)}</div></div>
         <div class="grid"><div class="c6">${PZ.cartaoRotina(d)}</div><div class="c6">${AR.cartaoHoje(d)}</div></div>
         <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${LB.cartaoAjustes(d)}</div></div>
         <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${alertas(d)}</div></div>
+        ${window.Tutorial ? `<div class="grid"><div class="c12">${window.Tutorial.cartaoAjustes(d)}</div></div>` : ""}
         <div class="grid"><div class="c7">${integracao(d)}</div><div class="c5">${privacidade(d)}</div></div>
         <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${window.Instalar ? window.Instalar.cartaoAjustes() : ""}</div></div>`;
     },
     depois(d, rota) {
+      // deixa os personagens de anime prontos para quando abrir "Editar avatar"
+      if (window.Avatar) setTimeout(() => window.Avatar.preaquecer(), 1500);
       if (rota.param) {
         const el = document.getElementById("sec-" + rota.param);
         if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.classList.add("destaque"); setTimeout(() => el.classList.remove("destaque"), 1800); }

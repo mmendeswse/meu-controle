@@ -21,59 +21,153 @@
   const UI = global.UI;
   const esc = UI.esc;
   const JIKAN = "https://api.jikan.moe/v4";
-  const cacheApi = {}; // respostas da sessão (evita repetir pedidos)
-  const est = { aberto: false, escolha: null, original: null, aoConcluir: null, nome: "", cor: "roxo", top: [], topPagina: 0, topFim: false, busca: "", resultados: null, buscando: false, erro: {} };
+
+  // séries com fileira própria (ids do MyAnimeList), na ordem em que aparecem
+  const SERIES = [
+    [20, "Naruto"], [21, "One Piece"], [813, "Dragon Ball Z"], [38000, "Demon Slayer"], [40748, "Jujutsu Kaisen"],
+    [16498, "Attack on Titan"], [31964, "My Hero Academia"], [52299, "Solo Leveling"], [52991, "Frieren"], [50265, "Spy x Family"],
+    [44511, "Chainsaw Man"], [11061, "Hunter x Hunter"], [1535, "Death Note"], [5114, "Fullmetal Alchemist"], [30276, "One Punch Man"],
+    [269, "Bleach"], [20583, "Haikyuu!!"], [527, "Pokémon"], [530, "Sailor Moon"], [22319, "Tokyo Ghoul"],
+    [32182, "Mob Psycho 100"], [1575, "Code Geass"], [9253, "Steins;Gate"], [1, "Cowboy Bebop"]
+  ];
+
+  const est = {
+    aberto: false, escolha: null, original: null, aoConcluir: null, nome: "", cor: "roxo",
+    linhas: {},   // chave → lista de personagens já carregados ("top", "s:20", "busca", "anime")
+    erros: {},    // chave → mensagem
+    busca: "", buscando: false, animeBusca: null
+  };
 
   // ---------------------------------------------------------------------
-  // APIs
+  // cache no aparelho: a galeria abre na hora a partir da 2ª vez
   // ---------------------------------------------------------------------
-  let filaJikan = Promise.resolve();
-  // a Jikan aceita até 3 pedidos por segundo: os pedidos esperam a vez
-  function jikan(caminho) {
-    if (cacheApi[caminho]) return Promise.resolve(cacheApi[caminho]);
-    const p = filaJikan.then(() => fetch(JIKAN + caminho).then((r) => {
-      if (r.status === 429) throw new Error("muitos pedidos — tente de novo em alguns segundos");
+  const CHAVE_CACHE = "meuControle:avatarCache", VALIDADE = 14 * 864e5, MAX_CACHE = 70;
+  let disco = null;
+  function lerCache() {
+    if (disco) return disco;
+    try { disco = JSON.parse(localStorage.getItem(CHAVE_CACHE)) || {}; } catch (e) { disco = {}; }
+    return disco;
+  }
+  function gravarCache(k, lista) {
+    const c = lerCache();
+    c[k] = { t: Date.now(), l: lista };
+    const ks = Object.keys(c);
+    if (ks.length > MAX_CACHE) ks.sort((a, b) => c[a].t - c[b].t).slice(0, ks.length - MAX_CACHE).forEach((x) => delete c[x]);
+    try { localStorage.setItem(CHAVE_CACHE, JSON.stringify(c)); } catch (e) { /* sem espaço: segue só na memória */ }
+  }
+
+  // ---------------------------------------------------------------------
+  // fila de pedidos à Jikan (até 3 por segundo), com prioridade para a
+  // busca, tempo-limite e nova tentativa quando o servidor está ocupado
+  // ---------------------------------------------------------------------
+  const fila = [], emAndamento = {};
+  let ocupado = false, ultimo = 0;
+  function pedir(caminho, tentativa) {
+    const ctrl = global.AbortController ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 12000) : 0;
+    return fetch(JIKAN + caminho, ctrl ? { signal: ctrl.signal } : {}).then((r) => {
+      clearTimeout(t);
+      if (r.status === 429 || r.status >= 500) { const e = new Error(r.status === 429 ? "servidor ocupado" : "erro " + r.status); e.repetir = true; throw e; }
       if (!r.ok) throw new Error("erro " + r.status);
       return r.json();
-    }));
-    filaJikan = p.catch(() => {}).then(() => new Promise((ok) => setTimeout(ok, 400)));
-    return p.then((j) => { cacheApi[caminho] = j; return j; });
+    }).catch((e) => {
+      clearTimeout(t);
+      if (e && e.name === "AbortError") { e = new Error("o servidor demorou para responder"); e.repetir = true; }
+      else if (e && e.name === "TypeError" && navigator.onLine) e.repetir = true;
+      if (e.repetir && tentativa < 2) return new Promise((ok) => setTimeout(ok, 1300 * (tentativa + 1))).then(() => pedir(caminho, tentativa + 1));
+      throw e;
+    });
   }
-  function personagem(c) {
+  function proximo() {
+    if (ocupado || !fila.length) return;
+    ocupado = true;
+    setTimeout(() => {
+      const t = fila.shift();
+      ultimo = Date.now();
+      pedir(t.caminho, 0).then(t.ok, t.erro).finally(() => { ultimo = Date.now(); ocupado = false; proximo(); });
+    }, Math.max(0, ultimo + 360 - Date.now()));
+  }
+  function jikan(caminho, urgente) {
+    if (emAndamento[caminho]) return emAndamento[caminho];
+    const p = new Promise((ok, erro) => { const t = { caminho, ok, erro }; if (urgente) fila.unshift(t); else fila.push(t); proximo(); });
+    emAndamento[caminho] = p;
+    p.then(() => { delete emAndamento[caminho]; }, () => { delete emAndamento[caminho]; });
+    return p;
+  }
+  // devolve do cache (mesmo antigo, atualizando em segundo plano) ou da rede
+  function obter(chave, caminho, transformar, urgente) {
+    const c = lerCache()[chave];
+    if (c && Date.now() - c.t < VALIDADE) return Promise.resolve(c.l);
+    const p = jikan(caminho, urgente).then((j) => { const l = transformar(j); if (l.length) gravarCache(chave, l); return l; });
+    if (c) { p.catch(() => {}); return Promise.resolve(c.l); }
+    return p;
+  }
+
+  // personagem enxuto: { u: imagem, n: nome, l: link }
+  function enxuto(c) {
     const img = (c.images && ((c.images.webp && c.images.webp.image_url) || (c.images.jpg && c.images.jpg.image_url))) || "";
     if (!img || /questionmark|apple-touch-icon/i.test(img)) return null; // sem foto no MyAnimeList
-    return { fonte: "jikan", url: img, nome: c.name, credito: c.name, link: c.url || "", foco: "50% 18%" };
+    return { u: img, n: c.name || "", l: c.url || "" };
   }
-  function carregarTop() {
-    if (est.topFim || est.carregandoTop) return;
-    est.carregandoTop = true;
-    const pg = est.topPagina + 1;
-    jikan(`/top/characters?page=${pg}&limit=25`).then((j) => {
-      const novos = (j.data || []).map(personagem).filter(Boolean);
-      est.top = est.top.concat(novos.filter((n) => !est.top.some((x) => x.url === n.url)));
-      est.topPagina = pg;
-      est.topFim = !(j.pagination && j.pagination.has_next_page);
-      est.erro.top = null;
-    }).catch((e) => { est.erro.top = msgErro(e); }).finally(() => { est.carregandoTop = false; desenhar(); });
+  function item(x) { return { fonte: "jikan", url: x.u, nome: x.n, credito: x.n, link: x.l, foco: "50% 18%" }; }
+  const deTop = (j) => (j.data || []).map(enxuto).filter(Boolean);
+  const deElenco = (j) => (j.data || []).filter((x) => x.character)
+    .sort((a, b) => (a.role === "Main" ? 0 : 1) - (b.role === "Main" ? 0 : 1) || (b.favorites || 0) - (a.favorites || 0))
+    .map((x) => enxuto(x.character)).filter(Boolean).slice(0, 20);
+
+  function carregarLinha(chave, urgente) {
+    if (est.linhas[chave] || est.erros[chave] === "carregando") return;
+    let p;
+    if (chave === "top") p = obter("top", "/top/characters?page=1&limit=25", deTop, urgente);
+    else if (chave.indexOf("s:") === 0) p = obter(chave, `/anime/${chave.slice(2)}/characters`, deElenco, urgente);
+    else return;
+    est.erros[chave] = "carregando";
+    p.then((l) => { est.linhas[chave] = l.map(item); est.erros[chave] = null; })
+      .catch((e) => { est.erros[chave] = msgErro(e); })
+      .finally(() => desenharLinha(chave));
   }
+  // aquece o cache em segundo plano (ex.: ao abrir Ajustes ou o passo do avatar)
+  function preaquecer() {
+    if (!navigator.onLine) return;
+    const c = lerCache();
+    ["top", "s:" + SERIES[0][0], "s:" + SERIES[1][0], "s:" + SERIES[2][0]].forEach((k) => {
+      if (c[k] && Date.now() - c[k].t < VALIDADE) return;
+      if (k === "top") obter("top", "/top/characters?page=1&limit=25", deTop).catch(() => {});
+      else obter(k, `/anime/${k.slice(2)}/characters`, deElenco).catch(() => {});
+    });
+  }
+
   let timerBusca = null;
   function buscar(q) {
     est.busca = q;
     clearTimeout(timerBusca);
-    if (q.trim().length < 2) { est.resultados = null; desenhar(true); return; }
+    if (q.trim().length < 2) { est.linhas.busca = null; est.animeBusca = null; est.erros.busca = null; est.buscando = false; desenharResultados(); return; }
     timerBusca = setTimeout(() => {
-      est.buscando = true; desenhar(true);
-      jikan(`/characters?q=${encodeURIComponent(q.trim())}&order_by=favorites&sort=desc&limit=24`).then((j) => {
+      const termo = q.trim(), chave = "q:" + termo.toLowerCase();
+      est.buscando = true; desenharResultados();
+      const pPers = obter(chave, `/characters?q=${encodeURIComponent(termo)}&order_by=favorites&sort=desc&limit=24`, deTop, true);
+      // também procura um anime com esse nome e mostra o elenco dele
+      const pAnime = obter("a" + chave, `/anime?q=${encodeURIComponent(termo)}&order_by=members&sort=desc&limit=1&sfw=true`,
+        (j) => (j.data || []).slice(0, 1).map((a) => ({ u: "", n: a.title_english || a.title || "", l: String(a.mal_id) })), true)
+        .then((l) => l[0] && l[0].l ? obter("s:" + l[0].l, `/anime/${l[0].l}/characters`, deElenco, true).then((el) => ({ titulo: l[0].n, lista: el })) : null)
+        .catch(() => null);
+      pPers.then((l) => {
         if (est.busca !== q) return;
-        est.resultados = (j.data || []).map(personagem).filter(Boolean);
-        est.erro.busca = null;
-      }).catch((e) => { est.erro.busca = msgErro(e); }).finally(() => { est.buscando = false; desenhar(true); });
+        est.linhas.busca = l.map(item); est.erros.busca = null;
+      }).catch((e) => { if (est.busca === q) est.erros.busca = msgErro(e); })
+        .finally(() => { if (est.busca === q) { est.buscando = false; desenharResultados(); } });
+      pAnime.then((r) => {
+        if (est.busca !== q) return;
+        est.animeBusca = r && r.lista.length ? r.titulo : null;
+        est.linhas.anime = r ? r.lista.map(item) : null;
+        desenharResultados();
+      });
     }, 450);
   }
   function msgErro(e) {
-    if (!navigator.onLine) return "Sem internet agora. As imagens aparecem quando o aparelho estiver conectado.";
+    if (!navigator.onLine) return "Sem internet agora. Os personagens aparecem quando o aparelho estiver conectado.";
     if (!e || e.name === "TypeError") return "Não consegui falar com o servidor de imagens. Verifique a internet e tente de novo.";
-    return "Não consegui carregar as imagens (" + e.message + ").";
+    return "O servidor de imagens não respondeu (" + e.message + ").";
   }
 
   // ---------------------------------------------------------------------
@@ -96,17 +190,26 @@
       return c.toDataURL("image/jpeg", 0.86);
     });
   }
+  const CACHE_IMG = "meu-controle-avatar";
+  // guarda a imagem escolhida para aparecer sem internet (quando o servidor não deixa copiar)
+  function guardarEndereco(url) {
+    if (!global.caches || !/^https:/.test(url || "")) return Promise.resolve();
+    return caches.open(CACHE_IMG).then((c) => c.match(url).then((r) => r || fetch(url, { mode: "no-cors" }).then((resp) => c.put(url, resp)))).catch(() => {});
+  }
   function guardarLocal(item) {
     if (item.src && item.src.indexOf("data:") === 0) return Promise.resolve(item);
-    return fetch(item.url, { mode: "cors" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+    const ctrl = global.AbortController ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 8000) : 0;
+    return fetch(item.url, ctrl ? { mode: "cors", signal: ctrl.signal } : { mode: "cors" }).then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
       .then((b) => miniatura(b, item.foco)).then((src) => Object.assign({}, item, { src }))
-      .catch(() => Object.assign({}, item, { src: item.url })); // sem permissão de cópia: usa o endereço (o service worker guarda em cache)
+      .catch(() => guardarEndereco(item.url).then(() => Object.assign({}, item, { src: item.url })))
+      .finally(() => clearTimeout(t));
   }
   function lerFoto(arquivo) {
     if (!arquivo || !/^image\//.test(arquivo.type)) { UI.toast("Escolha um arquivo de imagem."); return; }
     miniatura(arquivo, "50% 40%").then((src) => {
       est.escolha = { fonte: "foto", url: "", src, nome: "Sua foto", credito: "", link: "" };
-      desenhar();
+      desenharFoto(); atualizarSelecao();
     }).catch(() => UI.toast("Não consegui abrir essa imagem."));
   }
 
@@ -114,83 +217,132 @@
   // desenho
   // ---------------------------------------------------------------------
   function corHex(k) { return global.Personalizar.corHex(k); }
-  function circulo(item, opc) {
-    const sel = est.escolha && est.escolha.fonte === item.fonte && (est.escolha.url || est.escolha.src) === (item.url || item.src);
-    return `<button class="av-op${sel ? " ativo" : ""}" data-acao="av-escolher" data-i="${opc.i}" data-grupo="${opc.g}" title="${esc(item.nome || item.credito || "")}" aria-label="${esc(item.nome || "Imagem")}">
-      <img src="${esc(item.src || item.url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="object-position:${item.foco || "50% 30%"}" onerror="this.closest('.av-op').classList.add('quebrada')">
-      ${opc.legenda && item.nome ? `<span class="av-nome">${esc(item.nome)}</span>` : ""}</button>`;
+  function chaveDe(it) {
+    if (!it) return "inicial";
+    if (it.fonte === "emoji") return "e:" + it.emoji;
+    if (it.fonte === "inicial") return "inicial";
+    return "u:" + (it.url || it.src || "");
   }
-  function grade(lista, g, legenda) { return `<div class="av-grade">${lista.map((x, i) => circulo(x, { i, g, legenda })).join("")}</div>`; }
-  function carregando(n) { return `<div class="av-grade">${Array.from({ length: n || 6 }, () => `<span class="av-op esqueleto"></span>`).join("")}</div>`; }
+  function circulo(it, grupo, i, legenda) {
+    const sel = chaveDe(est.escolha) === chaveDe(it);
+    return `<button class="av-op${sel ? " ativo" : ""}" data-acao="av-escolher" data-i="${i}" data-grupo="${grupo}" data-chave="${esc(chaveDe(it))}" title="${esc(it.nome || "")}" aria-label="${esc(it.nome || "Imagem")}" aria-pressed="${sel}">
+      <span class="av-img"><img src="${esc(it.src || it.url)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="object-position:${it.foco || "50% 30%"}" onload="this.parentNode.classList.add('ok')" onerror="this.closest('.av-op').classList.add('quebrada')"></span>
+      ${legenda && it.nome ? `<span class="av-nome">${esc(it.nome)}</span>` : ""}</button>`;
+  }
+  function grade(lista, g) { return `<div class="av-grade">${lista.map((x, i) => circulo(x, g, i, true)).join("")}</div>`; }
+  function trilho(lista, g) { return `<div class="av-trilho">${lista.map((x, i) => circulo(x, g, i, true)).join("")}</div>`; }
+  function esqueleto(n, tipo) { return `<div class="${tipo || "av-trilho"}">${Array.from({ length: n || 8 }, () => `<span class="av-op"><span class="av-img esqueleto"></span><span class="av-nome esq"></span></span>`).join("")}</div>`; }
   function aviso(txt, acao, rotulo, dados) { return `<p class="av-aviso">${esc(txt)}${acao ? ` <button class="link-acao" data-acao="${acao}" ${dados || ""}>${rotulo}</button>` : ""}</p>`; }
 
-  function itemAtual() { return est.escolha; }
   function topoHTML() {
-    const it = itemAtual();
-    const bg = it && (it.src || it.url) ? `style="--av-bg:url('${(it.src || it.url).replace(/'/g, "%27")}')"` : `style="--av-bg:none;--av-cor:${corHex(est.cor)}"`;
-    const conteudo = it && (it.src || it.url) ? `<img src="${esc(it.src || it.url)}" alt="" referrerpolicy="no-referrer" style="object-position:${it.foco || "50% 30%"}">`
+    const it = est.escolha;
+    const temImg = it && (it.src || it.url);
+    const bg = temImg ? `style="--av-bg:url('${(it.src || it.url).replace(/'/g, "%27")}')"` : `style="--av-bg:none;--av-cor:${corHex(est.cor)}"`;
+    const conteudo = temImg ? `<img src="${esc(it.src || it.url)}" alt="" referrerpolicy="no-referrer" style="object-position:${it.foco || "50% 30%"}">`
       : `<span class="av-emoji">${esc((it && it.emoji) || (est.nome || "Eu").charAt(0).toUpperCase())}</span>`;
     return `<div class="av-topo" ${bg}><div class="av-topo-fundo"></div>
       <span class="avatar gigante" style="--av:${corHex(est.cor)}">${conteudo}</span>
       <b class="av-nome-pessoa">${esc(est.nome || "Você")}</b>
-      ${it && (it.credito || it.nome) && it.fonte !== "foto" && it.fonte !== "emoji" ? `<small class="av-credito">${esc(it.fonte === "jikan" ? it.nome + " · MyAnimeList" : it.credito || it.nome)}${it.link ? ` · <a href="${esc(it.link)}" target="_blank" rel="noopener">fonte</a>` : ""}</small>` : ""}
+      ${it && it.fonte === "jikan" ? `<small class="av-credito">${esc(it.nome)} · MyAnimeList${it.link ? ` · <a href="${esc(it.link)}" target="_blank" rel="noopener">fonte</a>` : ""}</small>` : ""}
     </div>`;
+  }
+  function linhaHTML(chave) {
+    const l = est.linhas[chave], e = est.erros[chave];
+    if (l && l.length) return trilho(l, chave);
+    if (l && !l.length) return aviso("Nenhum personagem com foto aqui.");
+    if (e && e !== "carregando") return aviso(e, "av-tentar", "Tentar de novo", `data-k="${chave}"`);
+    return esqueleto(8);
+  }
+  function fotoHTML() {
+    const f = est.escolha && est.escolha.fonte === "foto" ? est.escolha : est.original && est.original.fonte === "foto" ? est.original : null;
+    return `<div class="av-grade av-grade-foto"><label class="av-op av-enviar-op"><input type="file" accept="image/*" id="avArquivo" hidden><span class="av-img av-enviar"><span>📷</span><small>Escolher foto</small></span></label>
+      ${f ? circulo(f, "foto", 0) : ""}</div>`;
   }
   function corpoHTML() {
     const P = global.Personalizar;
-    const online = navigator.onLine;
-    const listaTop = est.top;
-    let html = "";
-    html += `<section class="av-secao"><h3>Sua foto</h3>
-      <div class="av-grade">
-        <label class="av-op av-enviar"><input type="file" accept="image/*" id="avArquivo" hidden><span>📷</span><small>Escolher foto</small></label>
-        ${est.escolha && est.escolha.fonte === "foto" ? circulo(est.escolha, { i: 0, g: "foto" }) : est.original && est.original.fonte === "foto" ? circulo(est.original, { i: 0, g: "foto-orig" }) : ""}
-      </div></section>`;
-    html += `<section class="av-secao"><h3>Buscar personagem</h3>
-      <div class="av-busca">${UI.svg("buscar")}<input id="avBusca" type="search" value="${esc(est.busca)}" placeholder="Nome do personagem — ex.: Luffy, Frieren, Tanjiro" autocomplete="off" enterkeyhint="search"></div>
+    let html = `<section class="av-secao"><h3>Sua foto</h3><div id="avFoto">${fotoHTML()}</div></section>`;
+    html += `<section class="av-secao"><h3>Buscar</h3>
+      <div class="av-busca">${UI.svg("buscar")}<input id="avBusca" type="search" value="${esc(est.busca)}" placeholder="Personagem ou anime — ex.: Luffy, Frieren, Naruto" autocomplete="off" enterkeyhint="search"></div>
       <div id="avResultados">${resultadosHTML()}</div></section>`;
-    html += `<section class="av-secao"><h3>Personagens mais populares</h3>
-      ${listaTop.length ? grade(listaTop, "top", true) : est.erro.top ? "" : carregando(9)}
-      ${est.erro.top ? aviso(est.erro.top, "av-tentar", "Tentar de novo", 'data-k="top"') : !est.topFim && listaTop.length ? `<button class="btn av-mais" data-acao="av-mais-top"${est.carregandoTop ? " disabled" : ""}>${est.carregandoTop ? "Carregando…" : "Ver mais personagens"}</button>` : ""}
-    </section>`;
+    html += `<section class="av-secao av-linha" data-linha="top"><h3>Mais populares</h3><div class="av-linha-corpo">${linhaHTML("top")}</div></section>`;
+    html += SERIES.map((s) => `<section class="av-secao av-linha" data-linha="s:${s[0]}"><h3>${esc(s[1])}</h3><div class="av-linha-corpo">${linhaHTML("s:" + s[0])}</div></section>`).join("");
     html += `<section class="av-secao"><h3>Emojis</h3>
-      <div class="av-grade emojis"><button class="av-op av-emoji-op${est.escolha && est.escolha.fonte === "inicial" ? " ativo" : ""}" data-acao="av-inicial" style="--av:${corHex(est.cor)}"><span>${esc((est.nome || "Eu").charAt(0).toUpperCase())}</span></button>
-        ${P.AVATARES.map((e) => `<button class="av-op av-emoji-op${est.escolha && est.escolha.emoji === e ? " ativo" : ""}" data-acao="av-emoji" data-k="${e}" style="--av:${corHex(est.cor)}"><span>${e}</span></button>`).join("")}</div>
+      <div class="av-grade emojis"><button class="av-op av-emoji-op${chaveDe(est.escolha) === "inicial" ? " ativo" : ""}" data-acao="av-inicial" data-chave="inicial"><span class="av-img">${esc((est.nome || "Eu").charAt(0).toUpperCase())}</span></button>
+        ${P.AVATARES.map((e) => `<button class="av-op av-emoji-op${chaveDe(est.escolha) === "e:" + e ? " ativo" : ""}" data-acao="av-emoji" data-k="${e}" data-chave="e:${e}"><span class="av-img">${e}</span></button>`).join("")}</div>
       <h3 class="av-sub">Cor de fundo</h3>
-      <div class="ap-cores">${P.CORES.map((c) => `<button class="ap-cor${est.cor === c.k ? " ativo" : ""}" data-acao="av-cor" data-k="${c.k}" style="--c:${c.c}" aria-label="${c.r}"></button>`).join("")}</div>
+      <div class="ap-cores" id="avCores">${coresHTML()}</div>
     </section>
-    <p class="av-rodape">${online ? "" : "📴 Sem internet: as galerias de anime aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a> via Jikan. A imagem escolhida fica guardada só neste aparelho.</p>`;
+    <p class="av-rodape">${navigator.onLine ? "" : "📴 Sem internet: os personagens aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a> via Jikan. A imagem escolhida fica guardada só neste aparelho.</p>`;
     return html;
   }
+  function coresHTML() { return global.Personalizar.CORES.map((c) => `<button class="ap-cor${est.cor === c.k ? " ativo" : ""}" data-acao="av-cor" data-k="${c.k}" style="--c:${c.c}" aria-label="${c.r}"></button>`).join(""); }
   function resultadosHTML() {
-    if (est.buscando) return carregando(6);
-    if (est.erro.busca) return aviso(est.erro.busca);
-    if (!est.resultados) return "";
-    if (!est.resultados.length) return aviso(`Nenhum personagem com foto encontrado para “${est.busca}”.`);
-    return grade(est.resultados, "busca", true);
+    if (!est.busca || est.busca.trim().length < 2) return `<p class="av-dica">Digite o nome de um personagem ou de um anime.</p>`;
+    let h = "";
+    if (est.buscando && !est.linhas.busca) h += esqueleto(6, "av-grade");
+    else if (est.erros.busca) h += aviso(est.erros.busca);
+    else if (est.linhas.busca && !est.linhas.busca.length && !(est.linhas.anime && est.linhas.anime.length)) h += aviso(`Nenhum personagem com foto encontrado para “${est.busca}”.`);
+    else if (est.linhas.busca && est.linhas.busca.length) h += grade(est.linhas.busca, "busca");
+    if (est.linhas.anime && est.linhas.anime.length) h += `<h3 class="av-sub">Personagens de ${esc(est.animeBusca)}</h3>${trilho(est.linhas.anime, "anime")}`;
+    return h;
   }
   function mudou() {
-    const a = est.escolha, o = est.original;
-    return JSON.stringify([a && (a.src || a.url || a.emoji || a.fonte), est.cor]) !== JSON.stringify([o && (o.src || o.url || o.emoji || o.fonte), est.corOriginal]);
+    return JSON.stringify([chaveDe(est.escolha), est.cor]) !== JSON.stringify([chaveDe(est.original), est.corOriginal]);
   }
-  function desenhar(soResultados) {
-    const el = document.getElementById("avTela");
+  function tela() { return document.getElementById("avTela"); }
+
+  // atualizações pontuais (sem redesenhar as galerias: nada pisca nem recarrega)
+  function atualizarSelecao() {
+    const el = tela(); if (!el) return;
+    const k = chaveDe(est.escolha);
+    el.querySelectorAll(".av-op[data-chave]").forEach((b) => { const on = b.dataset.chave === k; b.classList.toggle("ativo", on); b.setAttribute("aria-pressed", on); });
+    el.querySelector(".av-cabeca-topo").innerHTML = topoHTML();
+    const m = mudou();
+    el.querySelector("[data-acao='av-pronto']").disabled = !m;
+    const barra = el.querySelector(".av-confirmar");
+    const it = est.escolha;
+    barra.classList.toggle("on", m);
+    barra.querySelector(".av-confirmar-txt").innerHTML = m ? `<b>${esc(it && it.fonte === "jikan" ? it.nome : it && it.fonte === "foto" ? "Sua foto" : it && it.emoji ? "Emoji " + it.emoji : "Inicial do nome")}</b><small>toque em Usar para salvar</small>` : "";
+    barra.querySelector(".av-confirmar-img").innerHTML = el.querySelector(".av-topo .avatar").outerHTML.replace("gigante", "");
+  }
+  function desenharLinha(chave) {
+    const el = tela(); if (!el || !est.aberto) return;
+    const s = el.querySelector(`.av-linha[data-linha="${chave}"] .av-linha-corpo`);
+    if (s) s.innerHTML = linhaHTML(chave);
+  }
+  function desenharResultados() {
+    const r = tela() && tela().querySelector("#avResultados");
+    if (r) r.innerHTML = resultadosHTML();
+  }
+  function desenharFoto() {
+    const f = tela() && tela().querySelector("#avFoto");
+    if (f) { f.innerHTML = fotoHTML(); ligarArquivo(); }
+  }
+  function desenhar() {
+    const el = tela();
     if (!el || !est.aberto) return;
-    if (soResultados) { const r = el.querySelector("#avResultados"); if (r) { r.innerHTML = resultadosHTML(); return; } }
-    const rolagem = el.querySelector(".av-corpo") ? el.querySelector(".av-corpo").scrollTop : 0;
-    const foco = document.activeElement && document.activeElement.id === "avBusca";
     el.querySelector(".av-cabeca-topo").innerHTML = topoHTML();
     el.querySelector(".av-corpo-conteudo").innerHTML = corpoHTML();
-    el.querySelector("[data-acao='av-pronto']").disabled = !mudou();
-    el.querySelector(".av-corpo").scrollTop = rolagem;
-    ligarCampos(el);
-    if (foco) { const b = el.querySelector("#avBusca"); b.focus(); b.setSelectionRange(b.value.length, b.value.length); }
-  }
-  function ligarCampos(el) {
-    const arq = el.querySelector("#avArquivo");
-    if (arq) arq.addEventListener("change", (e) => { lerFoto(e.target.files[0]); e.target.value = ""; });
+    ligarArquivo();
     const b = el.querySelector("#avBusca");
     if (b) b.addEventListener("input", (e) => buscar(e.target.value));
+    observarLinhas(el);
+    atualizarSelecao();
+  }
+  function ligarArquivo() {
+    const arq = tela() && tela().querySelector("#avArquivo");
+    if (arq) arq.addEventListener("change", (e) => { lerFoto(e.target.files[0]); e.target.value = ""; });
+  }
+  // as fileiras só pedem os personagens quando chegam perto da tela
+  let observador = null;
+  function observarLinhas(el) {
+    if (observador) observador.disconnect();
+    const linhas = el.querySelectorAll(".av-linha");
+    if (!global.IntersectionObserver) { linhas.forEach((l) => carregarLinha(l.dataset.linha)); return; }
+    observador = new IntersectionObserver((ents) => ents.forEach((en) => {
+      if (en.isIntersecting) { carregarLinha(en.target.dataset.linha); observador.unobserve(en.target); }
+    }), { root: el.querySelector(".av-corpo"), rootMargin: "500px 0px" });
+    linhas.forEach((l) => observador.observe(l));
   }
 
   // ---------------------------------------------------------------------
@@ -206,12 +358,15 @@
     est.escolha = atual; est.original = atual;
     est.aoConcluir = opc.aoConcluir || salvarNoPerfil;
     est.aberto = true;
-    let el = document.getElementById("avTela");
+    // erros antigos não ficam presos: tenta de novo ao reabrir
+    Object.keys(est.erros).forEach((k) => { if (est.erros[k] !== "carregando") delete est.erros[k]; });
+    let el = tela();
     if (!el) {
       el = document.createElement("div");
       el.id = "avTela"; el.className = "av-tela"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-label", "Editar avatar");
       el.innerHTML = `<header class="av-barra"><button class="btn fantasma" data-acao="av-fechar" aria-label="Voltar">${UI.svg("voltar")}</button><b>Editar avatar</b><button class="btn av-pronto" data-acao="av-pronto" disabled>Pronto</button></header>
-        <div class="av-corpo"><div class="av-cabeca-topo"></div><div class="av-corpo-conteudo"></div></div>`;
+        <div class="av-corpo"><div class="av-cabeca-topo"></div><div class="av-corpo-conteudo"></div></div>
+        <div class="av-confirmar" aria-live="polite"><span class="av-confirmar-img"></span><span class="av-confirmar-txt"></span><button class="btn primario" data-acao="av-pronto">Usar</button></div>`;
       document.body.appendChild(el);
     }
     document.body.classList.add("av-aberta");
@@ -219,12 +374,12 @@
     UI.aposVoltar(() => { if (est.aberto) { try { history.pushState({ avatar: true }, "", location.href); } catch (e) { /* sem histórico */ } } });
     desenhar();
     el.querySelector(".av-corpo").scrollTop = 0;
-    if (!est.top.length) carregarTop();
   }
   function fechar(peloVoltar) {
-    const el = document.getElementById("avTela");
+    const el = tela();
     if (!el || !est.aberto) return;
     est.aberto = false;
+    if (observador) observador.disconnect();
     el.classList.remove("on");
     document.body.classList.remove("av-aberta");
     if (!peloVoltar && history.state && history.state.avatar) { voltaPropria = true; try { history.back(); } catch (e) { voltaPropria = false; } }
@@ -240,11 +395,11 @@
 
   function concluir() {
     const it = est.escolha;
-    const btn = document.querySelector("#avTela [data-acao='av-pronto']");
+    const btns = document.querySelectorAll("#avTela [data-acao='av-pronto']");
     const terminar = (resultado) => { const fn = est.aoConcluir; fechar(); if (fn) fn(resultado); };
     if (it && it.fonte === "jikan") {
-      if (btn) { btn.disabled = true; btn.textContent = "Salvando…"; }
-      guardarLocal(it).then((x) => { if (btn) btn.textContent = "Pronto"; terminar({ img: limpar(x), emoji: "", cor: est.cor }); });
+      btns.forEach((b) => { b.disabled = true; b.dataset.txt = b.textContent; b.textContent = "Salvando…"; });
+      guardarLocal(it).then((x) => { btns.forEach((b) => { b.textContent = b.dataset.txt; b.disabled = false; }); terminar({ img: limpar(x), emoji: "", cor: est.cor }); });
       return;
     }
     if (it && it.fonte === "foto") { terminar({ img: limpar(it), emoji: "", cor: est.cor }); return; }
@@ -254,14 +409,15 @@
   function salvarNoPerfil(r) {
     const d = global.App.dados(), ap = d.config.aparencia;
     ap.avatarImg = r.img; ap.avatar = r.img ? "" : r.emoji; ap.avatarCor = r.cor;
-    global.App.salvar(r.img ? "Avatar atualizado." : "Avatar atualizado.", { semIntegracao: true });
+    global.App.salvar("Avatar atualizado.", { semIntegracao: true });
   }
   function lista(g) {
-    if (g === "top") return est.top;
-    if (g === "busca") return est.resultados || [];
-    if (g === "foto") return est.escolha ? [est.escolha] : [];
-    if (g === "foto-orig") return est.original ? [est.original] : [];
-    return [];
+    if (g === "foto") return [est.escolha && est.escolha.fonte === "foto" ? est.escolha : est.original];
+    return est.linhas[g] || [];
+  }
+  function vibrar() {
+    const ap = (global.App.dados().config.aparencia || {});
+    if (ap.vibrar !== false && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) { /* sem suporte */ } }
   }
 
   global.App.registrarAcoes({
@@ -272,16 +428,29 @@
       const it = lista(el.dataset.grupo)[Number(el.dataset.i)];
       if (!it || el.classList.contains("quebrada")) return;
       est.escolha = Object.assign({}, it);
-      const ap = (global.App.dados().config.aparencia || {});
-      if (ap.vibrar !== false && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) { /* sem suporte */ } }
-      desenhar();
-      const c = document.querySelector("#avTela .av-corpo"); if (c) c.scrollTo({ top: 0, behavior: "smooth" });
+      vibrar(); atualizarSelecao();
     },
-    "av-emoji": (el) => { est.escolha = { fonte: "emoji", emoji: el.dataset.k }; desenhar(); },
-    "av-inicial": () => { est.escolha = { fonte: "inicial" }; desenhar(); },
-    "av-cor": (el) => { est.cor = el.dataset.k; desenhar(); },
-    "av-mais-top": () => carregarTop(),
-    "av-tentar": () => { est.erro.top = null; carregarTop(); desenhar(); }
+    "av-emoji": (el) => { est.escolha = { fonte: "emoji", emoji: el.dataset.k }; vibrar(); atualizarSelecao(); },
+    "av-inicial": () => { est.escolha = { fonte: "inicial" }; atualizarSelecao(); },
+    "av-cor": (el) => {
+      est.cor = el.dataset.k;
+      const t = tela();
+      t.querySelector("#avCores").innerHTML = coresHTML();
+      t.querySelectorAll(".av-emoji-op").forEach((b) => b.style.setProperty("--av", corHex(est.cor)));
+      atualizarSelecao();
+    },
+    // tenta de novo esta fileira (primeiro) e as outras que também falharam
+    "av-tentar": (el) => {
+      const k = el.dataset.k;
+      const falhas = Object.keys(est.erros).filter((x) => x !== k && est.erros[x] && est.erros[x] !== "carregando" && x !== "busca");
+      [k].concat(falhas).forEach((x, i) => { delete est.erros[x]; desenharLinha(x); carregarLinha(x, i === 0); });
+    }
+  });
+
+  // a imagem do avatar atual (quando é um endereço) fica guardada para funcionar sem internet
+  global.App.aoSalvar((d, abertura) => {
+    const img = d.config.aparencia && d.config.aparencia.avatarImg;
+    if (abertura && img && /^https:/.test(img.src || "")) setTimeout(() => guardarEndereco(img.src), 3000);
   });
 
   // ---------------------------------------------------------------------
@@ -314,5 +483,5 @@
   }
   document.addEventListener("DOMContentLoaded", abertura);
 
-  global.Avatar = { abrir, fechar, guardarLocal, miniatura, estado: est };
+  global.Avatar = { abrir, fechar, guardarLocal, miniatura, preaquecer, estado: est, SERIES };
 })(window);
