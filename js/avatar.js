@@ -109,13 +109,75 @@
     if (!img || /questionmark|apple-touch-icon/i.test(img)) return null; // sem foto no MyAnimeList
     return { u: img, n: c.name || "", l: c.url || "" };
   }
-  function item(x) { return { fonte: "jikan", url: x.u, nome: x.n, credito: x.n, link: x.l, foco: "50% 18%" }; }
+  function item(x) { return { fonte: "anime", url: x.u, nome: x.n, credito: x.n, link: x.l, foco: "50% 18%" }; }
+  const ehAnime = (it) => !!it && (it.fonte === "anime" || it.fonte === "jikan");
+  const site = (it) => /anilist/.test((it && (it.link || it.url)) || "") ? "AniList" : "MyAnimeList";
+
+  // ---------------------------------------------------------------------
+  // catálogo pronto (dados/personagens.json): gerado toda semana no GitHub
+  // e servido junto com o app — a galeria abre sem esperar API nenhuma
+  // ---------------------------------------------------------------------
+  let catalogo = null, pCatalogo = null;
+  function carregarCatalogo() {
+    if (pCatalogo) return pCatalogo;
+    pCatalogo = fetch("dados/personagens.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((j) => {
+        if (!j || !Array.isArray(j.series) || !j.series.length) throw new Error("vazio");
+        catalogo = j;
+        if (j.top && j.top.length) est.linhas.top = j.top.map(item);
+        j.series.forEach((x) => { est.linhas["s:" + x.id] = x.l.map(item); });
+        return true;
+      })
+      .catch(() => { pCatalogo = null; return false; }); // sem o arquivo: cai para a API
+    return pCatalogo;
+  }
+  function listaSeries() { return catalogo ? catalogo.series.map((x) => [x.id, x.t]) : SERIES; }
+
+  // busca na AniList (rápida), com a Jikan como reserva
+  const ANILIST = "https://graphql.anilist.co";
+  const Q_BUSCA = `query($q: String) {
+    c: Page(perPage: 24) { characters(search: $q, sort: [SEARCH_MATCH, FAVOURITES_DESC]) { name { full } image { large } siteUrl } }
+    m: Page(perPage: 1) { media(search: $q, type: ANIME, sort: [SEARCH_MATCH, POPULARITY_DESC]) { title { romaji english } characters(sort: [ROLE, FAVOURITES_DESC], perPage: 20) { nodes { name { full } image { large } siteUrl } } } }
+  }`;
+  function alEnxuto(c) {
+    const u = c && c.image && c.image.large;
+    return u && !/default\.(jpg|png)$/i.test(u) ? { u, n: c.name.full, l: c.siteUrl } : null;
+  }
+  function buscarAniList(termo) {
+    const chave = "al:" + termo.toLowerCase();
+    const c = lerCache()[chave];
+    if (c && Date.now() - c.t < VALIDADE) return Promise.resolve(c.l);
+    const ctrl = global.AbortController ? new AbortController() : null;
+    const t = ctrl ? setTimeout(() => ctrl.abort(), 8000) : 0;
+    return fetch(ANILIST, Object.assign({ method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ query: Q_BUSCA, variables: { q: termo } }) }, ctrl ? { signal: ctrl.signal } : {}))
+      .then((r) => { clearTimeout(t); if (!r.ok) throw new Error("erro " + r.status); return r.json(); })
+      .then((j) => {
+        const d = j && j.data;
+        if (!d) throw new Error("sem dados");
+        const m = d.m && d.m.media && d.m.media[0];
+        const r = { pers: (d.c.characters || []).map(alEnxuto).filter(Boolean),
+          anime: m ? { titulo: (m.title.english || m.title.romaji), lista: m.characters.nodes.map(alEnxuto).filter(Boolean) } : null };
+        gravarCache(chave, r);
+        return r;
+      })
+      .catch((e) => { clearTimeout(t); throw e; });
+  }
   const deTop = (j) => (j.data || []).map(enxuto).filter(Boolean);
   const deElenco = (j) => (j.data || []).filter((x) => x.character)
     .sort((a, b) => (a.role === "Main" ? 0 : 1) - (b.role === "Main" ? 0 : 1) || (b.favorites || 0) - (a.favorites || 0))
     .map((x) => enxuto(x.character)).filter(Boolean).slice(0, 20);
 
   function carregarLinha(chave, urgente) {
+    if (est.linhas[chave] || est.erros[chave] === "carregando") return;
+    // primeiro o catálogo pronto; a API só entra se ele não estiver disponível
+    if (!catalogo) {
+      est.erros[chave] = "carregando";
+      carregarCatalogo().then(() => { delete est.erros[chave]; if (est.linhas[chave]) desenharLinha(chave); else carregarDaApi(chave, urgente); });
+      return;
+    }
+    carregarDaApi(chave, urgente);
+  }
+  function carregarDaApi(chave, urgente) {
     if (est.linhas[chave] || est.erros[chave] === "carregando") return;
     let p;
     if (chave === "top") p = obter("top", "/top/characters?page=1&limit=25", deTop, urgente);
@@ -128,12 +190,10 @@
   }
   // aquece o cache em segundo plano (ex.: ao abrir Ajustes ou o passo do avatar)
   function preaquecer() {
-    if (!navigator.onLine) return;
-    const c = lerCache();
-    ["top", "s:" + SERIES[0][0], "s:" + SERIES[1][0], "s:" + SERIES[2][0]].forEach((k) => {
-      if (c[k] && Date.now() - c[k].t < VALIDADE) return;
-      if (k === "top") obter("top", "/top/characters?page=1&limit=25", deTop).catch(() => {});
-      else obter(k, `/anime/${k.slice(2)}/characters`, deElenco).catch(() => {});
+    carregarCatalogo().then((ok) => {
+      if (!ok || !navigator.onLine || !catalogo.top) return;
+      // e já pede as primeiras fotos ao navegador
+      catalogo.top.slice(0, 8).concat(catalogo.series[0] ? catalogo.series[0].l.slice(0, 6) : []).forEach((x) => { const i = new Image(); i.referrerPolicy = "no-referrer"; i.src = x.u; });
     });
   }
 
@@ -145,6 +205,18 @@
     timerBusca = setTimeout(() => {
       const termo = q.trim(), chave = "q:" + termo.toLowerCase();
       est.buscando = true; desenharResultados();
+      const aplicar = (pers, anime) => {
+        if (est.busca !== q) return;
+        est.linhas.busca = pers.map(item); est.erros.busca = null; est.buscando = false;
+        est.animeBusca = anime && anime.lista.length ? anime.titulo : null;
+        est.linhas.anime = anime && anime.lista.length ? anime.lista.map(item) : null;
+        desenharResultados();
+      };
+      buscarAniList(termo).then((r) => aplicar(r.pers, r.anime)).catch(() => { if (est.busca === q) buscarJikan(q, termo, chave); });
+    }, 400);
+  }
+  function buscarJikan(q, termo, chave) {
+    {
       const pPers = obter(chave, `/characters?q=${encodeURIComponent(termo)}&order_by=favorites&sort=desc&limit=24`, deTop, true);
       // também procura um anime com esse nome e mostra o elenco dele
       const pAnime = obter("a" + chave, `/anime?q=${encodeURIComponent(termo)}&order_by=members&sort=desc&limit=1&sfw=true`,
@@ -162,7 +234,7 @@
         est.linhas.anime = r ? r.lista.map(item) : null;
         desenharResultados();
       });
-    }, 450);
+    }
   }
   function msgErro(e) {
     if (!navigator.onLine) return "Sem internet agora. Os personagens aparecem quando o aparelho estiver conectado.";
@@ -243,7 +315,7 @@
     return `<div class="av-topo" ${bg}><div class="av-topo-fundo"></div>
       <span class="avatar gigante" style="--av:${corHex(est.cor)}">${conteudo}</span>
       <b class="av-nome-pessoa">${esc(est.nome || "Você")}</b>
-      ${it && it.fonte === "jikan" ? `<small class="av-credito">${esc(it.nome)} · MyAnimeList${it.link ? ` · <a href="${esc(it.link)}" target="_blank" rel="noopener">fonte</a>` : ""}</small>` : ""}
+      ${ehAnime(it) ? `<small class="av-credito">${esc(it.nome)} · ${site(it)}${it.link ? ` · <a href="${esc(it.link)}" target="_blank" rel="noopener">fonte</a>` : ""}</small>` : ""}
     </div>`;
   }
   function linhaHTML(chave) {
@@ -265,14 +337,14 @@
       <div class="av-busca">${UI.svg("buscar")}<input id="avBusca" type="search" value="${esc(est.busca)}" placeholder="Personagem ou anime — ex.: Luffy, Frieren, Naruto" autocomplete="off" enterkeyhint="search"></div>
       <div id="avResultados">${resultadosHTML()}</div></section>`;
     html += `<section class="av-secao av-linha" data-linha="top"><h3>Mais populares</h3><div class="av-linha-corpo">${linhaHTML("top")}</div></section>`;
-    html += SERIES.map((s) => `<section class="av-secao av-linha" data-linha="s:${s[0]}"><h3>${esc(s[1])}</h3><div class="av-linha-corpo">${linhaHTML("s:" + s[0])}</div></section>`).join("");
+    html += listaSeries().map((s) => `<section class="av-secao av-linha" data-linha="s:${s[0]}"><h3>${esc(s[1])}</h3><div class="av-linha-corpo">${linhaHTML("s:" + s[0])}</div></section>`).join("");
     html += `<section class="av-secao"><h3>Emojis</h3>
       <div class="av-grade emojis"><button class="av-op av-emoji-op${chaveDe(est.escolha) === "inicial" ? " ativo" : ""}" data-acao="av-inicial" data-chave="inicial"><span class="av-img">${esc((est.nome || "Eu").charAt(0).toUpperCase())}</span></button>
         ${P.AVATARES.map((e) => `<button class="av-op av-emoji-op${chaveDe(est.escolha) === "e:" + e ? " ativo" : ""}" data-acao="av-emoji" data-k="${e}" data-chave="e:${e}"><span class="av-img">${e}</span></button>`).join("")}</div>
       <h3 class="av-sub">Cor de fundo</h3>
       <div class="ap-cores" id="avCores">${coresHTML()}</div>
     </section>
-    <p class="av-rodape">${navigator.onLine ? "" : "📴 Sem internet: os personagens aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a> via Jikan. A imagem escolhida fica guardada só neste aparelho.</p>`;
+    <p class="av-rodape">${navigator.onLine ? "" : "📴 Sem internet: os personagens aparecem quando o aparelho estiver conectado. "}Personagens: <a href="https://anilist.co" target="_blank" rel="noopener">AniList</a> e <a href="https://myanimelist.net" target="_blank" rel="noopener">MyAnimeList</a>. A imagem escolhida fica guardada só neste aparelho.</p>`;
     return html;
   }
   function coresHTML() { return global.Personalizar.CORES.map((c) => `<button class="ap-cor${est.cor === c.k ? " ativo" : ""}" data-acao="av-cor" data-k="${c.k}" style="--c:${c.c}" aria-label="${c.r}"></button>`).join(""); }
@@ -302,7 +374,7 @@
     const barra = el.querySelector(".av-confirmar");
     const it = est.escolha;
     barra.classList.toggle("on", m);
-    barra.querySelector(".av-confirmar-txt").innerHTML = m ? `<b>${esc(it && it.fonte === "jikan" ? it.nome : it && it.fonte === "foto" ? "Sua foto" : it && it.emoji ? "Emoji " + it.emoji : "Inicial do nome")}</b><small>toque em Usar para salvar</small>` : "";
+    barra.querySelector(".av-confirmar-txt").innerHTML = m ? `<b>${esc(ehAnime(it) ? it.nome : it && it.fonte === "foto" ? "Sua foto" : it && it.emoji ? "Emoji " + it.emoji : "Inicial do nome")}</b><small>toque em Usar para salvar</small>` : "";
     barra.querySelector(".av-confirmar-img").innerHTML = el.querySelector(".av-topo .avatar").outerHTML.replace("gigante", "");
   }
   function desenharLinha(chave) {
@@ -374,6 +446,8 @@
     UI.aposVoltar(() => { if (est.aberto) { try { history.pushState({ avatar: true }, "", location.href); } catch (e) { /* sem histórico */ } } });
     desenhar();
     el.querySelector(".av-corpo").scrollTop = 0;
+    // primeira vez na sessão: assim que o catálogo chega, monta as fileiras dele
+    if (!catalogo) carregarCatalogo().then((ok) => { if (ok && est.aberto) desenhar(); });
   }
   function fechar(peloVoltar) {
     const el = tela();
@@ -397,7 +471,7 @@
     const it = est.escolha;
     const btns = document.querySelectorAll("#avTela [data-acao='av-pronto']");
     const terminar = (resultado) => { const fn = est.aoConcluir; fechar(); if (fn) fn(resultado); };
-    if (it && it.fonte === "jikan") {
+    if (ehAnime(it)) {
       btns.forEach((b) => { b.disabled = true; b.dataset.txt = b.textContent; b.textContent = "Salvando…"; });
       guardarLocal(it).then((x) => { btns.forEach((b) => { b.textContent = b.dataset.txt; b.disabled = false; }); terminar({ img: limpar(x), emoji: "", cor: est.cor }); });
       return;

@@ -1,9 +1,9 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v18";
+const CACHE = "meu-controle-v19";
 // a imagem do avatar escolhido (quando é um endereço) — o próprio app guarda aqui
 const CACHE_IMG = "meu-controle-avatar";
-const V = "?v=3.4.0";
+const V = "?v=3.4.1";
 const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "tutorial", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
@@ -19,9 +19,18 @@ self.addEventListener("fetch", (e) => {
   // imagens de avatar (MyAnimeList): o avatar escolhido sai do cache (funciona sem
   // internet); as da galeria vêm direto da rede, sem passar por aqui
   if (url.origin !== location.origin) {
-    if (e.request.destination === "image" && /(^|\.)(myanimelist\.net)$/.test(url.hostname)) {
+    if (e.request.destination === "image" && /(^|\.)(myanimelist\.net|anilist\.co)$/.test(url.hostname)) {
       e.respondWith(caches.open(CACHE_IMG).then((c) => c.match(e.request.url)).then((r) => r || fetch(e.request)));
     }
+    return;
+  }
+  // lista de personagens (atualizada toda semana): responde do cache na hora e atualiza por trás
+  if (url.pathname.endsWith("/dados/personagens.json")) {
+    e.respondWith(caches.open(CACHE).then((c) => c.match(url.pathname).then((r) => {
+      const rede = fetch(e.request).then((resp) => { if (resp.ok) c.put(url.pathname, resp.clone()); return resp; });
+      if (r) { e.waitUntil(rede.catch(() => {})); return r; }
+      return rede;
+    })));
     return;
   }
   const ehPagina = e.request.mode === "navigate" || (e.request.destination === "document");

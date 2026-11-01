@@ -98,13 +98,19 @@ abrir **Editar avatar**:
   o elenco);
 - **Mais populares** e uma fileira por anime (Naruto, One Piece, Dragon
   Ball Z, Demon Slayer, Jujutsu Kaisen…), que rolam para o lado — do
-  MyAnimeList, pela API pública [Jikan](https://jikan.moe);
+  MyAnimeList, pela [AniList](https://anilist.co) e pela API pública [Jikan](https://jikan.moe);
 - **Emojis** com cor de fundo.
 
-Ao tocar num personagem aparece embaixo a barra **Usar**. As fileiras só
-são pedidas quando chegam perto da tela e ficam guardadas no aparelho por
-14 dias, então a galeria abre na hora a partir da segunda vez (e já vem
-pré-carregada ao abrir Ajustes ou o passo do avatar nas boas-vindas).
+Ao tocar num personagem aparece embaixo a barra **Usar**.
+
+As fileiras vêm de `dados/personagens.json`, um arquivo que o próprio
+repositório gera toda segunda-feira pelo GitHub Actions
+(`.github/workflows/personagens.yml` + `scripts/atualizar-personagens.mjs`,
+dados da [AniList](https://anilist.co)). Assim a galeria abre na hora, sem
+depender da velocidade das APIs de anime. Para atualizar à mão: aba
+**Actions** do GitHub → *Atualizar personagens do avatar* → *Run workflow*.
+Para mudar os animes, edite a lista `SERIES` do script. A busca usa a
+AniList e, se ela falhar, a Jikan.
 
 A imagem escolhida é reduzida para 256 px e guardada no próprio aparelho:
 aparece sem internet e vai junto no backup. As galerias precisam de
