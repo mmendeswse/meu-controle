@@ -117,6 +117,46 @@ aparece sem internet e vai junto no backup. As galerias precisam de
 internet; sem conexão, a tela avisa e os emojis e a foto continuam
 funcionando.
 
+## Sincronização entre aparelhos (GitHub)
+
+Em **Ajustes → Sincronização**: "Criar conta de sincronização" pede uma chave
+de acesso do GitHub (*fine-grained token*, só com **Contents: Read and
+write** num repositório **privado**, ex. `meu-controle-dados`). O app gera o
+**código da conta** (texto e QR code); nos outros aparelhos, "Entrar com
+código" (ou "Já uso em outro aparelho" nas boas-vindas).
+
+- Cada conta é o arquivo `contas/<id>.json` do repositório, **criptografado**
+  (AES-GCM 256, gzip) com a chave que está no código. O token também viaja
+  só dentro do código e do arquivo criptografado.
+- Sincroniza ao abrir, ao voltar ao app, alguns segundos depois de cada
+  alteração e a cada 90 s com o app aberto. Mudanças feitas em dois
+  aparelhos ao mesmo tempo são juntadas registro a registro (base de três
+  vias guardada em IndexedDB); se o mesmo campo mudou nos dois, vale o do
+  aparelho que está sincronizando.
+- "Aparelhos conectados": renomear, remover (com opção de apagar os dados
+  do aparelho removido) e desconectar. "Trocar código" cria chave e arquivo
+  novos e apaga o antigo — use se um aparelho for perdido. Cada envio é um
+  commit: o histórico do GitHub guarda todas as versões.
+- O aviso de vencimento da chave do GitHub aparece 30 dias antes; a chave
+  nova vai sozinha para os outros aparelhos.
+- Fica fora da sincronização: a pasta de backup e o PIN.
+
+## Google Agenda
+
+Em **Ajustes → Google Agenda** → "Conectar": o app cria a agenda **Meu
+Controle** na conta Google da pessoa com remédios (repetindo nos dias certos,
+alerta na hora), treinos do plano semanal (alerta 30 min antes), jejum em
+andamento (alerta no fim) e, se quiser, refeições planejadas dos próximos 7
+dias. Mudou no app, a agenda acompanha (sozinha enquanto o acesso do Google
+vale; depois aparece o botão "Atualizar Google Agenda"). A permissão pedida
+(`calendar.app.created`) só dá acesso à agenda que o app cria.
+
+Configuração (uma vez, por quem cuida do app): criar um ID do cliente OAuth
+"Aplicativo da Web" no Google Cloud com a origem
+`https://mmendeswse.github.io`, ativar a Google Calendar API, cadastrar os
+e-mails da família como usuários de teste e colocar o ID em
+`CLIENT_ID_PADRAO` (js/agenda.js).
+
 ## Bloqueio com PIN
 
 Em **Ajustes → Segurança** cada pessoa pode criar um PIN de 6 dígitos (e
@@ -305,6 +345,8 @@ meu-controle/
     ├── primeiro-uso.js      # boas-vindas guiadas
     ├── tutorial.js          # tutoriais de cada tela, botão ? e "o que há de novo"
     ├── trava.js             # bloqueio com PIN / Face ID / digital
+    ├── sync.js              # sincronização criptografada pelo GitHub
+    ├── agenda.js            # integração com o Google Agenda
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```

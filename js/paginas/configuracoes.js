@@ -68,11 +68,12 @@
     titulo: "Ajustes",
     render(d) {
       const PZ = window.Personalizar, LB = window.Lembretes, AR = window.Areas;
-      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["backup", "🛟 Backup"], ["seguranca", "🔒 Segurança"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"], ["tutoriais", "❓ Tutoriais"]];
+      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["sync", "🔄 Sincronizar"], ["agenda", "📅 Google Agenda"], ["backup", "🛟 Backup"], ["seguranca", "🔒 Segurança"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"], ["tutoriais", "❓ Tutoriais"]];
       return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div>
           <nav class="atalhos-ajustes"><button data-acao="primeiro-uso">✨ Configuração inicial</button>${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
         <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${AR.cartaoAreas(d)}</div></div>
         <div class="grid"><div class="c6">${PZ.cartaoRotina(d)}</div><div class="c6">${AR.cartaoHoje(d)}</div></div>
+        ${window.Sync ? `<div class="grid"><div class="c7">${window.Sync.cartaoAjustes()}</div><div class="c5">${window.Agenda ? window.Agenda.cartaoAjustes(d) : ""}</div></div>` : ""}
         <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${window.Trava ? window.Trava.cartaoAjustes() : ""}</div></div>
         <div class="grid"><div class="c12">${LB.cartaoAjustes(d)}</div></div>
         <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${alertas(d)}</div></div>

@@ -117,6 +117,7 @@
         { alvo: ".atalhos-ajustes", titulo: "Atalhos", texto: "Vá direto para a parte que quer mudar." },
         { alvo: "#sec-aparencia", titulo: "Aparência", texto: "Tema claro ou escuro, cor, tamanho da letra e o seu avatar." },
         { alvo: "#sec-areas", titulo: "O que você usa", texto: "Desligue o que não usa: o app fica mais simples e as abas se ajustam." },
+        { alvo: "#sec-sync", titulo: "Sincronização", texto: "Use o app no celular e no computador com os mesmos dados: crie uma conta aqui e leia o QR code no outro aparelho.", opcional: true },
         { alvo: "#sec-seguranca", titulo: "Segurança", texto: "Crie um PIN de 6 dígitos (com Face ID ou digital, se o aparelho tiver) para ninguém abrir o app se pegar o seu celular.", opcional: true },
         { alvo: "#sec-backup", titulo: "Backup — importante!", texto: "Os dados ficam só neste aparelho. Ative o backup para não perder nada se trocar ou perder o celular." },
         { alvo: "#sec-tutoriais", titulo: "Tutoriais", texto: "Reveja qualquer explicação quando quiser.", opcional: true }
@@ -381,12 +382,12 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "3.5",
+    versao: "3.6",
     itens: [
+      ["🔄", "Sincronização entre aparelhos", "Em Ajustes → Sincronização: celular, tablet e computador com os mesmos dados, guardados criptografados no seu GitHub. Um QR code liga cada aparelho."],
       ["🔒", "Bloqueio com PIN", "Em Ajustes → Segurança: o app pede um PIN (ou Face ID/digital) ao abrir, para ninguém ver seus dados se pegar o seu celular."],
       ["⚡", "Avatares abrem na hora", "A lista de personagens agora vem junto com o app — sem esperar o servidor de anime."],
-      ["❓", "Tutoriais em cada tela", "Na primeira visita a cada tela, um passo a passo mostra como ela funciona. O botão <b>?</b> ao lado do título mostra de novo."],
-      ["📱", "Tablets e iPad", "Telas ajustadas para tablet, iPad e computador."]
+      ["❓", "Tutoriais em cada tela", "Na primeira visita a cada tela, um passo a passo mostra como ela funciona. O botão <b>?</b> ao lado do título mostra de novo."]
     ]
   };
   function abrirNovidades() {

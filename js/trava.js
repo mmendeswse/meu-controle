@@ -226,8 +226,11 @@
     try { Object.keys(localStorage).filter((k) => k.indexOf("meuControle") === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) { /* ignora */ }
     const semBanco = new Promise((ok) => {
       if (!global.indexedDB) { ok(); return; }
-      const r = indexedDB.deleteDatabase("meu-controle-backup");
-      r.onsuccess = r.onerror = r.onblocked = () => ok();
+      let n = 0;
+      ["meu-controle-backup", "meu-controle-sync"].forEach((nome) => {
+        const r = indexedDB.deleteDatabase(nome);
+        r.onsuccess = r.onerror = r.onblocked = () => { if (++n === 2) ok(); };
+      });
       setTimeout(ok, 2500);
     });
     const semCache = global.caches ? caches.delete("meu-controle-avatar").catch(() => {}) : Promise.resolve();
@@ -338,5 +341,17 @@
     }
   });
 
-  global.Trava = { ativo, travar, destravar, travada: () => travada, cartaoAjustes, conferir, definirPin };
+  // pede o PIN antes de algo sensível (ex.: mostrar o código da sincronização); sem bloqueio, libera direto
+  function pedirPin(sub) {
+    if (!ativo()) return Promise.resolve(true);
+    return new Promise((ok) => {
+      let certo = false;
+      fluxo([{ titulo: "Digite o seu PIN", sub: sub || "", conferir: (p) => conferir(p).then((v) => { certo = v; return v || "PIN incorreto."; }) }], () => ok(true));
+      // fechou o modal sem acertar
+      const m = document.getElementById("modal"), obs = new MutationObserver(() => { if (!m.classList.contains("on")) { obs.disconnect(); if (!certo) ok(false); } });
+      obs.observe(m, { attributes: true, attributeFilter: ["class"] });
+    });
+  }
+
+  global.Trava = { ativo, travar, destravar, travada: () => travada, cartaoAjustes, conferir, definirPin, pedirPin };
 })(window);

@@ -30,6 +30,7 @@
       <p class="pu-sub">Alimentação, treino, sono, hábitos e remédios num lugar só. Tudo fica guardado só neste aparelho — sem cadastro e sem mensalidade.</p>
       <div class="pu-opcoes">
         <button class="pu-grande primario" data-acao="pu-proximo"><span>✨</span><span><b>Começar do zero</b><small>4 perguntas rápidas e o app fica do seu jeito</small></span></button>
+        <button class="pu-grande" data-acao="pu-sync"><span>🔄</span><span><b>Já uso em outro aparelho</b><small>Entre com o código da sua conta e os dados aparecem aqui</small></span></button>
         <button class="pu-grande" data-acao="pu-restaurar"><span>🛟</span><span><b>Restaurar um backup</b><small>Trocou de aparelho? Traga seus dados de volta</small></span></button>
         <button class="pu-grande" data-acao="pu-exemplo"><span>👀</span><span><b>Só olhar com dados de exemplo</b><small>Dados fictícios, apagáveis com um toque</small></span></button>
       </div></div>`;
@@ -110,6 +111,7 @@
       const d = App().dados(); d.config.aparencia.tema = escolha.tema; global.Personalizar.aplicar(d);
       desenhar();
     },
+    "pu-sync": () => { passo = -1; UI.fecharModal(); marcarFeito(); UI.aposVoltar(() => global.Sync && global.Sync.abrirEntrar()); },
     "pu-restaurar": () => { passo = -1; UI.fecharModal(); marcarFeito(); document.getElementById("inputImportarBackup").click(); },
     "pu-exemplo": () => { passo = -1; UI.fecharModal(); App().substituirDados(A.carregarExemplo()); App().ir("dashboard"); UI.toast("Dados de exemplo carregados — apague quando quiser começar."); },
     "pu-concluir": () => {

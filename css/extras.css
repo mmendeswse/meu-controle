@@ -756,3 +756,53 @@ html.travado .trava { opacity: 1; }
 #sec-seguranca .botoes-linha { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 #sec-seguranca .seg-opcoes { margin-bottom: 4px; }
 #travaBio:not(:empty) { margin-top: 12px; }
+
+/* ======================================================================
+   sincronização (sync.js)
+   ====================================================================== */
+.sy-status { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--painel-2); margin-bottom: 12px; }
+.sy-status > span { font-size: 22px; line-height: 1.1; }
+.sy-status b { display: block; font-size: 15px; }
+.sy-status small { display: block; color: var(--dim); font-size: 13px; line-height: 1.45; margin-top: 2px; word-break: break-word; }
+.sy-status.ok { background: color-mix(in srgb, var(--up, #30D158) 14%, var(--painel-2)); }
+.sy-status.erro { background: color-mix(in srgb, var(--down, #FF453A) 14%, var(--painel-2)); }
+.sy-gira { display: inline-block; animation: syGira 1s linear infinite; }
+@keyframes syGira { to { transform: rotate(360deg); } }
+.sy-aparelhos { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.sy-ap { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--linha); }
+.sy-ap-ic { font-size: 22px; }
+.sy-ap > div { flex: 1; min-width: 0; }
+.sy-ap b { display: block; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sy-ap b em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--c-hoje); background: color-mix(in srgb, var(--c-hoje) 15%, transparent); padding: 2px 7px; border-radius: 99px; margin-left: 4px; }
+.sy-ap small { display: block; color: var(--dim); font-size: 12.5px; }
+#sec-sync .botoes-linha { display: flex; flex-wrap: wrap; gap: 8px; }
+#sec-sync a.btn { text-decoration: none; }
+.sy-mais { margin-top: 12px; }
+.sy-mais summary { cursor: pointer; color: var(--dim); font-size: 13.5px; font-weight: 600; padding: 6px 0; }
+.sy-mais .botoes-linha { margin-top: 8px; }
+.sy-passos { margin: 0 0 14px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; }
+.sy-passos a { color: var(--c-hoje); font-weight: 600; }
+.sy-passos code, #modal code { font-size: 12.5px; background: var(--painel-2); padding: 1px 5px; border-radius: 5px; }
+.sy-erro { color: var(--down, #FF453A); font-size: 13.5px; font-weight: 600; min-height: 1em; margin: 6px 0 0; }
+.sy-aviso { padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--acc, #FF9F0A) 18%, transparent); font-size: 13.5px; }
+.sy-qr { display: flex; justify-content: center; margin: 4px 0 12px; }
+.sy-qr svg { width: min(260px, 70vw); height: auto; background: #fff; border-radius: 12px; padding: 6px; }
+#sy_cod { font-family: var(--mono, monospace); font-size: 11.5px; word-break: break-all; resize: none; }
+.sy-camera { position: relative; margin: 6px 0 12px; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 1; max-width: 320px; }
+.sy-camera video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sy-mira { position: absolute; inset: 18%; border: 3px solid rgba(255, 255, 255, .85); border-radius: 16px; box-shadow: 0 0 0 999px rgba(0, 0, 0, .35); }
+.sy-modos { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.sy-modos label, .sy-check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--linha); cursor: pointer; }
+.sy-modos input, .sy-check input { margin-top: 3px; accent-color: var(--c-hoje); width: 18px; height: 18px; flex: none; }
+.sy-modos b, .sy-check b { display: block; font-size: 14px; }
+.sy-modos small, .sy-check small { display: block; color: var(--dim); font-size: 12.5px; line-height: 1.4; }
+/* selo no avatar do topo: erro de sincronização */
+html[data-sync="erro"] #avatarBarra::after, html[data-sync="erro"] #perfilLateral .avatar::after { content: ""; position: absolute; right: 0; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--down, #FF453A); box-shadow: 0 0 0 2px var(--bg, #000); }
+/* aviso "Atualizar Google Agenda" */
+.agenda-aviso { position: fixed; z-index: 85; left: 16px; right: 88px; bottom: calc(92px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px; border-radius: 16px; border: 1px solid var(--linha-2); background: var(--painel); color: var(--texto); box-shadow: 0 12px 30px rgba(0, 0, 0, .35); text-align: left; cursor: pointer; animation: agAviso .3s ease; }
+.agenda-aviso > span:first-child { font-size: 22px; }
+.agenda-aviso b { display: block; font-size: 14px; }
+.agenda-aviso small { display: block; font-size: 12px; color: var(--dim); }
+@media (min-width: 861px) { .agenda-aviso { bottom: 24px; left: auto; right: 96px; max-width: 360px; } }
+@keyframes agAviso { from { opacity: 0; translate: 0 12px; } }
+body.modal-aberto .agenda-aviso, html.travado .agenda-aviso { display: none; }
