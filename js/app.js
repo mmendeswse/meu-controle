@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "3.0.0";
+  const VERSAO_APP = "3.1.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -63,7 +63,7 @@
   function comDesfazer(mensagem, alteracao) {
     const antes = JSON.stringify(DADOS);
     alteracao();
-    salvar(mensagem, { desfazer: () => { DADOS = A.substituir(JSON.parse(antes)); renderizar(); UI.toast("Alteração desfeita."); } });
+    salvar(mensagem, { desfazer: () => { DADOS = (A.substituirSemCopia || A.substituir)(JSON.parse(antes)); renderizar(); UI.toast("Alteração desfeita."); } });
   }
   function substituirDados(novo) { DADOS = novo; if (window.Personalizar) window.Personalizar.aplicar(DADOS); renderizar(); POS_SALVAR.forEach((fn) => { try { fn(DADOS); } catch (e) { console.error(e); } }); }
 
@@ -76,7 +76,14 @@
     if (!PAGINAS[secao]) secao = "dashboard";
     ROTA = { secao, param: param || null };
     const hash = "#/" + secao + (param ? "/" + encodeURIComponent(param) : "");
-    if (location.hash !== hash) history.replaceState(null, "", hash);
+    // mudar de seção entra no histórico (o "voltar" do celular volta à tela anterior); trocar de aba não.
+    // Se um formulário acabou de fechar, espera o "voltar" dele terminar antes de mexer no histórico.
+    UI.aposVoltar(() => {
+      if (location.hash === hash) return;
+      const atual = lerHash();
+      if (atual && atual.secao !== secao && !(opc && opc.substituir)) history.pushState(null, "", hash);
+      else history.replaceState(null, "", hash);
+    });
     UI.fecharModal();
     renderizar();
     if (!opc || !opc.manterRolagem) window.scrollTo(0, 0);
@@ -89,11 +96,12 @@
 
   function renderizar() {
     if (window.Personalizar) window.Personalizar.aplicar(DADOS);
+    if (window.Areas) { window.Areas.aplicarNavegacao(DADOS); montarItensFab(); }
     const pag = PAGINAS[ROTA.secao] || PAGINAS.dashboard;
     const secaoMenu = pag.menu || ROTA.secao;
     document.querySelectorAll("#navPrincipal button, #tabBar button[data-secao], #maisSheet button[data-secao]").forEach((b) => b.classList.toggle("ativo", b.dataset.secao === secaoMenu));
     const btnMais = document.querySelector("#tabBar [data-mais]");
-    if (btnMais) btnMais.classList.toggle("ativo", SECOES_MAIS.indexOf(secaoMenu) !== -1);
+    if (btnMais) btnMais.classList.toggle("ativo", (window.Areas && window.Areas.maisAtuais ? window.Areas.maisAtuais : SECOES_MAIS).indexOf(secaoMenu) !== -1);
     document.body.dataset.secao = secaoMenu;
     fecharMais();
     document.title = (pag.titulo ? pag.titulo + " · " : "") + "Meu Controle";
@@ -173,9 +181,19 @@
     { acao: "rapido-compra", icone: "🛒", rotulo: "Item na lista de compras" },
     { acao: "rapido-alimento", icone: "🥦", rotulo: "Novo alimento" }
   ];
-  function montarFab() {
+  // os atalhos do botão + seguem as áreas ligadas em Ajustes
+  let assinaturaFab = "";
+  function montarItensFab() {
     const menu = document.getElementById("fabMenu");
-    menu.innerHTML = RAPIDO.map((r) => `<button class="fab-item" data-acao="${r.acao}" role="menuitem"><span>${r.icone}</span>${r.rotulo}</button>`).join("");
+    if (!menu || !DADOS) return;
+    const itens = RAPIDO.filter((r) => !window.Areas || window.Areas.rapidoVisivel(DADOS, r.acao));
+    const ass = itens.map((r) => r.acao).join(",");
+    if (ass === assinaturaFab) return;
+    assinaturaFab = ass;
+    menu.innerHTML = itens.map((r) => `<button class="fab-item" data-acao="${r.acao}" role="menuitem"><span>${r.icone}</span>${r.rotulo}</button>`).join("");
+  }
+  function montarFab() {
+    montarItensFab();
     document.getElementById("fab").addEventListener("click", (e) => {
       e.stopPropagation();
       const aberto = document.body.classList.toggle("fab-aberto");
@@ -399,7 +417,9 @@
     iniciarRelogio();
     ajustarBarraGuias();
     window.addEventListener("resize", ajustarBarraGuias);
-    window.addEventListener("hashchange", () => { const h = lerHash(); if (h && (h.secao !== ROTA.secao || h.param !== ROTA.param)) ir(h.secao, h.param); });
+    const seguirHash = () => { if (UI.modalAberto()) return; const h = lerHash(); if (h && (h.secao !== ROTA.secao || h.param !== ROTA.param)) ir(h.secao, h.param, { substituir: true }); };
+    window.addEventListener("hashchange", seguirHash);
+    window.addEventListener("popstate", () => setTimeout(seguirHash, 0));
     const h = lerHash();
     ir(h && (PAGINAS[h.secao] || ALIAS[h.secao]) ? h.secao : "dashboard", h && h.param);
     POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } });

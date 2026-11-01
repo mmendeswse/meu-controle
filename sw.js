@@ -1,8 +1,8 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v12";
-const V = "?v=3.0.0";
-const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "instalar", "lembretes", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
+const CACHE = "meu-controle-v13";
+const V = "?v=3.1.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "primeiro-uso", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",
   "./js/vendor/chart.umd.min.js",

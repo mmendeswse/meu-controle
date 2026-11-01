@@ -40,8 +40,8 @@
   const CAMPOS_MEDIDA = METRICAS.filter((m) => m.fonte === "medidas").map((m) => m.chave);
 
   function perfil(d) { return d.usuarios[0]; }
-  function pesagens(d) { return d.pesagens.slice().sort((a, b) => a.data.localeCompare(b.data)); }
-  function medidas(d) { return d.medidas.slice().sort((a, b) => a.data.localeCompare(b.data)); }
+  function pesagens(d) { return N.ordenada(d.pesagens, "data"); }
+  function medidas(d) { return N.ordenada(d.medidas, "data"); }
   function pesoNaData(d, data) {
     const l = pesagens(d).filter((p) => p.data <= data);
     return l.length ? Number(l[l.length - 1].peso) : null;
@@ -118,7 +118,7 @@
     d.medidas.forEach((m) => { (mapa[m.data] = mapa[m.data] || { data: m.data }).medida = m; });
     return Object.keys(mapa).sort().reverse().map((k) => mapa[k]);
   }
-  function pesagemDoDia(d, data) { return d.pesagens.find((p) => p.data === data) || null; }
+  function pesagemDoDia(d, data) { return (N.grupo(d.pesagens, "data")[data] || [])[0] || null; }
   function medidaDoDia(d, data) { return d.medidas.find((m) => m.data === data) || null; }
   function diasSemPesar(d) {
     const s = pesagens(d);
@@ -148,11 +148,11 @@
   // sessões de treino
   // ---------------------------------------------------------------------
   function treino(d, id) { return d.treinos.find((t) => t.id === id) || null; }
-  function treinosOrdenados(d) { return d.treinos.slice().sort((a, b) => a.data.localeCompare(b.data)); }
+  function treinosOrdenados(d) { return N.ordenada(d.treinos, "data"); }
   function treinosNoPeriodo(d, ini, fim) { return treinosOrdenados(d).filter((t) => N.entre(t.data, ini, fim)); }
-  function treinosDoDia(d, data) { return d.treinos.filter((t) => t.data === data); }
+  function treinosDoDia(d, data) { return (N.grupo(d.treinos, "data")[data] || []).slice(); }
   function seriesDoTreino(d, treinoId) {
-    return d.series.filter((s) => s.treinoId === treinoId).sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    return (N.grupo(d.series, "treinoId")[treinoId] || []).slice().sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
   }
   function volumeSerie(s) {
     return s.status === "Pulado" ? 0 : (Number(s.series) || 0) * (Number(s.repeticoes) || 0) * (Number(s.carga) || 0);
@@ -257,7 +257,8 @@
   // sequências: com plano, conta dias seguidos "seguindo o plano" (treinou
   // quando devia ou descansou quando era descanso); sem plano, dias seguidos
   // com treino realizado. Hoje ainda pendente não quebra a sequência.
-  function sequencias(d) {
+  function sequencias(d) { return N.memo(d, "F.sequencias", () => calcularSequencias(d)); }
+  function calcularSequencias(d) {
     const ini = inicioUso(d);
     if (!ini) return { atual: 0, melhor: 0, modo: temPlano(d) ? "plano" : "treinos" };
     const modoPlano = temPlano(d);

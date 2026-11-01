@@ -53,7 +53,7 @@
   // =====================================================================
   // CHECK-IN
   // =====================================================================
-  function checkin(d, data) { return d.bemEstar.find((b) => b.data === data) || null; }
+  function checkin(d, data) { return (N.grupo(d.bemEstar, "data")[data] || [])[0] || null; }
 
   // horas entre "dormi" e "acordei" (atravessando a meia-noite)
   function horasEntre(dormiu, acordou) {
@@ -96,7 +96,8 @@
   }
 
   // relações entre áreas, só com registros suficientes nos dois grupos
-  function relacoes(d) {
+  function relacoes(d) { return N.memo(d, "BE.relacoes", () => calcularRelacoes(d)); }
+  function calcularRelacoes(d) {
     const out = [];
     const F = global.Fitness, AL = global.Alimentacao;
     const ini = N.hoje(-60), fim = N.hoje(0);
@@ -166,7 +167,7 @@
     const dias = Array.isArray(h.dias) && h.dias.length ? h.dias : [1, 2, 3, 4, 5, 6, 7];
     return dias.indexOf(N.diaSemana(data)) !== -1;
   }
-  function registro(d, hid, data) { return d.habitoRegistros.find((r) => r.habitoId === hid && r.data === data) || null; }
+  function registro(d, hid, data) { return (N.grupo(d.habitoRegistros, "habitoId", "data")[hid + "|" + data] || [])[0] || null; }
   // hábitos ligados a outras áreas contam sozinhos (água, passos)
   function valorNoDia(d, h, data) {
     if (h.agua && global.Alimentacao) return global.Alimentacao.aguaDoDia(d, data);
@@ -188,7 +189,8 @@
 
   // dias seguidos cumprindo (só conta os dias em que o hábito estava previsto;
   // hoje, se ainda não feito, não quebra a sequência)
-  function sequencia(d, h) {
+  function sequencia(d, h) { return N.memo(d, "BE.seq:" + h.id + ":" + (h.inicio || "") + (h.dias || []).join(""), () => calcularSequencia(d, h)); }
+  function calcularSequencia(d, h) {
     const hj = N.hoje(0), ini = inicioHabito(h);
     let atual = 0, melhor = 0, corrente = 0, quebrouAtual = false;
     const dias = N.intervalo(ini, hj);
@@ -263,7 +265,7 @@
     const dias = Array.isArray(r.dias) && r.dias.length ? r.dias : [1, 2, 3, 4, 5, 6, 7];
     return dias.indexOf(N.diaSemana(data)) !== -1;
   }
-  function dose(d, rid, data, horario) { return d.doses.find((x) => x.remedioId === rid && x.data === data && x.horario === horario) || null; }
+  function dose(d, rid, data, horario) { return (N.grupo(d.doses, "remedioId", "data", "horario")[rid + "|" + data + "|" + horario] || [])[0] || null; }
   function dosesDoDia(d, data) {
     const out = [];
     d.remedios.forEach((r) => {
@@ -274,7 +276,7 @@
       });
     });
     // doses extras (sob demanda) registradas no dia
-    d.doses.filter((x) => x.data === data && x.extra).forEach((x) => {
+    (N.grupo(d.doses, "data")[data] || []).filter((x) => x.extra).forEach((x) => {
       const r = remedio(d, x.remedioId);
       if (r) out.push({ remedio: r, horario: x.horario, dose: x, status: x.status, extra: true });
     });

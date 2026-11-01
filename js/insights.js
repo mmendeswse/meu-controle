@@ -47,10 +47,16 @@
   // ---------------------------------------------------------------------
   // INSIGHTS
   // ---------------------------------------------------------------------
-  function gerarInsights(d) {
+  function gerarInsights(d) { return N.memo(d, "IN.insights", () => calcularInsights(d)); }
+  function calcularInsights(d) {
     const out = [];
     const hj = N.hoje(0);
-    const add = (tipo, icone, texto, rota, peso) => out.push({ tipo, icone, texto, rota, peso: peso || 0 });
+    const AR = global.Areas;
+    const add = (tipo, icone, texto, rota, peso) => {
+      const a = AR && AR.areaDaRota(rota);
+      if (a && !AR.area(d, a)) return;
+      out.push({ tipo, icone, texto, rota, peso: peso || 0 });
+    };
 
     // peso nas últimas 2 semanas
     const vp = F.variacao(d, "peso", 14);
@@ -147,7 +153,7 @@
       if (rel) add(rel.bom ? "positivo" : "info", rel.icone, rel.texto, "bemestar", 5);
       BE.habitosAtivos(d).forEach((h) => {
         const sq = BE.sequencia(d, h);
-        if (sq.atual >= 7) add("positivo", h.emoji || "🌱", `${sq.atual} dias seguidos em “${h.nome}”${sq.atual >= sq.melhor && sq.atual > 7 ? " — o seu recorde!" : ""}.`, "bemestar/habitos", 5);
+        if (sq.atual >= 7) add("positivo", h.emoji || "🌱", `${sq.atual} dias seguidos em “${h.nome}”${sq.atual >= sq.melhor && sq.atual > 7 ? " — o seu recorde!" : "."}`, "bemestar/habitos", 5);
         const ds = BE.desafio(d, h);
         if (ds && ds.estado === "ativo" && ds.restantes <= 3 && ds.restantes > 0) add("info", "🏆", `Faltam ${ds.restantes} ${ds.restantes === 1 ? "dia" : "dias"} para concluir o desafio “${h.nome}”.`, "bemestar/habitos", 6);
       });
@@ -168,20 +174,25 @@
   // ---------------------------------------------------------------------
   // ALERTAS
   // ---------------------------------------------------------------------
-  function gerarAlertas(d, todos) {
+  // os alertas dependem também da hora (água, doses atrasadas): guardados por minuto
+  function gerarAlertas(d, todos) { return N.memo(d, "IN.alertas:" + !!todos, () => calcularAlertas(d, todos), N.hoje(0) + N.horaAgora()); }
+  function calcularAlertas(d, todos) {
     const cfg = d.config.alertas || {};
     const out = [];
     const hj = N.hoje(0);
     const agora = new Date();
     const hora = agora.getHours() + agora.getMinutes() / 60;
-    const add = (tipo, nivel, titulo, texto, rota, chave) => { if (todos || cfg[tipo] !== false) out.push({ tipo, nivel, titulo, texto, rota, chave: tipo + ":" + chave }); };
+    const AR = global.Areas;
+    const add = (tipo, nivel, titulo, texto, rota, chave) => {
+      if (AR && AR.AREA_ALERTA[tipo] && !AR.area(d, AR.AREA_ALERTA[tipo])) return;
+      if (todos || cfg[tipo] !== false) out.push({ tipo, nivel, titulo, texto, rota, chave: tipo + ":" + chave });
+    };
     const usaAlgo = d.pesagens.length + d.treinos.length + d.refeicoes.length + d.compras.length > 0;
 
-    // treinos planejados que passaram sem registro
-    d.treinos.filter((t) => t.status === "Planejado" && t.data < hj && t.data >= N.hoje(-7))
-      .sort((a, b) => b.data.localeCompare(a.data)).slice(0, 3).forEach((t) => {
-        add("treinoNaoRealizado", "aviso", "Treino não realizado", `"${t.nome}" de ${dataCurta(t.data)} ainda está como planejado. Marque como realizado ou cancelado.`, "academia", t.id);
-      });
+    // treinos planejados que passaram sem registro (agrupados)
+    const tpend = d.treinos.filter((t) => t.status === "Planejado" && t.data < hj && t.data >= N.hoje(-7)).sort((a, b) => b.data.localeCompare(a.data));
+    if (tpend.length === 1) add("treinoNaoRealizado", "aviso", "Treino não realizado", `"${tpend[0].nome}" de ${dataCurta(tpend[0].data)} ainda está como planejado. Marque como realizado ou cancelado.`, "academia", tpend[0].id);
+    else if (tpend.length > 1) add("treinoNaoRealizado", "aviso", `${tpend.length} treinos sem registro`, `${tpend.slice(0, 3).map((t) => `${t.nome} (${dataCurta(t.data)})`).join(", ")}${tpend.length > 3 ? "…" : ""} ainda estão como planejados.`, "academia", tpend.map((t) => t.id).join(","));
 
     // peso sem registro
     const dsp = F.diasSemPesar(d);
@@ -189,22 +200,19 @@
     if (dsp == null && usaAlgo) add("pesoSemRegistro", "info", "Sem pesagens", "Você ainda não registrou o seu peso.", "evolucao", "nunca");
     else if (dsp != null && dsp >= lim) add("pesoSemRegistro", "aviso", "Peso sem registro", `Sua última pesagem foi há ${dsp} dias.`, "evolucao", F.pesagens(d).slice(-1)[0].data);
 
-    // estoque baixo
-    C.estoqueBaixo(d).slice(0, 5).forEach((e) => {
-      const a = AL.alimento(d, e.alimentoId);
-      if (!a) return;
-      add("estoqueBaixo", "perigo", "Estoque baixo", `${a.nome} está abaixo da quantidade mínima (${N.qtdLegivel(e.quantidade, e.unidade)} de ${N.qtdLegivel(e.minimo, e.unidade)}).`, "estoque", e.id + ":" + e.quantidade);
-    });
+    // estoque baixo (um aviso só, com os nomes)
+    const baixos = C.estoqueBaixo(d).map((e) => ({ e, a: AL.alimento(d, e.alimentoId) })).filter((x) => x.a);
+    if (baixos.length === 1) add("estoqueBaixo", "aviso", "Estoque baixo", `${baixos[0].a.nome} está abaixo do mínimo (${N.qtdLegivel(baixos[0].e.quantidade, baixos[0].e.unidade)} de ${N.qtdLegivel(baixos[0].e.minimo, baixos[0].e.unidade)}).`, "estoque", baixos[0].e.id + ":" + baixos[0].e.quantidade);
+    else if (baixos.length > 1) add("estoqueBaixo", "aviso", `${baixos.length} alimentos acabando`, `${baixos.slice(0, 4).map((x) => x.a.nome).join(", ")}${baixos.length > 4 ? "…" : ""} estão abaixo do mínimo.`, "estoque", baixos.map((x) => x.e.id).sort().join(","));
 
     // itens importantes pendentes
     const alta = C.pendentes(d).filter((c) => c.prioridade === "Alta");
-    if (alta.length) add("itemImportante", "perigo", "Itens importantes", `${alta.length} ${alta.length === 1 ? "item" : "itens"} de alta prioridade na lista: ${alta.slice(0, 4).map((c) => c.nome).join(", ")}${alta.length > 4 ? "…" : ""}.`, "compras", alta.map((c) => c.id).sort().join(","));
+    if (alta.length) add("itemImportante", "aviso", "Itens importantes", `${alta.length} ${alta.length === 1 ? "item" : "itens"} de alta prioridade na lista: ${alta.slice(0, 4).map((c) => c.nome).join(", ")}${alta.length > 4 ? "…" : ""}.`, "compras", alta.map((c) => c.id).sort().join(","));
 
-    // metas atrasadas / fora do ritmo
-    M.avaliarTodas(d).filter((a) => a.status === "fora" || (a.status === "atencao" && a.tipo.modo === "resultado" && a.meta.prazo)).forEach((a) => {
-      add("metaAtrasada", a.status === "fora" ? "perigo" : "aviso", a.status === "fora" ? "Meta fora do ritmo" : "Meta em atenção",
-        `${a.meta.titulo || a.tipo.rotulo}: ${a.explicacao}`, "metas", a.meta.id + ":" + a.status + ":" + N.inicioSemana());
-    });
+    // metas atrasadas / fora do ritmo (agrupadas)
+    const mf = M.avaliarTodas(d).filter((a) => a.status === "fora" || (a.status === "atencao" && a.tipo.modo === "resultado" && a.meta.prazo));
+    if (mf.length === 1) add("metaAtrasada", "aviso", mf[0].status === "fora" ? "Meta fora do ritmo" : "Meta em atenção", `${mf[0].meta.titulo || mf[0].tipo.rotulo}: ${mf[0].explicacao}`, "metas", mf[0].meta.id + ":" + mf[0].status + ":" + N.inicioSemana());
+    else if (mf.length > 1) add("metaAtrasada", "aviso", `${mf.length} metas pedem atenção`, mf.map((a) => a.meta.titulo || a.tipo.rotulo).join(", ") + ".", "metas", mf.map((a) => a.meta.id + a.status).sort().join(",") + ":" + N.inicioSemana());
 
     // refeição planejada
     const rh = AL.resumoHoje(d);
@@ -248,16 +256,14 @@
     // bem-estar: doses, estoque de remédios, jejum e check-in
     const BE = global.BemEstar;
     if (BE) {
-      BE.dosesDoDia(d, hj).forEach((x) => {
-        if (x.extra || x.status !== "Pendente") return;
-        const atraso = BE.atrasoMin(x.horario);
-        if (atraso >= 30) add("remedioAtrasado", "perigo", "Remédio atrasado", `${x.remedio.nome} (${x.remedio.dose || "dose"}) era às ${x.horario}.`, "bemestar/remedios", x.remedio.id + ":" + hj + ":" + x.horario);
-        else if (atraso >= -10) add("remedioAtrasado", "aviso", "Hora do remédio", `${x.remedio.nome} às ${x.horario} · ${x.remedio.dose || ""}`.trim(), "bemestar/remedios", x.remedio.id + ":" + hj + ":" + x.horario + ":agora");
-      });
-      BE.remediosAtivos(d).forEach((r) => {
-        const e = BE.estoque(r);
-        if (e && e.baixo) add("remedioEstoque", "perigo", "Remédio acabando", `${r.nome}: restam ${n1(e.qtd, e.qtd % 1 ? 1 : 0)} ${BE.unidade(e.qtd, r.unidadeDose || "")}${e.dias != null ? ` (≈ ${e.dias} ${e.dias === 1 ? "dia" : "dias"})` : ""}.`, "bemestar/remedios", r.id + ":" + Math.floor(e.qtd));
-      });
+      const pend = BE.dosesDoDia(d, hj).filter((x) => !x.extra && x.status === "Pendente").map((x) => Object.assign({ atraso: BE.atrasoMin(x.horario) }, x));
+      const atrasadas = pend.filter((x) => x.atraso >= 30), agora = pend.filter((x) => x.atraso < 30 && x.atraso >= -10);
+      if (atrasadas.length === 1) add("remedioAtrasado", "perigo", "Remédio atrasado", `${atrasadas[0].remedio.nome} (${atrasadas[0].remedio.dose || "dose"}) era às ${atrasadas[0].horario}.`, "bemestar/remedios", atrasadas[0].remedio.id + ":" + hj + ":" + atrasadas[0].horario);
+      else if (atrasadas.length > 1) add("remedioAtrasado", "perigo", `${atrasadas.length} doses atrasadas`, atrasadas.map((x) => `${x.remedio.nome} (${x.horario})`).join(", ") + ".", "bemestar/remedios", atrasadas.map((x) => x.remedio.id + x.horario).join(",") + ":" + hj);
+      if (agora.length) add("remedioAtrasado", "aviso", "Hora do remédio", agora.map((x) => `${x.remedio.nome} às ${x.horario}`).join(", "), "bemestar/remedios", agora.map((x) => x.remedio.id + x.horario).join(",") + ":" + hj + ":agora");
+      const acabando = BE.remediosAtivos(d).map((r) => ({ r, e: BE.estoque(r) })).filter((x) => x.e && x.e.baixo);
+      if (acabando.length === 1) add("remedioEstoque", "perigo", "Remédio acabando", `${acabando[0].r.nome}: restam ${n1(acabando[0].e.qtd, acabando[0].e.qtd % 1 ? 1 : 0)} ${BE.unidade(acabando[0].e.qtd, acabando[0].r.unidadeDose || "")}${acabando[0].e.dias != null ? ` (≈ ${acabando[0].e.dias} ${acabando[0].e.dias === 1 ? "dia" : "dias"})` : ""}.`, "bemestar/remedios", acabando[0].r.id + ":" + Math.floor(acabando[0].e.qtd));
+      else if (acabando.length > 1) add("remedioEstoque", "perigo", `${acabando.length} remédios acabando`, acabando.map((x) => `${x.r.nome}${x.e.dias != null ? ` (≈ ${x.e.dias} d)` : ""}`).join(", ") + ".", "bemestar/remedios", acabando.map((x) => x.r.id + Math.floor(x.e.qtd)).join(","));
       const jj = BE.jejumAtivo(d);
       if (jj && BE.horasJejum(jj) >= Number(jj.metaHoras)) add("jejumMeta", "sucesso", "Jejum concluído", `Você completou ${BE.fmtHoras(BE.horasJejum(jj))} de jejum (meta ${BE.fmtHoras(jj.metaHoras)}). Encerre quando fizer a próxima refeição.`, "bemestar/jejum", jj.id);
       const P = global.Personalizar;
@@ -271,9 +277,11 @@
     if (usaAlgo && !d.demo) {
       const ult = d.config.ultimoBackup ? N.isoLocal(new Date(d.config.ultimoBackup)) : null;
       const dias = ult ? N.diasEntre(ult, hj) : null;
-      if (dias == null || dias >= 30) add("backupAntigo", "info", "Backup", dias == null ? "Você ainda não fez nenhum backup dos seus dados." : `Seu último backup foi há ${dias} dias.`, "configuracoes", N.inicioSemana());
+      const B = global.Backup;
+      if (B ? B.precisaLembrar(d) : (dias == null || dias >= 30)) add("backupAntigo", "aviso", "Backup", dias == null ? "Você ainda não fez nenhum backup dos seus dados." : `Seu último backup foi há ${dias} dias.`, "configuracoes/backup", N.hoje(0));
     }
-    return out;
+    const ORDEM = { perigo: 0, aviso: 1, sucesso: 2, info: 3 };
+    return out.sort((a, b) => (ORDEM[a.nivel] || 9) - (ORDEM[b.nivel] || 9));
   }
 
   function lidas(d) {

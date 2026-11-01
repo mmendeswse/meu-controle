@@ -300,14 +300,18 @@
   App.registrarPagina("bemestar", {
     titulo: "Bem-estar",
     render(d, rota) {
-      const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "resumo";
+      const AR = window.Areas, MAPA = { resumo: "checkin", habitos: "habitos", remedios: "remedios", jejum: "jejum" };
+      const disp = ABAS.filter((x) => !AR || AR.area(d, MAPA[x.k]));
+      if (!disp.length) return `<div class="cabecalho-pagina"><div><h1>Bem-estar</h1></div></div>` + UI.card({ titulo: "Bem-estar", corpo: UI.vazio({ icone: "💚", titulo: "As partes do Bem-estar estão desligadas.", texto: "Ligue sono e humor, hábitos, remédios ou jejum em Ajustes → O que você usa.", acao: "ir", rotulo: "Abrir ajustes", dados: 'data-secao="configuracoes" data-param="areas"' }) });
+      const aba = disp.some((x) => x.k === rota.param) ? rota.param : disp[0].k;
       const corpo = aba === "habitos" ? abaHabitos(d) : aba === "remedios" ? abaRemedios(d) : aba === "jejum" ? abaJejum(d) : abaResumo(d);
       const at = BE.jejumAtivo(d);
-      const abas = ABAS.map((x) => Object.assign({}, x, x.k === "jejum" && at ? { r: "Jejum ⏳" } : {}));
+      const abas = disp.map((x) => Object.assign({}, x, x.k === "jejum" && at ? { r: "Jejum ⏳" } : {}));
       return `<div class="cabecalho-pagina"><div><h1>Bem-estar</h1><p class="sub">Sono, humor, hábitos, remédios e jejum</p></div>${UI.abas(abas, aba, "aba-bemestar")}</div>${corpo}`;
     },
     depois(d, rota) {
       const aba = rota.param || "resumo";
+      // (as abas desligadas não chegam aqui: o render já escolheu a primeira disponível)
       const cor = getComputedStyle(document.body).getPropertyValue("--marca").trim() || "#5AC8FA";
       if (document.getElementById("graf-be-sono")) {
         const s = BE.serie(d, "sono", N.hoje(-29), N.hoje(0));
@@ -334,7 +338,7 @@
   });
 
   App.registrarAcoes({
-    "aba-bemestar": (el) => App.ir("bemestar", el.dataset.k === "resumo" ? null : el.dataset.k, { manterRolagem: true }),
+    "aba-bemestar": (el) => App.ir("bemestar", el.dataset.k, { manterRolagem: true }),
     "be-mes-humor": (el) => {
       const st = App.estado.bemestar;
       const novo = N.addMeses(st.mesHumor || N.inicioMes(), Number(el.dataset.delta));

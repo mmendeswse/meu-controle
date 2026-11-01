@@ -45,20 +45,7 @@
     </div>` });
   }
 
-  function backup(d) {
-    const ult = d.config.ultimoBackup ? new Date(d.config.ultimoBackup).toLocaleString("pt-BR") : "nunca";
-    return UI.card({ titulo: "Backup e restauração", sub: "seus dados ficam só neste navegador — guarde uma cópia", corpo: `<div class="pad">
-      <div class="botoes-linha">
-        <button class="btn primario" data-acao="exportar-backup">${UI.svg("download")}Fazer backup (.json)</button>
-        <button class="btn" data-acao="importar-backup">${UI.svg("upload")}Restaurar backup</button>
-        <button class="btn" data-acao="copiar-backup">${UI.svg("copiar")}Copiar como texto</button>
-        <button class="btn" data-acao="colar-backup">Colar texto de backup</button>
-      </div>
-      <p class="ajuda">Último backup: <b>${ult}</b>. Restaurar substitui todos os dados atuais (o sistema pede confirmação). Backups da versão anterior do sistema também são aceitos e convertidos automaticamente.</p>
-      <div class="sechead">Exportação</div>
-      <div class="botoes-linha"><button class="btn" data-acao="exportar-planilha">${UI.svg("download")}Exportar tudo em Excel (.xlsx)</button><button class="btn" data-acao="ir" data-secao="relatorios">Relatório do período (PDF / CSV / Excel)</button></div>
-    </div>` });
-  }
+  function backup(d) { return window.Backup.cartaoAjustes(d); }
 
   function exclusao(d) {
     const grupos = A.GRUPOS_EXCLUSAO;
@@ -80,13 +67,15 @@
   App.registrarPagina("configuracoes", {
     titulo: "Ajustes",
     render(d) {
-      const PZ = window.Personalizar, LB = window.Lembretes;
-      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Aparência, rotina, lembretes, perfil e seus dados</p></div>
-          <nav class="atalhos-ajustes">${[["aparencia", "🎨 Aparência"], ["rotina", "🕒 Rotina"], ["lembretes", "🔔 Lembretes"], ["alertas", "⚠️ Alertas"], ["instalar", "📲 Instalar"]].map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
-        <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${PZ.cartaoRotina(d)}</div></div>
-        <div class="grid"><div class="c6">${LB.cartaoAjustes(d)}</div><div class="c6">${perfil(d)}</div></div>
-        <div class="grid"><div class="c5">${alertas(d)}</div><div class="c7">${integracao(d)}</div></div>
-        <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${privacidade(d)}</div></div>
+      const PZ = window.Personalizar, LB = window.Lembretes, AR = window.Areas;
+      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["backup", "🛟 Backup"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"]];
+      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div>
+          <nav class="atalhos-ajustes">${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
+        <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${AR.cartaoAreas(d)}</div></div>
+        <div class="grid"><div class="c6">${PZ.cartaoRotina(d)}</div><div class="c6">${AR.cartaoHoje(d)}</div></div>
+        <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${LB.cartaoAjustes(d)}</div></div>
+        <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${alertas(d)}</div></div>
+        <div class="grid"><div class="c7">${integracao(d)}</div><div class="c5">${privacidade(d)}</div></div>
         <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${window.Instalar ? window.Instalar.cartaoAjustes() : ""}</div></div>`;
     },
     depois(d, rota) {
@@ -101,7 +90,7 @@
   });
 
   App.registrarAcoes({
-    "exportar-backup": () => { A.exportarDados(); App.renderizar(); UI.toast("Backup salvo — verifique seus downloads."); },
+    "exportar-backup": () => window.Backup.backupAgora(),
     "importar-backup": () => document.getElementById("inputImportarBackup").click(),
     "exportar-planilha": () => { window.Relatorios.exportarTudoXLSX(App.dados()); UI.toast("Planilha exportada."); },
     "copiar-backup": () => {

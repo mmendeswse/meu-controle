@@ -68,8 +68,22 @@
   }
   function dataBR(iso) { return iso ? iso.slice(8, 10) + "/" + iso.slice(5, 7) + "/" + iso.slice(0, 4) : "—"; }
 
+  // área do app a que cada tipo de meta pertence (metas de áreas desligadas ficam escondidas)
+  function areaDoTipo(tipo) {
+    const t = TIPOS[tipo] || {};
+    if (t.modo === "resultado") return "evolucao";
+    if (t.modo === "frequencia") return "academia";
+    if (t.modo === "limite" || t.modo === "limiteLista") return "compras";
+    if (t.fonte === "bemestar") return "checkin";
+    if (t.modo === "diaria") return tipo === "agua" ? null : "alimentacao";
+    return null;
+  }
+  function tipoVisivel(d, tipo) {
+    const AR = global.Areas, a = areaDoTipo(tipo);
+    return !AR || !a || AR.area(d, a);
+  }
   function metasAtivas(d) {
-    return d.metas.filter((m) => m.ativa !== false).sort((a, b) => Object.keys(TIPOS).indexOf(a.tipo) - Object.keys(TIPOS).indexOf(b.tipo));
+    return d.metas.filter((m) => m.ativa !== false && tipoVisivel(d, m.tipo)).sort((a, b) => Object.keys(TIPOS).indexOf(a.tipo) - Object.keys(TIPOS).indexOf(b.tipo));
   }
   function metaDoTipo(d, tipo) { return metasAtivas(d).find((m) => m.tipo === tipo) || null; }
 
@@ -236,5 +250,5 @@
 
   function avaliarTodas(d) { return metasAtivas(d).map((m) => avaliar(d, m)); }
 
-  global.Metas = { TIPOS, STATUS, fmt, fmtRitmo, metasAtivas, metaDoTipo, valorAtual, mediaDiaria, frequenciaSemanal, avaliar, avaliarTodas };
+  global.Metas = { TIPOS, STATUS, areaDoTipo, tipoVisivel, fmt, fmtRitmo, metasAtivas, metaDoTipo, valorAtual, mediaDiaria, frequenciaSemanal, avaliar, avaliarTodas };
 })(window);

@@ -41,7 +41,8 @@
   const CQ = window.Conquistas;
   function fmtCq(x, v) { return x.un ? UI.numAuto(v, x.casas) + " " + x.un : UI.numAuto(v, 0); }
   function abaConquistas(d) {
-    const lista = CQ.calcular(d), ok = lista.filter((x) => x.ok);
+    // só as categorias das áreas ligadas
+    const lista = CQ.visiveis(d), ok = lista.filter((x) => x.ok);
     const proximas = lista.filter((x) => !x.ok && x.atual > 0).sort((a, b) => b.pct - a.pct).slice(0, 3);
     const medalha = (x) => `<button class="cq${x.ok ? " ok" : ""}" ${x.ok ? `data-acao="conquista-compartilhar" data-id="${x.id}"` : "disabled"} title="${esc(x.s)}">
         <span class="cq-ic">${x.ic}</span><b>${esc(x.t)}</b><small>${esc(x.s)}</small>
@@ -52,7 +53,7 @@
         <div class="ht-txt"><b>${ok.length} de ${lista.length} conquistas</b><small>Calculadas pelos seus registros. Toque numa conquistada para compartilhar com a família.</small></div>
       </div>
       ${proximas.length ? `<div class="sechead">QUASE LÁ</div><div class="cq-grade">${proximas.map(medalha).join("")}</div>` : ""}
-      ${CQ.CATEGORIAS.map((c) => { const l = lista.filter((x) => x.cat === c); return `<div class="sechead">${c.toUpperCase()} <small>${l.filter((x) => x.ok).length}/${l.length}</small></div><div class="cq-grade">${l.map(medalha).join("")}</div>`; }).join("")}`;
+      ${CQ.CATEGORIAS.filter((c) => lista.some((x) => x.cat === c)).map((c) => { const l = lista.filter((x) => x.cat === c); return `<div class="sechead">${c.toUpperCase()} <small>${l.filter((x) => x.ok).length}/${l.length}</small></div><div class="cq-grade">${l.map(medalha).join("")}</div>`; }).join("")}`;
   }
 
   // celebra conquistas novas depois de cada registro
@@ -79,7 +80,7 @@
       if (antes !== JSON.stringify(d.config.conquistasVistas)) window.Armazenamento.salvarDados(d, true, true);
       return;
     }
-    const novas = CQ.novas(d, lista);
+    const novas = CQ.novas(d, CQ.visiveis(d));
     if (!novas.length) return;
     CQ.marcarVistas(d, lista);
     window.Armazenamento.salvarDados(d, true, true);
@@ -110,7 +111,7 @@
       const av = M.avaliarTodas(d);
       const existentes = {};
       av.forEach((a) => { existentes[a.meta.tipo] = true; });
-      const faltam = Object.keys(M.TIPOS).filter((k) => !existentes[k]);
+      const faltam = Object.keys(M.TIPOS).filter((k) => !existentes[k] && M.tipoVisivel(d, k));
       const resumo = { ok: av.filter((a) => a.status === "ok" || a.status === "atingida").length, atencao: av.filter((a) => a.status === "atencao").length, fora: av.filter((a) => a.status === "fora").length, semdados: av.filter((a) => a.status === "semdados").length };
       const secoes = GRUPOS.map((g) => {
         const lista = av.filter((a) => g.modos.indexOf(a.tipo.modo) !== -1 && (!g.teste || g.teste(a.tipo)));

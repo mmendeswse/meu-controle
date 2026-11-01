@@ -958,7 +958,7 @@
     const tipo = mt ? mt.tipo : (tipoIni || "peso");
     const m = UI.abrirModal(`
       <h3>${mt ? "Editar meta" : "Nova meta"}</h3>
-      <div class="campo"><label for="f_tipo">Tipo de meta</label><select id="f_tipo"${mt ? " disabled" : ""}>${UI.opcoes(Object.keys(M.TIPOS).map((k) => ({ v: k, r: M.TIPOS[k].icone + " " + M.TIPOS[k].rotulo })), tipo)}</select></div>
+      <div class="campo"><label for="f_tipo">Tipo de meta</label><select id="f_tipo"${mt ? " disabled" : ""}>${UI.opcoes(Object.keys(M.TIPOS).filter((k) => k === tipo || M.tipoVisivel(d, k)).map((k) => ({ v: k, r: M.TIPOS[k].icone + " " + M.TIPOS[k].rotulo })), tipo)}</select></div>
       <div class="campo"><label for="f_titulo">Descrição</label><input id="f_titulo" value="${esc(mt ? mt.titulo || "" : "")}" placeholder="opcional — ex.: Chegar a 75 kg"></div>
       <div id="metaCampos"></div>
       <div class="campo"><label for="f_obs">Observações</label><input id="f_obs" value="${esc(mt ? mt.obs || "" : "")}" placeholder="opcional"></div>

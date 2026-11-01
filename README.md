@@ -55,6 +55,26 @@ Na primeira vez que você abrir, o sistema começa **vazio**, com um passo a pas
 de boas-vindas. Se quiser conhecer antes, use **Explorar com dados de exemplo**
 (dados fictícios, marcados com um aviso amarelo e removíveis com um clique).
 
+## Primeira abertura
+
+Cada pessoa da família, ao abrir o app pela primeira vez, responde 4
+perguntas rápidas: nome, avatar, **o que quer acompanhar** e horários de
+acordar e dormir. Também dá para **restaurar um backup** (quem trocou de
+aparelho) ou só olhar com dados de exemplo.
+
+Perfis prontos (Ajustes → O que você usa):
+
+| Perfil | O que fica ligado |
+| --- | --- |
+| 🌟 Completo | tudo |
+| 🩺 Saúde e remédios | remédios, sono e humor, hábitos, peso semanal e metas; letra maior |
+| 🧒 Criança ou adolescente | hábitos, água, sono, humor e conquistas — sem peso, calorias, dietas ou jejum |
+| 💪 Fitness | treino, alimentação, corpo, jejum e compras — sem remédios |
+
+Depois dá para ligar e desligar cada área, escolher as 4 abas da barra do
+celular e montar a tela Hoje (quais cartões, em que ordem). Desligar uma
+área só esconde: os dados continuam guardados.
+
 ## Onde ficam os seus dados
 
 Tudo é salvo no armazenamento local do seu próprio navegador
@@ -63,9 +83,31 @@ Tudo é salvo no armazenamento local do seu próprio navegador
 - Os dados ficam ligados àquele navegador, naquele aparelho. Outro
   navegador ou outro aparelho começa vazio.
 - Limpar os dados de navegação apaga os seus dados.
-- Para levar seus dados para outro lugar (ou ter uma cópia de segurança),
-  use **Ajustes → Fazer backup** (arquivo `.json`) ou **Copiar como texto**
-  (texto), e depois **Restaurar backup / Colar texto de backup** no outro aparelho.
+- Para levar seus dados para outro lugar, use **Ajustes → Backup** e depois
+  **Restaurar de um arquivo** no outro aparelho.
+
+### Backup automático (Ajustes → Backup)
+
+O app protege os dados em três camadas, sem servidor:
+
+1. **Proteção do navegador:** pede para o navegador não apagar os dados
+   sozinho (no iPhone, isso vale para o app instalado).
+2. **Cópias automáticas no aparelho:** uma por dia (as últimas 14) e uma
+   antes de qualquer coisa que substitua ou apague dados (restaurar, reset,
+   excluir um grupo, carregar o exemplo). Restauráveis com um toque.
+   Protegem contra apagar sem querer — não contra perder o aparelho.
+3. **Backup fora do aparelho:**
+   - **Computador (Chrome/Edge):** escolha uma vez uma pasta — de
+     preferência a do **Google Drive**, OneDrive ou Dropbox instalado no PC
+     — e o app grava o backup lá sozinho depois das alterações
+     (`meu-controle-backup.json` + um arquivo por dia, os últimos 7).
+   - **Celular:** os navegadores não deixam um site gravar arquivos
+     sozinho, então o backup é de **1 toque**: um aviso na tela Hoje (no
+     intervalo escolhido) abre o compartilhar — Drive, iCloud, WhatsApp…
+
+Envio direto para o Google Drive sem nenhum toque também é possível, mas
+exige criar um projeto no Google Cloud com uma credencial OAuth e publicar
+uma tela de consentimento — fica como próximo passo, se fizer falta.
 
 ## O que o sistema faz
 
@@ -201,6 +243,9 @@ meu-controle/
     ├── lembretes.js         # notificações e calendário (.ics)
     ├── formularios.js       # formulários (modais)
     ├── formularios-saude.js # check-in, hábitos, remédios e jejum
+    ├── areas.js             # áreas, perfis prontos, abas do celular e tela Hoje
+    ├── backup.js            # cópias automáticas, pasta automática e backup em 1 toque
+    ├── primeiro-uso.js      # boas-vindas guiadas
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```

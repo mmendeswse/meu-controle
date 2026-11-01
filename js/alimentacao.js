@@ -23,7 +23,7 @@
   // ---------------------------------------------------------------------
   // alimentos
   // ---------------------------------------------------------------------
-  function alimento(d, id) { return d.alimentos.find((a) => a.id === id) || null; }
+  function alimento(d, id) { return (N.grupo(d.alimentos, "id")[id] || [])[0] || null; }
   function alimentoPorNome(d, nome) {
     const k = String(nome || "").trim().toLowerCase();
     return k ? d.alimentos.find((a) => a.nome.trim().toLowerCase() === k) || null : null;
@@ -73,8 +73,8 @@
   // ---------------------------------------------------------------------
   // refeições
   // ---------------------------------------------------------------------
-  function refeicao(d, id) { return d.refeicoes.find((r) => r.id === id) || null; }
-  function itensDe(d, refeicaoId) { return d.refeicaoItens.filter((i) => i.refeicaoId === refeicaoId); }
+  function refeicao(d, id) { return (N.grupo(d.refeicoes, "id")[id] || [])[0] || null; }
+  function itensDe(d, refeicaoId) { return (N.grupo(d.refeicaoItens, "refeicaoId")[refeicaoId] || []).slice(); }
   function nutricaoItem(d, i) { return nutricaoDe(alimento(d, i.alimentoId), i.quantidade, i.unidade); }
   function nutricaoRefeicao(d, refeicaoId) { return somarNutricao(itensDe(d, refeicaoId).map((i) => nutricaoItem(d, i))); }
   function custoRefeicao(d, refeicaoId) {
@@ -91,7 +91,7 @@
     return lista.sort((a, b) => (a.data || "").localeCompare(b.data || "") || (ORDEM_TIPO[a.tipo] - ORDEM_TIPO[b.tipo]) || (a.horario || "").localeCompare(b.horario || ""));
   }
   function refeicoesNoDia(d, data) {
-    return ordenarRefeicoes(d.refeicoes.filter((r) => r.data === data));
+    return ordenarRefeicoes((N.grupo(d.refeicoes, "data")[data] || []).slice());
   }
   function refeicoesNoPeriodo(d, ini, fim) {
     return ordenarRefeicoes(d.refeicoes.filter((r) => N.entre(r.data, ini, fim)));
@@ -130,7 +130,7 @@
   // ---------------------------------------------------------------------
   // água
   // ---------------------------------------------------------------------
-  function aguaDoDia(d, data) { return N.soma(d.agua.filter((a) => a.data === data), (a) => a.ml); }
+  function aguaDoDia(d, data) { return N.soma(N.grupo(d.agua, "data")[data] || [], (a) => a.ml); }
   function diasComAgua(d, ini, fim) {
     const dias = {};
     d.agua.forEach((a) => { if (N.entre(a.data, ini, fim) && a.ml > 0) dias[a.data] = true; });

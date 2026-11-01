@@ -194,7 +194,56 @@
     { chave: "fibra", rotulo: "Fibras", curto: "F", unidade: "g" }
   ];
 
+  // ---------------------------------------------------------------------
+  // desempenho: índices e resultados guardados até a próxima alteração
+  // ---------------------------------------------------------------------
+  // "geracao" muda a cada salvamento (armazenamento.js chama novaGeracao).
+  // Índices são guardados por lista (WeakMap) e refeitos quando a geração
+  // ou o tamanho da lista mudam; resultados pesados, por conjunto de dados.
+  let geracao = 0;
+  function novaGeracao() { geracao++; }
+  const indices = new WeakMap();
+  // agrupa uma lista pelos campos indicados: grupo(d.doses, "remedioId", "data", "horario")["id|2026-11-01|08:00"]
+  function grupo(lista) {
+    const campos = Array.prototype.slice.call(arguments, 1), nome = campos.join("|");
+    let porLista = indices.get(lista);
+    if (!porLista) { porLista = {}; indices.set(lista, porLista); }
+    const c = porLista[nome];
+    if (c && c.g === geracao && c.n === lista.length) return c.m;
+    const m = Object.create(null);
+    for (let i = 0; i < lista.length; i++) {
+      const x = lista[i];
+      const k = campos.length === 1 ? x[campos[0]] : campos.map((f) => x[f]).join("|");
+      (m[k] || (m[k] = [])).push(x);
+    }
+    porLista[nome] = { g: geracao, n: lista.length, m };
+    return m;
+  }
+  function chaveGrupo() { return Array.prototype.join.call(arguments, "|"); }
+  // lista ordenada por um campo (cópia; a original não muda)
+  function ordenada(lista, campo) {
+    let porLista = indices.get(lista);
+    if (!porLista) { porLista = {}; indices.set(lista, porLista); }
+    const nome = "ord:" + campo, c = porLista[nome];
+    if (c && c.g === geracao && c.n === lista.length) return c.m.slice();
+    const m = lista.slice().sort((a, b) => String(a[campo]).localeCompare(String(b[campo])));
+    porLista[nome] = { g: geracao, n: lista.length, m };
+    return m.slice();
+  }
+  const memos = new WeakMap();
+  // resultado de fn(d) guardado até a próxima alteração (ou até mudar o "extra", ex.: o dia)
+  function memo(d, nome, fn, extra) {
+    let porDados = memos.get(d);
+    if (!porDados) { porDados = {}; memos.set(d, porDados); }
+    const k = geracao + "|" + (extra == null ? hoje(0) : extra), c = porDados[nome];
+    if (c && c.k === k) return c.v;
+    const v = fn();
+    porDados[nome] = { k, v };
+    return v;
+  }
+
   global.Nucleo = {
+    novaGeracao, grupo, chaveGrupo, ordenada, memo, get geracao() { return geracao; },
     novoId, isoLocal, paraData, hoje, addDias, addMeses, diasEntre, diaSemana, inicioSemana, fimSemana,
     mesDe, inicioMes, fimMes, inicioTrimestre, fimTrimestre, intervalo, entre, horaAgora,
     NOMES_DIA, DIA_CURTO,

@@ -7,23 +7,29 @@
   "use strict";
 
   const N = window.Nucleo, UI = window.UI, AL = window.Alimentacao, C = window.Compras, F = window.Fitness, M = window.Metas, I = window.Insights, G = window.Graficos;
-  const BE = window.BemEstar, P = window.Personalizar;
+  const BE = window.BemEstar, P = window.Personalizar, AR = window.Areas;
   const esc = UI.esc;
 
   function semRegistros(d) {
-    return !d.pesagens.length && !d.medidas.length && !d.refeicoes.length && !d.treinos.length && !d.compras.length && !d.alimentos.length && !d.metas.length && !d.fichas.length;
+    return !d.pesagens.length && !d.medidas.length && !d.refeicoes.length && !d.treinos.length && !d.compras.length && !d.alimentos.length && !d.metas.length && !d.fichas.length
+      && !d.bemEstar.length && !d.habitos.length && !d.remedios.length;
   }
 
   // primeiros passos, na ordem em que o sistema é montado
   function boasVindas(d) {
     const u = d.usuarios[0];
+    // os passos seguem as áreas que a pessoa usa
     const passos = [
-      { ok: u.nome && u.nome !== "Eu" && u.altura, acao: "editar-perfil", t: "Perfil", s: "Nome, altura e objetivo (usados no IMC)." },
-      { ok: d.pesagens.length > 0, acao: "rapido-peso", t: "Peso de hoje", s: "O ponto de partida. Medidas são opcionais." },
-      { ok: d.metas.length > 0, acao: "nova-meta", t: "Metas", s: "Peso, calorias, proteína, água, treinos por semana…" },
-      { ok: d.alimentos.length > 0, acao: "novo-alimento", t: "Alimentos", s: "Com calorias, macros e preço — base das refeições e compras." },
-      { ok: d.fichas.length > 0, acao: "nova-ficha", t: "Ficha de treino", s: "Exercícios, séries e repetições. Depois, o plano da semana." }
-    ];
+      { area: "evolucao", ok: u.nome && u.nome !== "Eu" && u.altura, acao: "editar-perfil", t: "Perfil", s: "Altura e objetivo (usados no IMC)." },
+      { area: "evolucao", ok: d.pesagens.length > 0, acao: "rapido-peso", t: "Peso de hoje", s: "O ponto de partida. Medidas são opcionais." },
+      { area: "remedios", ok: d.remedios.length > 0, acao: "novo-remedio", t: "Remédios e suplementos", s: "Com horários: cada dose aparece no seu dia." },
+      { area: "habitos", ok: d.habitos.length > 0, acao: "habito-modelos", t: "Um hábito ou desafio", s: "Água, leitura, fio dental, 21 dias sem açúcar…" },
+      { area: "checkin", ok: d.bemEstar.length > 0, acao: "rapido-checkin", t: "Primeiro check-in", s: "Como você dormiu e como está — leva 10 segundos." },
+      { area: "metas", ok: d.metas.length > 0, acao: "nova-meta", t: "Metas", s: "Peso, sono, passos, água, treinos por semana…" },
+      { area: "alimentacao", ok: d.alimentos.length > 0, acao: "novo-alimento", t: "Alimentos", s: "Com calorias, macros e preço — base das refeições e compras." },
+      { area: "academia", ok: d.fichas.length > 0, acao: "nova-ficha", t: "Ficha de treino", s: "Exercícios, séries e repetições. Depois, o plano da semana." }
+    ].filter((p) => AR.area(d, p.area)).slice(0, 5);
+    if (!passos.length) return "";
     return `<section class="boas-vindas">
       <div class="bv-texto"><h1>Bem-vindo ao Meu Controle</h1>
         <p>Siga os passos na ordem — depois, é só usar a tela <b>Hoje</b> e o botão <b>+</b> no dia a dia. Tudo fica salvo só neste aparelho.</p>
@@ -48,18 +54,21 @@
   // ------------------------------------------------------------------
   function notaDoDia(d, dia) {
     const partes = [];
-    const mk = AL.metaDiaria(d, "kcal"), ma = AL.metaDiaria(d, "agua");
+    const comida = AR.area(d, "alimentacao");
+    const mk = comida ? AL.metaDiaria(d, "kcal") : null, ma = AL.metaDiaria(d, "agua");
     if (mk) partes.push(Math.min(AL.consumoDoDia(d, dia).kcal / mk, 1));
-    if (ma) partes.push(Math.min(AL.aguaDoDia(d, dia) / ma, 1));
-    const s = F.situacaoDoDia(d, dia);
-    if (s.previsto) partes.push(s.realizado ? 1 : 0);
-    if (!mk) {
+    if (ma && d.config.rotina.mostrar.agua !== false) partes.push(Math.min(AL.aguaDoDia(d, dia) / ma, 1));
+    if (AR.area(d, "academia")) {
+      const s = F.situacaoDoDia(d, dia);
+      if (s.previsto) partes.push(s.realizado ? 1 : 0);
+    }
+    if (comida && !mk) {
       const refs = AL.refeicoesNoDia(d, dia);
       if (refs.length) partes.push(refs.filter((r) => r.status === "Realizada").length / refs.length);
     }
-    const doses = BE.dosesDoDia(d, dia).filter((x) => !x.extra);
+    const doses = AR.area(d, "remedios") ? BE.dosesDoDia(d, dia).filter((x) => !x.extra) : [];
     if (doses.length) partes.push(doses.filter((x) => x.status === "Tomado").length / doses.length);
-    const habs = BE.habitosDoDia(d, dia);
+    const habs = AR.area(d, "habitos") ? BE.habitosDoDia(d, dia) : [];
     if (habs.length) partes.push(N.media(habs, (h) => BE.progressoNoDia(d, h, dia)));
     return partes.length ? partes.reduce((a, b) => a + b, 0) / partes.length : null;
   }
@@ -106,29 +115,31 @@
     // pesagem: todo dia, uma vez por semana ou não mostrar
     const p = F.pesagemDoDia(d, hj);
     const diaDePeso = mostrar.peso === "diario" || (mostrar.peso === "semanal" && N.diaSemana(hj) === Number(mostrar.diaPesagem || 1));
-    if (p) itens.push({ hora: hAcordar, feito: true, texto: "⚖️ Peso: " + UI.kg(p.peso), sub: "registrado", acao: `data-acao="registrar-corpo" data-data="${hj}"` });
-    else if (diaDePeso) itens.push({ hora: hAcordar, texto: "⚖️ Peso", sub: mostrar.peso === "semanal" ? "dia da pesagem semanal" : "em jejum, ao acordar (opcional)", acao: `data-acao="rapido-peso"`, opcional: mostrar.peso !== "semanal" });
+    const usaPeso = AR.area(d, "evolucao");
+    if (p && usaPeso) itens.push({ hora: hAcordar, feito: true, texto: "⚖️ Peso: " + UI.kg(p.peso), sub: "registrado", acao: `data-acao="registrar-corpo" data-data="${hj}"` });
+    else if (diaDePeso && usaPeso) itens.push({ hora: hAcordar, texto: "⚖️ Peso", sub: mostrar.peso === "semanal" ? "dia da pesagem semanal" : "em jejum, ao acordar (opcional)", acao: `data-acao="rapido-peso"`, opcional: mostrar.peso !== "semanal" });
 
     // sono da noite (check-in)
     const ck = BE.checkin(d, hj);
-    if (mostrar.sono !== false) {
+    if (mostrar.sono !== false && AR.area(d, "checkin")) {
       const hs = BE.horasSono(ck);
       itens.push(hs != null ? { hora: hAcordar, feito: true, texto: "😴 Sono: " + BE.fmtHoras(hs), sub: ck.sonoQualidade ? BE.emoji("sonoQualidade", ck.sonoQualidade) + " " + BE.nivel("sonoQualidade", ck.sonoQualidade).r.toLowerCase() : "registrado", acao: `data-acao="checkin" data-data="${hj}" data-foco="sono"` }
         : { hora: hAcordar, texto: "😴 Sono da noite", sub: "como você dormiu?", acao: `data-acao="checkin" data-data="${hj}" data-foco="sono"` });
     }
 
-    const refs = AL.refeicoesNoDia(d, hj);
+    const usaComida = AR.area(d, "alimentacao");
+    const refs = usaComida ? AL.refeicoesNoDia(d, hj) : [];
     refs.forEach((r) => {
       const n = AL.nutricaoRefeicao(d, r.id), feito = r.status === "Realizada";
       itens.push({ hora: r.horario || N.HORARIO_SUGERIDO[r.tipo] || "12:00", feito, pulado: r.status === "Pulada", texto: (N.EMOJI_REFEICAO[r.tipo] || "") + " " + r.tipo,
         sub: (n.kcal ? Math.round(n.kcal) + " kcal" : AL.itensDe(d, r.id).length + " itens") + (feito ? "" : r.status === "Pulada" ? " · pulada" : " · planejada"),
         acao: `data-acao="ciclar-refeicao" data-id="${r.id}" title="${feito ? "Desmarcar" : "Marcar como realizada"}"` });
     });
-    (d.config.rotina.refeicoesDoDia || []).filter((t) => !refs.some((r) => r.tipo === t)).forEach((t) => {
+    (usaComida ? d.config.rotina.refeicoesDoDia || [] : []).filter((t) => !refs.some((r) => r.tipo === t)).forEach((t) => {
       itens.push({ hora: N.HORARIO_SUGERIDO[t], texto: N.EMOJI_REFEICAO[t] + " " + t, sub: "registrar", vazio: true, acao: `data-acao="nova-refeicao" data-data="${hj}" data-tipo="${t}" data-status="Realizada"` });
     });
 
-    if (mostrar.treino !== false) {
+    if (mostrar.treino !== false && AR.area(d, "academia")) {
       const hTreino = P.horario(d, "treino");
       const th = F.treinoDeHoje(d);
       if (th && th.origem === "descanso") itens.push({ hora: hTreino, feito: true, texto: "😴 Descanso", sub: "dia de descanso no plano" });
@@ -140,7 +151,7 @@
     }
 
     // remédios: cada dose no horário
-    if (mostrar.remedios !== false) BE.dosesDoDia(d, hj).forEach((x) => {
+    if (mostrar.remedios !== false && AR.area(d, "remedios")) BE.dosesDoDia(d, hj).forEach((x) => {
       const r = x.remedio, atraso = x.status === "Pendente" ? BE.atrasoMin(x.horario) : null;
       itens.push({ hora: x.horario, feito: x.status === "Tomado", pulado: x.status === "Pulado", texto: (BE.EMOJI_REMEDIO[r.tipo] || "💊") + " " + r.nome,
         sub: (r.dose || "") + (x.status === "Tomado" && x.dose && x.dose.hora ? " · tomado às " + x.dose.hora : x.status === "Pulado" ? " · pulada" : atraso != null && atraso > 30 ? " · atrasado" : r.instrucao && r.instrucao !== "Indiferente" ? " · " + r.instrucao.toLowerCase() : ""),
@@ -148,7 +159,7 @@
     });
 
     // hábitos previstos para hoje (com horário, entram na ordem do dia)
-    if (mostrar.habitos !== false) BE.habitosDoDia(d, hj).forEach((h) => {
+    if (mostrar.habitos !== false && AR.area(d, "habitos")) BE.habitosDoDia(d, hj).forEach((h) => {
       const feito = BE.cumpridoNoDia(d, h, hj), v = BE.valorNoDia(d, h, hj), seq = BE.sequencia(d, h), ds = BE.desafio(d, h);
       itens.push({ hora: h.horario || "", feito, texto: (h.emoji || "✅") + " " + h.nome,
         sub: (h.tipo === "quantidade" ? `${UI.numAuto(v, 1)} de ${UI.numAuto(h.meta, 1)} ${h.unidade || ""}` : feito ? "feito" : "toque quando fizer") + (ds && ds.estado === "ativo" ? ` · dia ${ds.dia}/${h.duracao}` : seq.atual >= 2 ? ` · 🔥 ${seq.atual}` : ""),
@@ -156,7 +167,7 @@
     });
 
     // como foi o dia (humor, energia, estresse)
-    if (mostrar.humor !== false) {
+    if (mostrar.humor !== false && AR.area(d, "checkin")) {
       const ok = ck && ck.humor != null;
       itens.push({ hora: P.horario(d, "checkin"), feito: ok, texto: ok ? `${BE.emoji("humor", ck.humor)} Dia: ${BE.nivel("humor", ck.humor).r.toLowerCase()}` : "🙂 Como foi o dia", sub: ok ? [ck.energia ? "energia " + BE.emoji("energia", ck.energia) : "", ck.estresse ? "estresse " + BE.emoji("estresse", ck.estresse) : ""].filter(Boolean).join(" · ") || "registrado" : "humor, energia e estresse",
         acao: `data-acao="checkin" data-data="${hj}" data-foco="humor"`, chave: "humor" });
@@ -170,7 +181,7 @@
         acao: `data-acao="agua" data-data="${hj}"`, extra: `<button class="btn pequeno" data-acao="agua-rapida" data-data="${hj}" title="Somar um copo">+${d.config.copoAgua || 250} ml</button>` });
     }
     // jejum em andamento: termina hoje no horário previsto, ou fica "ao longo do dia"
-    const jj = mostrar.jejum !== false ? BE.jejumAtivo(d) : null;
+    const jj = mostrar.jejum !== false && AR.area(d, "jejum") ? BE.jejumAtivo(d) : null;
     if (jj) {
       const fim = new Date(new Date(jj.inicio).getTime() + Number(jj.metaHoras) * 3600000), atingiu = Date.now() >= fim.getTime();
       const hFim = N.isoLocal(fim) === hj ? String(fim.getHours()).padStart(2, "0") + ":" + String(fim.getMinutes()).padStart(2, "0") : "";
@@ -202,18 +213,24 @@
         <button class="check-btn" data-chave="${esc(l.chave)}" ${l.acao || "disabled"}><span class="check-ic">${l.feito ? "✓" : l.pulado ? "–" : ""}</span><span class="check-txt"><b>${l.hora ? `<span class="check-hora">${l.hora}</span>` : ""}${esc(l.texto)}</b><small>${esc(l.sub || "")}</small></span>
         ${l === proximo ? `<span class="chip-proximo">${esc(quandoFalta(l.hora))}</span>` : ""}</button>
         ${l.extra || ""}</li>`;
+    // itens concluídos ficam recolhidos (o que acabou de ser marcado ainda aparece uma vez)
+    const recolher = d.config.hoje.recolherFeitos !== false && !window.App.estado.hojeMostrarFeitos;
+    const visivel = (l) => !recolher || !(l.feito || l.pulado) || (ultimo && ultimo === l.chave);
     const grupos = PERIODOS.map((g) => {
       const lista = itens.filter((l) => g.teste(l.hora));
       if (!lista.length) return "";
       const ok = lista.filter((l) => l.feito).length;
-      return `<li class="periodo"><span>${g.ic} ${g.r}</span><small>${ok}/${lista.length}</small></li>${lista.map(linha).join("")}`;
+      const mostrar = lista.filter(visivel);
+      return `<li class="periodo${mostrar.length ? "" : " completo"}"><span>${g.ic} ${g.r}</span><small>${mostrar.length ? `${ok}/${lista.length}` : "✓ tudo feito"}</small></li>${mostrar.map(linha).join("")}`;
     }).join("");
+    const nFeitos = itens.filter((l) => l.feito || l.pulado).length;
+    const botaoFeitos = d.config.hoje.recolherFeitos !== false && nFeitos ? `<li class="mostrar-feitos"><button class="link-acao" data-acao="hoje-mostrar-feitos">${recolher ? `Mostrar ${nFeitos} ${UI.plural(nFeitos, "concluído", "concluídos")}` : "Recolher os concluídos"}</button></li>` : "";
 
     const topo = `<div class="dia-progresso${completo ? " completo" : ""}">
         <div class="dp-barra"><i style="width:${pct}%"></i></div>
         <div class="dp-txt">${completo ? "🎉 <b>Dia completo!</b> Você cumpriu tudo o que tinha para hoje." : `<b>${pct}%</b> do dia · ${proximo ? `próximo: ${esc(proximo.texto.replace(/^\S+\s/, ""))} às ${proximo.hora}` : "falta pouco"}`}</div>
       </div>`;
-    const corpo = topo + `<ul class="checklist">${grupos}</ul>`;
+    const corpo = topo + (itens.length ? `<ul class="checklist">${grupos}${botaoFeitos}</ul>` : `<p class="ajuda pad-x">Nada no roteiro de hoje. Escolha o que aparece em <button class="link-acao" data-acao="ir" data-secao="configuracoes" data-param="rotina">Ajustes → Rotina</button>.</p>`);
     return UI.card({ titulo: "Seu dia", sub: `${feitos} de ${obrig.length} concluídos · toque para marcar`, acoes: `<button class="btn pequeno" data-acao="ir" data-secao="alimentacao">diário →</button>`, corpo, classe: "card-checklist" });
   }
 
@@ -290,19 +307,22 @@
   function destaques(d) {
     const sem = F.semanaAtual(d), seq = F.sequencias(d), rc = C.resumo(d);
     const sono = BE.media(d, "sono", N.hoje(-6), N.hoje(0)), noite = BE.doDia(d, "sono", N.hoje(0)), mSono = BE.metaDe(d, "sono");
-    const cq = window.Conquistas.calcular(d), cqOk = cq.filter((x) => x.ok).length, prox = cq.filter((x) => !x.ok && x.atual > 0).sort((a, b) => b.pct - a.pct)[0];
+    const cq = window.Conquistas.visiveis(d), cqOk = cq.filter((x) => x.ok).length, prox = cq.filter((x) => !x.ok && x.atual > 0).sort((a, b) => b.pct - a.pct)[0];
     const s = F.serie(d, "peso");
     const atu = s.length ? s[s.length - 1] : null;
     const ant = s.length > 1 ? s.filter((x) => N.diasEntre(x.data, atu.data) >= 7).pop() || s[0] : null;
     const dp = atu && ant ? atu.valor - ant.valor : null;
-    return `<div class="tiles-saude">
-      ${tile({ rota: "academia", cor: "#30D158", icone: IC.treino, rotulo: "Treinos", valor: `${sem.realizados}<small> / ${sem.planejados} na semana</small>`, barra: sem.planejados ? (sem.realizados / sem.planejados) * 100 : null, sub: seq.atual ? `🔥 ${seq.atual} ${UI.plural(seq.atual, "dia", "dias")} seguidos` : "Comece sua sequência hoje" })}
-      ${tile({ rota: "evolucao", cor: "#BF5AF2", icone: IC.peso, rotulo: "Peso", valor: atu ? `${UI.num(atu.valor, 1)}<small> kg</small>` : `<small>sem registro</small>`, sub: dp != null ? `${UI.sinal(dp, 1, "kg")} desde ${UI.dataCurta(ant.data)}` : atu ? "registrado em " + UI.dataCurta(atu.data) : "Toque para registrar" })}
-      ${tile({ rota: "compras", cor: "#40C8E0", icone: IC.gasto, rotulo: "Gasto no mês", valor: `${UI.brl(rc.gastoMes)}`, sub: rc.pendentes ? `${rc.pendentes} ${UI.plural(rc.pendentes, "item", "itens")} na lista · ${UI.brl(rc.totalEstimado)}` : "Lista em dia" })}
-      ${tile({ rota: "estoque", cor: "#FF9F0A", icone: IC.estoque, rotulo: "Estoque baixo", valor: `${rc.estoqueBaixo}<small> ${UI.plural(rc.estoqueBaixo, "item", "itens")}</small>`, sub: rc.estoqueBaixo ? "abaixo do mínimo" : d.estoque.length ? "tudo em ordem" : "não controlado" })}
-      ${tile({ rota: "bemestar", cor: "var(--c-bem)", icone: IC_SONO, rotulo: "Sono", valor: noite != null ? `${BE.fmtHoras(noite)}<small> esta noite</small>` : sono.media != null ? `${BE.fmtHoras(sono.media)}<small> média</small>` : `<small>sem registro</small>`, barra: mSono && (noite != null || sono.media != null) ? ((noite != null ? noite : sono.media) / mSono) * 100 : null, sub: sono.media != null ? `média de 7 dias: ${BE.fmtHoras(sono.media)}` : "Registre no check-in" })}
-      ${tile({ rota: "conquistas", cor: "var(--c-conq)", icone: IC_TROFEU, rotulo: "Conquistas", valor: `${cqOk}<small> de ${cq.length}</small>`, barra: (cqOk / cq.length) * 100, sub: prox ? `próxima: ${prox.t}` : "veja as medalhas" })}
-    </div>`;
+    const T = {
+      treinos: () => tile({ rota: "academia", cor: "#30D158", icone: IC.treino, rotulo: "Treinos", valor: `${sem.realizados}<small> / ${sem.planejados} na semana</small>`, barra: sem.planejados ? (sem.realizados / sem.planejados) * 100 : null, sub: seq.atual ? `🔥 ${seq.atual} ${UI.plural(seq.atual, "dia", "dias")} seguidos` : "Comece sua sequência hoje" }),
+      peso: () => tile({ rota: "evolucao", cor: "#BF5AF2", icone: IC.peso, rotulo: "Peso", valor: atu ? `${UI.num(atu.valor, 1)}<small> kg</small>` : `<small>sem registro</small>`, sub: dp != null ? `${UI.sinal(dp, 1, "kg")} desde ${UI.dataCurta(ant.data)}` : atu ? "registrado em " + UI.dataCurta(atu.data) : "Toque para registrar" }),
+      gasto: () => tile({ rota: "compras", cor: "#40C8E0", icone: IC.gasto, rotulo: "Gasto no mês", valor: `${UI.brl(rc.gastoMes)}`, sub: rc.pendentes ? `${rc.pendentes} ${UI.plural(rc.pendentes, "item", "itens")} na lista · ${UI.brl(rc.totalEstimado)}` : "Lista em dia" }),
+      estoque: () => tile({ rota: "estoque", cor: "#FF9F0A", icone: IC.estoque, rotulo: "Estoque baixo", valor: `${rc.estoqueBaixo}<small> ${UI.plural(rc.estoqueBaixo, "item", "itens")}</small>`, sub: rc.estoqueBaixo ? "abaixo do mínimo" : d.estoque.length ? "tudo em ordem" : "não controlado" }),
+      sono: () => tile({ rota: "bemestar", cor: "var(--c-bem)", icone: IC_SONO, rotulo: "Sono", valor: noite != null ? `${BE.fmtHoras(noite)}<small> esta noite</small>` : sono.media != null ? `${BE.fmtHoras(sono.media)}<small> média</small>` : `<small>sem registro</small>`, barra: mSono && (noite != null || sono.media != null) ? ((noite != null ? noite : sono.media) / mSono) * 100 : null, sub: sono.media != null ? `média de 7 dias: ${BE.fmtHoras(sono.media)}` : "Registre no check-in" }),
+      conquistas: () => tile({ rota: "conquistas", cor: "var(--c-conq)", icone: IC_TROFEU, rotulo: "Conquistas", valor: `${cqOk}<small> de ${cq.length}</small>`, barra: (cqOk / cq.length) * 100, sub: prox ? `próxima: ${prox.t}` : "veja as medalhas" })
+    };
+    const lista = AR.tilesHoje(d);
+    if (!lista.length) return "";
+    return `<div class="tiles-saude n${lista.length}">${lista.map((k) => T[k]()).join("")}</div>`;
   }
 
   // ------------------------------------------------------------------
@@ -341,9 +361,9 @@
   function frase(d) {
     const hj = N.hoje(0), p = [];
     const c = AL.consumoDoDia(d, hj), mk = AL.metaDiaria(d, "kcal");
-    if (c.kcal) p.push(`${UI.numAuto(c.kcal, 0)}${mk ? " de " + UI.numAuto(mk, 0) : ""} kcal`);
+    if (c.kcal && AR.area(d, "alimentacao")) p.push(`${UI.numAuto(c.kcal, 0)}${mk ? " de " + UI.numAuto(mk, 0) : ""} kcal`);
     const th = F.treinoDeHoje(d);
-    if (th && th.origem !== "descanso") p.push(th.status === "Realizado" ? "treino feito ✓" : "treino pendente");
+    if (th && th.origem !== "descanso" && AR.area(d, "academia")) p.push(th.status === "Realizado" ? "treino feito ✓" : "treino pendente");
     const alertas = I.gerarAlertas(d).filter((x) => x.nivel === "perigo").length;
     if (alertas) p.push(`<span class="down">${alertas} ${UI.plural(alertas, "alerta importante", "alertas importantes")}</span>`);
     return p.join(" · ");
@@ -359,24 +379,35 @@
       const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
       const seqAtual = F.sequencias(d).atual;
       const dataExt = N.paraData(N.hoje(0)).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-      return `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
+      const cab = `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
         <header class="cab-hoje">
           <div><p class="cab-data">${esc(dataExt)}</p>
             <h1>${saud}${nome ? ", " + esc(nome) : ""}</h1>
             ${f ? `<p class="cab-frase">${f}</p>` : ""}</div>
-          <div class="cab-direita">${seqAtual ? `<button class="pill-seq" data-acao="ir" data-secao="academia" title="Dias seguidos cumprindo o plano de treino">🔥 <b>${seqAtual}</b></button>` : ""}
+          <div class="cab-direita">${seqAtual && AR.area(d, "academia") ? `<button class="pill-seq" data-acao="ir" data-secao="academia" title="Dias seguidos cumprindo o plano de treino">🔥 <b>${seqAtual}</b></button>` : ""}
           ${P.avatarHTML(d)}</div>
         </header>
-        ${bannerJejum(d)}
-        ${semanaRotina(d)}
-        <div class="grid grid-hoje">
-          <div class="c7">${aneisDoDia(d)}</div>
-          <div class="c5">${destaques(d)}</div>
-        </div>
-        <div class="grid">
-          <div class="c5">${roteiro(d)}</div>
-          <div class="c7">${insights(d)}<div class="espaco"></div>${progresso(d)}</div>
-        </div>`;
+        ${window.Backup ? window.Backup.cartaoHoje(d) : ""}
+        ${AR.area(d, "jejum") ? bannerJejum(d) : ""}`;
+      // cartões na ordem escolhida em Ajustes → Tela Hoje. No computador, em duas
+      // colunas equilibradas; no celular, uma coluna na ordem exata.
+      const FAZ = { semana: semanaRotina, aneis: aneisDoDia, destaques, seudia: roteiro, insights, progresso };
+      const PESO = { aneis: 3, destaques: 3, seudia: 6, insights: 3, progresso: 4 };
+      let html = "", cols = [[], []], pesos = [0, 0], ordem = 0;
+      const fechar = () => {
+        if (cols[0].length || cols[1].length) html += `<div class="hoje-cols"><div class="hoje-col">${cols[0].join("")}</div><div class="hoje-col">${cols[1].join("")}</div></div>`;
+        cols = [[], []]; pesos = [0, 0];
+      };
+      AR.cartoesHoje(d).forEach((k) => {
+        const conteudo = FAZ[k](d);
+        if (!conteudo) return;
+        const bloco = `<div class="hoje-bloco" style="order:${ordem++}">${conteudo}</div>`;
+        if (k === "semana") { fechar(); html += bloco; return; }
+        const c = pesos[0] <= pesos[1] ? 0 : 1;
+        cols[c].push(bloco); pesos[c] += PESO[k] || 3;
+      });
+      fechar();
+      return cab + (html || UI.card({ titulo: "Tela Hoje", corpo: UI.vazio({ icone: "🧩", titulo: "Todos os cartões estão escondidos.", texto: "Escolha o que aparece em Ajustes → Tela Hoje.", acao: "ir", rotulo: "Abrir ajustes", dados: 'data-secao="configuracoes" data-param="hoje"' }) }));
     },
     depois(d) {
       if (document.getElementById("graf-dash-peso")) {

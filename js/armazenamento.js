@@ -93,6 +93,14 @@
   function aparenciaPadrao() {
     return { tema: "escuro", cor: "rosa", corUnica: false, fonte: "normal", avatar: "", avatarCor: "roxo", vibrar: true, animacoes: true };
   }
+  // áreas do app que cada pessoa usa, abas do celular e a tela Hoje
+  function areasPadrao() {
+    return { evolucao: true, alimentacao: true, academia: true, bemestar: true, checkin: true, habitos: true, remedios: true, jejum: true, compras: true, metas: true, relatorios: true };
+  }
+  function hojePadrao() {
+    return { cartoes: ["semana", "aneis", "destaques", "seudia", "insights", "progresso"], ocultos: [],
+      tiles: ["treinos", "peso", "sono", "gasto", "estoque", "conquistas"], tilesOcultos: [], recolherFeitos: true };
+  }
   function lembretesPadrao() {
     return { ativos: false, remedios: true, habitos: true, checkin: true, agua: false, aguaIntervalo: 2 };
   }
@@ -114,6 +122,11 @@
       aparencia: aparenciaPadrao(),
       rotina: rotinaPadrao(),
       lembretes: lembretesPadrao(),
+      backup: { intervalo: 7, pasta: null, ultimoAuto: null, adiadoAte: null },
+      areas: areasPadrao(),
+      abas: ["dashboard", "alimentacao", "academia", "evolucao"],
+      hoje: hojePadrao(),
+      perfilUso: null, // preenchido na primeira abertura (completo, saude, crianca, fitness)
       conquistasVistas: null, // null = ainda não comparou (não celebra o que já existia)
       jejumPadrao: 16
     };
@@ -262,6 +275,14 @@
     d.config.integracao = Object.assign({}, cfg.integracao, (d.config && d.config.integracao) || {});
     d.config.aparencia = Object.assign({}, cfg.aparencia, (d.config && d.config.aparencia) || {});
     d.config.lembretes = Object.assign({}, cfg.lembretes, (d.config && d.config.lembretes) || {});
+    d.config.backup = Object.assign({}, cfg.backup, (d.config && d.config.backup) || {});
+    d.config.areas = Object.assign({}, cfg.areas, (d.config && d.config.areas) || {});
+    if (!Array.isArray(d.config.abas) || !d.config.abas.length) d.config.abas = cfg.abas;
+    const hj = (d.config && d.config.hoje) || {};
+    d.config.hoje = Object.assign({}, cfg.hoje, hj);
+    // cartões novos de versões futuras entram no fim da lista
+    cfg.hoje.cartoes.forEach((k) => { if (d.config.hoje.cartoes.indexOf(k) === -1) d.config.hoje.cartoes.push(k); });
+    cfg.hoje.tiles.forEach((k) => { if (d.config.hoje.tiles.indexOf(k) === -1) d.config.hoje.tiles.push(k); });
     const r = (d.config && d.config.rotina) || {};
     d.config.rotina = {
       horarios: Object.assign({}, cfg.rotina.horarios, r.horarios || {}),
@@ -305,6 +326,7 @@
 
   function salvarDados(dados, semNotificar, semCarimbo) {
     cache = dados;
+    N.novaGeracao();
     if (!semCarimbo) dados.atualizadoEm = new Date().toISOString();
     try {
       gravarBruto(JSON.stringify(dados));
@@ -390,7 +412,7 @@
           reject(new Error("Não consegui ler esse arquivo. Verifique se é o JSON exportado pelo próprio sistema.")); return;
         }
         if (!validarBackup(obj)) { reject(new Error("Esse arquivo não parece ser um backup do Meu Controle.")); return; }
-        resolve(substituir(obj));
+        resolve(global.Armazenamento.substituir(obj)); // passa pela cópia de segurança (backup.js)
       };
       leitor.onerror = () => reject(new Error("Falha ao ler o arquivo."));
       leitor.readAsText(arquivo);
@@ -413,7 +435,7 @@
     VERSAO, COLECOES, TIPOS_ALERTA, GRUPOS_EXCLUSAO,
     carregarDados, salvarDados, substituir, resetCompleto, limparRegistros, apagarGrupo,
     perfil, carregarExemplo, exportarDados, importarDados, validarBackup, baixarArquivo, usoArmazenamento,
-    esquemaVazio, configPadrao, rotinaPadrao, aparenciaPadrao, lembretesPadrao, migrarV1, normalizar,
+    esquemaVazio, configPadrao, areasPadrao, hojePadrao, rotinaPadrao, aparenciaPadrao, lembretesPadrao, migrarV1, normalizar,
     novoId: N.novoId, hoje: N.hoje, isoLocal: N.isoLocal, aoMudar
   };
 })(window);

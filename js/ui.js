@@ -242,15 +242,25 @@
     document.getElementById("scrim").classList.add("on");
     document.body.classList.add("modal-aberto");
     aoFecharModal = opc.aoFechar || null;
+    // o "voltar" do celular fecha o formulário em vez de sair do app
+    aposVoltar(() => { if (modalAberto() && (!history.state || !history.state.modal)) { try { history.pushState({ modal: true }, "", location.href); } catch (e) { /* sem histórico */ } } });
     if (!opc.semFoco) {
       const primeiro = m.querySelector("input:not([type=checkbox]):not([readonly]), select, textarea");
       if (primeiro && window.matchMedia("(pointer: fine)").matches) setTimeout(() => primeiro.focus(), 30);
     }
     return m;
   }
-  function fecharModal() {
+  function fecharModal(peloVoltar) {
     const m = document.getElementById("modal");
     if (!m.classList.contains("on")) return;
+    if (!peloVoltar && history.state && history.state.modal) {
+      // tira a entrada do formulário do histórico; o que vier depois (ir para outra tela,
+      // abrir outro formulário) espera esse "voltar" terminar — ver aposVoltar
+      voltaPendente = true;
+      try { history.back(); } catch (e) { voltaPendente = false; }
+      clearTimeout(timerVolta);
+      timerVolta = setTimeout(concluirVolta, 600); // segurança, se o navegador não avisar
+    }
     m.classList.remove("on");
     m.innerHTML = "";
     document.getElementById("scrim").classList.remove("on");
@@ -259,6 +269,43 @@
     if (fn) fn();
   }
   function modalAberto() { return document.getElementById("modal").classList.contains("on"); }
+  let voltaPendente = false, filaVolta = [], timerVolta = null;
+  function concluirVolta() {
+    clearTimeout(timerVolta);
+    voltaPendente = false;
+    const f = filaVolta; filaVolta = [];
+    f.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
+  }
+  // executa agora, ou logo depois do "voltar" que um formulário fechado deixou pendente
+  function aposVoltar(fn) { if (voltaPendente) filaVolta.push(fn); else fn(); }
+  window.addEventListener("popstate", (e) => {
+    if (voltaPendente) { e.stopImmediatePropagation(); concluirVolta(); return; } // foi o próprio app que voltou
+    if (modalAberto()) { e.stopImmediatePropagation(); fecharModal(true); }
+  });
+
+  // no celular, arrastar o formulário para baixo (a partir do topo) fecha
+  (function () {
+    let y0 = null, dy = 0, m = null;
+    document.addEventListener("touchstart", (e) => {
+      m = document.getElementById("modal");
+      if (!m || !m.classList.contains("on") || !e.target.closest("#modal") || window.innerWidth > 860) { y0 = null; return; }
+      if (m.scrollTop > 0 || e.target.closest("input, textarea, select, .escala, .ap-avatares, .hab-mapa")) { y0 = null; return; }
+      y0 = e.touches[0].clientY; dy = 0;
+    }, { passive: true });
+    document.addEventListener("touchmove", (e) => {
+      if (y0 == null) return;
+      dy = e.touches[0].clientY - y0;
+      if (dy > 0 && m.scrollTop <= 0) { m.style.transition = "none"; m.style.transform = `translateY(${dy}px)`; }
+      else { m.style.transform = ""; }
+    }, { passive: true });
+    document.addEventListener("touchend", () => {
+      if (y0 == null) return;
+      y0 = null;
+      m.style.transition = "transform .2s ease";
+      if (dy > 110) { m.style.transform = `translateY(100%)`; setTimeout(() => { m.style.transform = ""; m.style.transition = ""; fecharModal(); }, 180); }
+      else { m.style.transform = ""; setTimeout(() => { m.style.transition = ""; }, 220); }
+    });
+  })();
   // confirmação para ações destrutivas. Com `digitar`, exige escrever a palavra.
   function confirmar(o) {
     const m = abrirModal(`<h3>${esc(o.titulo || "Confirmar")}</h3>
@@ -302,7 +349,7 @@
     esc, brl, num, numAuto, kg, litros, sinal, pct, dataBR, dataCurta, dataLonga, mesRotulo, rotuloRelativo, plural, opcoes,
     ICONES, svg, dica, card, gaugeSVG, kpi, deltaPill, mini, barra, macro, barList, vazio, SEM_DADOS, CLASSE_STATUS, selo, statusMeta, abas,
     botao, botaoIcone, linhaAcoes, navData,
-    toast, abrirModal, fecharModal, modalAberto, confirmar, botoesModal,
+    toast, abrirModal, fecharModal, modalAberto, aposVoltar, confirmar, botoesModal,
     valor, texto, numero, marcado, multiplos, chips, campoChips, campoAlimento
   };
 })(window);

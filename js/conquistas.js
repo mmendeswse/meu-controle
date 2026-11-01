@@ -152,13 +152,20 @@
   ];
   const CATEGORIAS = ["Corpo", "Alimentação", "Treino", "Bem-estar", "Hábitos", "Remédios", "Jejum", "Constância"];
 
-  function calcular(d) {
+  function calcular(d) { return N.memo(d, "CQ.calcular", () => calcularAgora(d)); }
+  function calcularAgora(d) {
     const c = contexto(d);
     return LISTA.map((x) => {
       const atual = Number(x.v(c)) || 0;
       return { id: x.id, cat: x.cat, ic: x.ic, t: x.t, s: typeof x.s === "function" ? x.s(c) : x.s, atual, alvo: x.alvo, casas: x.casas || 0, un: x.un || "",
         ok: atual >= x.alvo, pct: N.limitar((atual / x.alvo) * 100, 0, 100) };
     });
+  }
+  // só as das áreas ligadas em Ajustes → O que você usa
+  const AREA_CAT = { "Corpo": "evolucao", "Alimentação": "alimentacao", "Treino": "academia", "Bem-estar": "checkin", "Hábitos": "habitos", "Remédios": "remedios", "Jejum": "jejum" };
+  function visiveis(d) {
+    const AR = global.Areas;
+    return calcular(d).filter((x) => !AR || !AREA_CAT[x.cat] || AR.area(d, AREA_CAT[x.cat])).filter((x) => x.id !== "compras20" || !AR || AR.area(d, "compras"));
   }
   // conquistas desbloqueadas que ainda não foram celebradas
   function novas(d, lista) {
@@ -172,5 +179,5 @@
     d.config.conquistasVistas = lista.filter((x) => x.ok).map((x) => x.id);
   }
 
-  global.Conquistas = { LISTA, CATEGORIAS, calcular, novas, marcarVistas, maiorSequencia };
+  global.Conquistas = { LISTA, CATEGORIAS, calcular, visiveis, novas, marcarVistas, maiorSequencia };
 })(window);
