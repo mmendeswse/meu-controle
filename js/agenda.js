@@ -255,6 +255,7 @@
   function talvezEnviar() {
     if (!configurado() || !conectadoAqui()) return;
     const d = App().dados(), c = cfg(d);
+    if (d.demo) return; // dados de exemplo não vão para a agenda de verdade
     if (!c.ativa || c.ultimoHash === hashTudo(d)) { atualizarAviso(); return; }
     const t = tokenValido();
     if (t) enviar(t).catch(() => {}); else atualizarAviso();

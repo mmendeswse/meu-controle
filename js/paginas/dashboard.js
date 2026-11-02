@@ -382,7 +382,7 @@
       const cab = `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
         <header class="cab-hoje">
           <div><p class="cab-data">${esc(dataExt)}</p>
-            <h1>${saud}${nome ? ", " + esc(nome) : ""}</h1>
+            <h1>${esc(P.saudacao(d))}</h1>
             ${f ? `<p class="cab-frase">${f}</p>` : ""}</div>
           <div class="cab-direita">${seqAtual && AR.area(d, "academia") ? `<button class="pill-seq" data-acao="ir" data-secao="academia" title="Dias seguidos cumprindo o plano de treino">🔥 <b>${seqAtual}</b></button>` : ""}
           ${P.avatarHTML(d)}</div>

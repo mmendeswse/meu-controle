@@ -537,7 +537,7 @@
     if (ap.abertura === false || !d.config.onboardingFeito && (u.nome || "Eu") === "Eu") return;
     if (/[?&]acao=/.test(location.search)) return; // atalho do ícone: vai direto ao ponto
     if (document.documentElement.classList.contains("travado")) return; // a tela do PIN já cumprimenta
-    const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
+    const nome = global.Personalizar.primeiroNome(d);
     const h = new Date().getHours(), saud = h < 5 ? "Boa noite" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
     const img = ap.avatarImg && ap.avatarImg.src;
     const el = document.createElement("div");

@@ -76,6 +76,20 @@ celular e montar a tela Hoje (quais cartões, em que ordem). Desligar uma
 área só esconde: os dados continuam guardados. Para refazer essas
 perguntas: **Ajustes → ✨ Configuração inicial**.
 
+## Personalização
+
+Em **Ajustes → Aparência**: seu nome, **como o app te chama** (apelido usado
+nas saudações), **nome do app** (aparece no topo e na aba do navegador),
+estilo da saudação (Bom dia / Olá / E aí / só o nome), tema (escuro, escuro
+suave, claro, automático), **fundo** (liso, degradê, aurora), cor do app,
+**cantos** (arredondados, bem redondos, retos), **espaçamento** (confortável
+ou compacto), tamanho da letra, avatar, vibração e animações.
+
+As telas deslizam ao navegar (para a frente ou para trás no menu) e as abas
+trocam com um esmaecer rápido; no celular, o título grande sobe para a barra
+do topo ao rolar. Tudo isso respeita "Animações" desligado e a preferência do
+sistema por menos movimento.
+
 ## Tutoriais
 
 Na primeira visita a cada tela (Hoje, Alimentação, Treino, Bem-estar,
@@ -347,6 +361,7 @@ meu-controle/
     ├── trava.js             # bloqueio com PIN / Face ID / digital
     ├── sync.js              # sincronização criptografada pelo GitHub
     ├── agenda.js            # integração com o Google Agenda
+    ├── ux.js                # transições entre telas, título que sobe ao rolar, toque nas abas
     ├── paginas/             # uma página por arquivo (dashboard = Hoje, evolucao = Corpo, academia = Treino, …)
     └── vendor/chart.umd.min.js
 ```

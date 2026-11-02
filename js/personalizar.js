@@ -21,12 +21,18 @@
     { k: "roxo", r: "Roxo", c: "#BF5AF2" }, { k: "marrom", r: "Marrom", c: "#AC8E68" }, { k: "grafite", r: "Grafite", c: "#8E8E93" }
   ];
   const FONTES = [{ k: "pequena", r: "Pequena", z: 0.92 }, { k: "normal", r: "Normal", z: 1 }, { k: "grande", r: "Grande", z: 1.1 }, { k: "extra", r: "Extra grande", z: 1.22 }];
-  const TEMAS = [{ k: "escuro", r: "🌙 Escuro" }, { k: "claro", r: "☀️ Claro" }, { k: "auto", r: "🌓 Automático" }];
+  const TEMAS = [{ k: "escuro", r: "🌙 Escuro" }, { k: "suave", r: "🌫️ Escuro suave" }, { k: "claro", r: "☀️ Claro" }, { k: "auto", r: "🌓 Automático" }];
+  const FUNDOS = [{ k: "liso", r: "Liso" }, { k: "degrade", r: "Degradê" }, { k: "aurora", r: "Aurora" }];
+  const CANTOS = [{ k: "redondo", r: "Arredondados", raio: 18, sm: 12 }, { k: "bolha", r: "Bem redondos", raio: 26, sm: 16 }, { k: "reto", r: "Retos", raio: 8, sm: 6 }];
+  const DENSIDADES = [{ k: "confortavel", r: "Confortável" }, { k: "compacta", r: "Compacta" }];
+  const SAUDACOES = [{ k: "hora", r: "Bom dia / Boa tarde" }, { k: "ola", r: "Olá" }, { k: "eai", r: "E aí" }, { k: "nome", r: "Só o nome" }];
+  const NOME_APP = "Meu Controle";
   const AVATARES = ["🙂", "😎", "🤓", "🥰", "😺", "🐶", "🦊", "🐼", "🦁", "🐯", "🐸", "🐵", "🦄", "🐝", "🐢", "🐬", "🌻", "🌈", "⭐", "🔥", "⚡", "🏃", "🏋️", "🧘", "🚴", "⚽", "🏀", "🎮", "🎸", "📚", "👩", "👨", "👧", "👦", "👵", "👴"];
   const SECOES = ["c-hoje", "c-corpo", "c-comer", "c-treino", "c-bem", "c-compras", "c-metas", "c-relat"];
 
   function corHex(k) { const c = CORES.find((x) => x.k === k); return c ? c.c : CORES[0].c; }
   function temaEfetivo(ap) {
+    if (ap.tema === "suave") return "escuro";
     if (ap.tema === "auto") return window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "claro" : "escuro";
     return ap.tema === "claro" ? "claro" : "escuro";
   }
@@ -40,6 +46,14 @@
     const html = document.documentElement;
     const tema = temaEfetivo(ap);
     html.dataset.tema = tema;
+    html.classList.toggle("tema-suave", ap.tema === "suave");
+    html.dataset.fundo = ap.fundo || "liso";
+    const ct = CANTOS.find((x) => x.k === ap.cantos) || CANTOS[0];
+    html.style.setProperty("--raio", ct.raio + "px");
+    html.style.setProperty("--raio-sm", ct.sm + "px");
+    html.classList.toggle("compacto", ap.densidade === "compacta");
+    const logo = document.querySelector(".logo-txt b");
+    if (logo) logo.textContent = nomeApp(d);
     const cor = corHex(ap.cor);
     html.style.setProperty("--c-hoje", cor);
     html.style.setProperty("--c-metas", cor);
@@ -50,7 +64,7 @@
     html.classList.toggle("zoom-ativo", f.z !== 1);
     html.classList.toggle("sem-animacao", ap.animacoes === false);
     const meta = document.querySelector('meta[name="theme-color"]') || (() => { const m = document.createElement("meta"); m.name = "theme-color"; document.head.appendChild(m); return m; })();
-    meta.content = tema === "claro" ? "#F2F2F7" : "#000000";
+    meta.content = tema === "claro" ? "#F2F2F7" : ap.tema === "suave" ? "#141416" : "#000000";
     const cs = document.querySelector('meta[name="color-scheme"]');
     if (cs) cs.content = tema === "claro" ? "light" : "dark";
     aplicarRotina(d);
@@ -73,6 +87,21 @@
     const lat = document.getElementById("perfilLateral");
     if (lat) lat.innerHTML = `<span class="avatar${ap.avatarImg && ap.avatarImg.src ? " com-img" : ""}" style="--av:${corHex(ap.avatarCor || "roxo")}">${avatarConteudo(d)}</span>
       <span class="pl-txt"><b>${esc(nome || "Seu perfil")}</b><small>Editar avatar</small></span>`;
+  }
+  // nomes: o do app (cada um pode chamar do seu jeito) e como o app chama a pessoa
+  function nomeApp(d) { const n = ((d && d.config.aparencia) || {}).nomeApp; return (n && String(n).trim()) || NOME_APP; }
+  function primeiroNome(d) {
+    const u = d && d.usuarios[0];
+    if (!u) return "";
+    if (u.apelido && String(u.apelido).trim()) return String(u.apelido).trim();
+    return u.nome && u.nome !== "Eu" ? u.nome.trim().split(" ")[0] : "";
+  }
+  function saudacao(d, hora) {
+    const h = hora == null ? new Date().getHours() : hora, estilo = ((d && d.config.aparencia) || {}).saudacao || "hora";
+    const nome = primeiroNome(d);
+    if (estilo === "nome") return nome || "Olá";
+    if (estilo === "ola" || estilo === "eai") return (estilo === "ola" ? "Olá" : "E aí") + (nome ? ", " + nome : "");
+    return (h < 5 ? "Boa noite" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite") + (nome ? ", " + nome : "");
   }
   // os horários da rotina viram os horários sugeridos dos formulários
   function aplicarRotina(d) {
@@ -129,7 +158,18 @@
         <div><b>${esc(u.nome && u.nome !== "Eu" ? u.nome : "Sem nome")}</b><small>${esc(ap.avatarImg && ap.avatarImg.nome && ap.avatarImg.fonte !== "foto" ? ap.avatarImg.nome : u.objetivo || "")}</small>
           <span class="botoes-linha"><button class="btn pequeno primario" data-acao="av-abrir">Editar avatar</button><button class="btn pequeno" data-acao="editar-perfil">Perfil</button></span></div>
       </div>
+      <div class="ap-bloco ap-nomes">
+        <label class="campo"><span>Seu nome</span><input value="${esc(u.nome && u.nome !== "Eu" ? u.nome : "")}" placeholder="Nome completo ou como preferir" maxlength="60" data-mudar="ap-nome" autocomplete="name"></label>
+        <label class="campo"><span>Como o app te chama</span><input value="${esc(u.apelido || "")}" placeholder="${esc(primeiroNome(Object.assign({}, d, { usuarios: [Object.assign({}, u, { apelido: "" })] })) || "Apelido")}" maxlength="30" data-mudar="ap-apelido"></label>
+        <label class="campo"><span>Nome do app</span><input value="${esc(ap.nomeApp || "")}" placeholder="${NOME_APP}" maxlength="24" data-mudar="ap-nome-app"></label>
+      </div>
+      <div class="ap-bloco"><span class="ap-rot">Saudação na tela Hoje</span>${seg("ap-saudacao", SAUDACOES, ap.saudacao || "hora")}
+        <p class="ap-previa">Vai aparecer: <b>${esc(saudacao(d))}</b></p></div>
       <div class="ap-bloco"><span class="ap-rot">Tema</span>${seg("ap-tema", TEMAS, ap.tema)}</div>
+      <div class="ap-bloco"><span class="ap-rot">Fundo</span>
+        <div class="ap-fundos">${FUNDOS.map((f) => `<button class="ap-fundo f-${f.k}${(ap.fundo || "liso") === f.k ? " ativo" : ""}" data-acao="ap-fundo" data-k="${f.k}" aria-pressed="${(ap.fundo || "liso") === f.k}"><i></i><span>${f.r}</span></button>`).join("")}</div></div>
+      <div class="ap-bloco ap-dupla"><div><span class="ap-rot">Cantos</span>${seg("ap-cantos", CANTOS, ap.cantos || "redondo")}</div>
+        <div><span class="ap-rot">Espaçamento</span>${seg("ap-densidade", DENSIDADES, ap.densidade || "confortavel")}</div></div>
       <div class="ap-bloco"><span class="ap-rot">Cor do app</span>
         <div class="ap-cores">${CORES.map((c) => `<button class="ap-cor${ap.cor === c.k ? " ativo" : ""}" data-acao="ap-cor" data-k="${c.k}" style="--c:${c.c}" title="${c.r}" aria-label="${c.r}"></button>`).join("")}</div>
         ${interruptor("ap_unica", "Mesma cor em todas as telas", ap.corUnica, "Desligado, cada área tem a sua cor (Treino verde, Alimentação laranja…).", 'data-mudar="ap-cor-unica"')}
@@ -186,6 +226,10 @@
     "ap-tema": (el) => { App().dados().config.aparencia.tema = el.dataset.k; salvarAp(); },
     "ap-cor": (el) => { App().dados().config.aparencia.cor = el.dataset.k; salvarAp(); },
     "ap-fonte": (el) => { App().dados().config.aparencia.fonte = el.dataset.k; salvarAp(); },
+    "ap-fundo": (el) => { App().dados().config.aparencia.fundo = el.dataset.k; salvarAp(); },
+    "ap-cantos": (el) => { App().dados().config.aparencia.cantos = el.dataset.k; salvarAp(); },
+    "ap-densidade": (el) => { App().dados().config.aparencia.densidade = el.dataset.k; salvarAp(); },
+    "ap-saudacao": (el) => { App().dados().config.aparencia.saudacao = el.dataset.k; salvarAp(); },
     "ap-avatar": (el) => { App().dados().config.aparencia.avatar = el.dataset.k; salvarAp(); },
     "ap-avatar-cor": (el) => { App().dados().config.aparencia.avatarCor = el.dataset.k; salvarAp(); },
     "rotina-peso": (el) => { App().dados().config.rotina.mostrar.peso = el.dataset.k; salvarAp(); },
@@ -193,6 +237,9 @@
       aoConfirmar: () => { App().dados().config.rotina.horarios = A.rotinaPadrao().horarios; salvarAp("Horários restaurados."); } })
   });
   global.App.registrarMudancas({
+    "ap-nome": (el) => { const v = el.value.trim(); App().dados().usuarios[0].nome = v || "Eu"; salvarAp(v ? "Nome salvo." : null); },
+    "ap-apelido": (el) => { App().dados().usuarios[0].apelido = el.value.trim(); salvarAp(); },
+    "ap-nome-app": (el) => { App().dados().config.aparencia.nomeApp = el.value.trim(); salvarAp(el.value.trim() ? "Agora o app se chama “" + el.value.trim() + "”." : "Nome do app restaurado."); },
     "ap-cor-unica": (el) => { App().dados().config.aparencia.corUnica = el.checked; salvarAp(); },
     "ap-vibrar": (el) => { App().dados().config.aparencia.vibrar = el.checked; salvarAp(); },
     "ap-abertura": (el) => { App().dados().config.aparencia.abertura = el.checked; salvarAp(); },
@@ -204,5 +251,5 @@
     "rotina-mostrar": (el) => { App().dados().config.rotina.mostrar[el.dataset.k] = el.checked; salvarAp(); }
   });
 
-  global.Personalizar = { CORES, FONTES, TEMAS, AVATARES, corHex, temaEfetivo, aplicar, aplicarRotina, horario, mostrar, avatarHTML, avatarConteudo, atualizarAvatares, cartaoAparencia, cartaoRotina, interruptor, seg };
+  global.Personalizar = { CORES, FONTES, TEMAS, FUNDOS, CANTOS, AVATARES, nomeApp, primeiroNome, saudacao, corHex, temaEfetivo, aplicar, aplicarRotina, horario, mostrar, avatarHTML, avatarConteudo, atualizarAvatares, cartaoAparencia, cartaoRotina, interruptor, seg };
 })(window);

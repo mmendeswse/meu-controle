@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "3.7.0";
+  const VERSAO_APP = "3.8.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -107,7 +107,7 @@
     if (btnMais) btnMais.classList.toggle("ativo", (window.Areas && window.Areas.maisAtuais ? window.Areas.maisAtuais : SECOES_MAIS).indexOf(secaoMenu) !== -1);
     document.body.dataset.secao = secaoMenu;
     fecharMais();
-    document.title = (pag.titulo ? pag.titulo + " · " : "") + "Meu Controle";
+    document.title = (pag.titulo ? pag.titulo + " · " : "") + (window.Personalizar ? window.Personalizar.nomeApp(DADOS) : "Meu Controle");
     G.destruirTodos();
     const cont = document.getElementById("conteudo");
     try {

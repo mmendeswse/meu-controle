@@ -166,7 +166,7 @@
       html.appendChild(el); // fora do <body>, que fica inerte e escondido
     }
     const d = App() && App().dados();
-    const u = d && d.usuarios[0], nome = u && u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
+    const nome = d && global.Personalizar ? global.Personalizar.primeiroNome(d) : "";
     const avatar = d && global.Personalizar ? `<span class="avatar grande${d.config.aparencia.avatarImg ? " com-img" : ""}" style="--av:${global.Personalizar.corHex(d.config.aparencia.avatarCor || "roxo")}">${global.Personalizar.avatarConteudo(d)}</span>` : `<span class="trava-cadeado">🔒</span>`;
     const s = ler();
     const t = teclado(el, {

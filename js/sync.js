@@ -267,6 +267,8 @@
     if (st.rodando) { st.denovo = true; return Promise.resolve(); }
     // não troca os dados por baixo de um formulário aberto: tenta daqui a pouco
     if (!opc.agora && ocupadoNaTela()) { agendar(5000); return Promise.resolve(); }
+    // dados de exemplo nunca vão para a conta
+    if (App().dados().demo) { st.estado = "demo"; avisar(); return Promise.resolve(); }
     st.rodando = true; st.estado = "sincronizando"; avisar();
     let s = ler();
     const fim = (estado, msg) => {
@@ -303,6 +305,8 @@
         return gravarBase({ sha: remoto.sha, dados: junto });
       }
       aparelhos[eu] = Object.assign({}, meu, registro(s));
+      // aparelhos removidos há mais de 60 dias saem da lista
+      Object.keys(aparelhos).forEach((id) => { const x = aparelhos[id]; if (x && x.removido && x.removidoEm && Date.now() - Date.parse(x.removidoEm) > 60 * 864e5) delete aparelhos[id]; });
       const pacote = { dados: junto, aparelhos, acesso: { t: s.t }, salvoEm: new Date().toISOString(), por: eu };
       return cifrar(pacote, s.k).then((env) => gravarArquivo(s, env, remoto && remoto.sha, `Meu Controle: sincroniza (${(s.nome || nomePadrao()).slice(0, 40)})`))
         .then((sha) => { st.aparelhos = aparelhos; return gravarBase({ sha, dados: junto }); });
@@ -473,6 +477,7 @@
     const linhas = [];
     if (st.estado === "sincronizando") linhas.push(`<div class="sy-status"><span class="sy-gira">🔄</span><div><b>Sincronizando…</b></div></div>`);
     else if (st.estado === "erro" || s.erro) linhas.push(`<div class="sy-status erro"><span>⚠️</span><div><b>Não sincronizou</b><small>${esc(st.msg || s.erro)}</small></div></div>`);
+    else if (st.estado === "demo") linhas.push(`<div class="sy-status"><span>👀</span><div><b>Pausada: dados de exemplo</b><small>Os dados de exemplo não vão para a sua conta. Apague o exemplo para voltar a sincronizar.</small></div></div>`);
     else if (st.estado === "offline") linhas.push(`<div class="sy-status"><span>📴</span><div><b>Sem internet</b><small>As alterações ficam guardadas e sobem quando a conexão voltar.</small></div></div>`);
     else linhas.push(`<div class="sy-status ok"><span>✅</span><div><b>Sincronizado</b><small>Última vez: ${quando(s.ultimo)} · repositório ${esc(s.o + "/" + s.r)}</small></div></div>`);
     if (venc != null && venc <= 30) linhas.push(`<div class="sy-status erro"><span>⏳</span><div><b>A chave do GitHub ${venc < 0 ? "venceu" : venc === 0 ? "vence hoje" : `vence em ${venc} ${venc === 1 ? "dia" : "dias"}`}</b><small>Crie uma chave nova no GitHub e toque em “Atualizar chave do GitHub”. Os outros aparelhos recebem sozinhos.</small></div></div>`);
@@ -647,6 +652,22 @@
         }));
       });
     }
+  });
+
+  // apagar tudo neste aparelho (reset, "apagar exemplo") não pode apagar os
+  // outros aparelhos: antes, este aparelho sai da sincronização
+  ["resetCompleto", "carregarExemplo"].forEach((fn) => {
+    const original = A[fn];
+    if (typeof original !== "function") return;
+    A[fn] = function () {
+      if (conectado()) {
+        const eu = idAparelho();
+        alterarNuvem((n) => { if (n.aparelhos) delete n.aparelhos[eu]; }).catch(() => {});
+        const s = ler(); gravar({ disp: s.disp, nome: s.nome }); st.aparelhos = null; st.estado = "parado"; gravarBase(null);
+        setTimeout(() => UI.toast("Este aparelho saiu da sincronização (os outros aparelhos não foram afetados)."), 800);
+      }
+      return original.apply(this, arguments);
+    };
   });
 
   // ---------------------------------------------------------------------

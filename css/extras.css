@@ -806,3 +806,67 @@ html[data-sync="erro"] #avatarBarra::after, html[data-sync="erro"] #perfilLatera
 @media (min-width: 861px) { .agenda-aviso { bottom: 24px; left: auto; right: 96px; max-width: 360px; } }
 @keyframes agAviso { from { opacity: 0; translate: 0 12px; } }
 body.modal-aberto .agenda-aviso, html.travado .agenda-aviso { display: none; }
+
+/* ======================================================================
+   mais personalização (v3.8): tema suave, fundo, cantos, espaçamento
+   ====================================================================== */
+html.tema-suave { --bg: #141416; --painel: #1f1f23; --painel-2: #2a2a2f; --painel-3: #39393f; --linha: rgba(120, 120, 128, .28); }
+html.tema-suave .sidebar { background: #18181b; }
+/* fundo */
+html[data-fundo="degrade"] body { background: linear-gradient(180deg, color-mix(in srgb, var(--c-hoje) 24%, var(--bg)) 0, var(--bg) 560px) no-repeat, var(--bg); }
+html[data-fundo="aurora"] body { background:
+  radial-gradient(60% 420px at 12% 0, color-mix(in srgb, var(--c-hoje) 34%, transparent), transparent 72%) no-repeat,
+  radial-gradient(55% 380px at 92% 0, color-mix(in srgb, var(--c-bem, #00C7BE) 26%, transparent), transparent 72%) no-repeat,
+  radial-gradient(40% 300px at 55% 120px, color-mix(in srgb, var(--vi, #BF5AF2) 18%, transparent), transparent 75%) no-repeat, var(--bg); }
+html[data-tema="claro"][data-fundo="degrade"] body { background: linear-gradient(180deg, color-mix(in srgb, var(--c-hoje) 16%, var(--bg)) 0, var(--bg) 560px) no-repeat, var(--bg); }
+@media (min-width: 861px) { html[data-fundo="degrade"] .sidebar, html[data-fundo="aurora"] .sidebar { background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); } }
+/* espaçamento compacto */
+html.compacto .grid { gap: 10px; margin-bottom: 10px; }
+html.compacto .card > .body.pad, html.compacto .card > .body > .body.pad, html.compacto .pad { padding: 4px 14px 12px; }
+html.compacto .card > header { padding: 12px 14px 6px; }
+html.compacto .kpi-row { gap: 10px; margin-bottom: 10px; }
+html.compacto .kpi { padding: 12px 14px; }
+html.compacto .cabecalho-pagina { margin-bottom: 10px; }
+html.compacto .tile-saude { padding: 12px 14px; }
+/* cartão Aparência */
+.ap-nomes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 720px) { .ap-nomes { grid-template-columns: 1fr 1fr; } .ap-nomes .campo:first-child { grid-column: 1 / -1; } }
+.ap-nomes .campo { display: flex; flex-direction: column; gap: 5px; margin: 0; }
+.ap-nomes .campo span { font-size: 12.5px; font-weight: 600; color: var(--dim); }
+.ap-previa { margin: 8px 0 0; font-size: 13px; color: var(--dim); }
+.ap-previa b { color: var(--texto); }
+.ap-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .ap-dupla { grid-template-columns: 1fr; } }
+.ap-fundos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 420px; }
+.ap-fundo { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px; border-radius: 14px; border: 2px solid transparent; background: none; color: var(--texto); font-size: 13px; font-weight: 600; cursor: pointer; }
+.ap-fundo i { width: 100%; aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid var(--linha); background: var(--bg); }
+.ap-fundo.f-degrade i { background: linear-gradient(180deg, color-mix(in srgb, var(--c-hoje) 45%, var(--bg)), var(--bg) 85%); }
+.ap-fundo.f-aurora i { background: radial-gradient(70% 70% at 15% 0, color-mix(in srgb, var(--c-hoje) 55%, transparent), transparent 70%), radial-gradient(60% 60% at 90% 0, color-mix(in srgb, var(--c-bem, #00C7BE) 45%, transparent), transparent 70%), var(--bg); }
+.ap-fundo.ativo { border-color: var(--c-hoje); }
+
+/* ======================================================================
+   transições e detalhes de toque (ux.js)
+   ====================================================================== */
+#conteudo.entra-frente { animation: entraFrente .32s cubic-bezier(.22, 1, .36, 1); }
+#conteudo.entra-tras { animation: entraTras .32s cubic-bezier(.22, 1, .36, 1); }
+#conteudo.entra-aba { animation: entraAba .22s ease-out; }
+@keyframes entraFrente { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes entraTras { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes entraAba { from { opacity: .35; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { #conteudo.entra-frente, #conteudo.entra-tras, #conteudo.entra-aba { animation: none; } }
+/* o "pulinho" do ícone da aba tocada */
+#tabBar button.pulo svg { animation: abaPulo .36s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes abaPulo { 0% { transform: scale(1); } 35% { transform: scale(.82); } 100% { transform: scale(1); } }
+#tabBar button:active svg { transform: scale(.9); }
+/* toque nos cartões e blocos clicáveis */
+.tile-saude, .hab-card, .rem-card, .preset, .tour-item, .mais-item { transition: transform .12s ease, background-color .15s; }
+.tile-saude:active, .hab-card:active, .rem-card:active, .preset:active, .tour-item:active, .mais-item:active { transform: scale(.98); }
+/* título que sobe para a barra do topo (celular) */
+.titulo-topo { display: none; }
+@media (max-width: 860px) {
+  .titulo-topo { display: block; position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 50%); transform: translate(-50%, -30%); max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 700 16px/1.2 var(--display); color: var(--texto); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  html.titulo-rolado .titulo-topo { opacity: 1; transform: translate(-50%, -50%); }
+  .logo-txt { transition: opacity .2s; }
+  html.titulo-rolado .logo-txt { opacity: 0; }
+}

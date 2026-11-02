@@ -382,8 +382,10 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "3.7",
+    versao: "3.8",
     itens: [
+      ["🎨", "Mais jeitos de personalizar", "Em Ajustes → Aparência: seu nome, como o app te chama, o nome do próprio app, saudação, tema escuro suave, fundo degradê ou aurora, cantos e espaçamento."],
+      ["✨", "Transições entre as telas", "As telas deslizam ao navegar e, no celular, o título sobe para a barra do topo ao rolar — como nos apps de saúde."],
       ["📅", "Google Agenda", "Em Ajustes → Google Agenda: remédios, treinos e jejum viram eventos com alerta na sua agenda — tocam mesmo com o app fechado, até no relógio."],
       ["🔄", "Sincronização entre aparelhos", "Em Ajustes → Sincronização: celular, tablet e computador com os mesmos dados, guardados criptografados no seu GitHub. Um QR code liga cada aparelho."],
       ["🔒", "Bloqueio com PIN", "Em Ajustes → Segurança: o app pede um PIN (ou Face ID/digital) ao abrir, para ninguém ver seus dados se pegar o seu celular."],
