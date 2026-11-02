@@ -1,9 +1,9 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v21";
+const CACHE = "meu-controle-v22";
 // a imagem do avatar escolhido (quando é um endereço) — o próprio app guarda aqui
 const CACHE_IMG = "meu-controle-avatar";
-const V = "?v=3.6.0";
+const V = "?v=3.7.0";
 const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "tutorial", "trava", "sync", "agenda", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./manifest.json", "./favicon.svg", "./favicon-32.png",

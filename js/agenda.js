@@ -23,7 +23,7 @@
   "use strict";
 
   // ID do cliente OAuth (Google Cloud → APIs e serviços → Credenciais). Público por natureza.
-  const CLIENT_ID_PADRAO = "";
+  const CLIENT_ID_PADRAO = "415282972688-krpcv51t9tjkmd70ntibsag1pobri2av.apps.googleusercontent.com";
   const idCliente = () => global.MC_GOOGLE_CLIENT_ID || CLIENT_ID_PADRAO;
   const ESCOPO = "https://www.googleapis.com/auth/calendar.app.created";
   const API = "https://www.googleapis.com/calendar/v3";

@@ -382,8 +382,9 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "3.6",
+    versao: "3.7",
     itens: [
+      ["📅", "Google Agenda", "Em Ajustes → Google Agenda: remédios, treinos e jejum viram eventos com alerta na sua agenda — tocam mesmo com o app fechado, até no relógio."],
       ["🔄", "Sincronização entre aparelhos", "Em Ajustes → Sincronização: celular, tablet e computador com os mesmos dados, guardados criptografados no seu GitHub. Um QR code liga cada aparelho."],
       ["🔒", "Bloqueio com PIN", "Em Ajustes → Segurança: o app pede um PIN (ou Face ID/digital) ao abrir, para ninguém ver seus dados se pegar o seu celular."],
       ["⚡", "Avatares abrem na hora", "A lista de personagens agora vem junto com o app — sem esperar o servidor de anime."],
