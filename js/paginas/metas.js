@@ -118,7 +118,7 @@
         if (!lista.length) return "";
         return `<div class="sechead">${g.r.toUpperCase()}</div><div class="metas-grade">${lista.map(cartao).join("")}</div>`;
       }).join("");
-      return `<div class="cabecalho-pagina"><div><h1>Metas</h1><p class="sub">Atual, objetivo, prazo e progresso — avaliados pela tendência dos seus registros</p></div><div class="cab-acoes">${UI.abas(ABAS_METAS, "metas", "aba-metas")}${UI.botao("nova-meta", "Nova meta", { classe: "primario", icone: "mais" })}</div></div>
+      return `<div class="cabecalho-pagina"><div><h1>Metas</h1><p class="sub">Atual, objetivo, prazo e progresso — avaliados pela tendência dos seus registros</p></div><div class="cab-acoes">${UI.abas(ABAS_METAS, "metas", "aba-metas")}${d.config.perfilUso !== "crianca" && window.Areas.area(d, "alimentacao") ? `<button class="btn" data-acao="calc-metas" title="Estimar calorias, proteína e água para o seu objetivo">🧮<span class="btn-txt">Calcular</span></button>` : ""}${UI.botao("nova-meta", "Nova meta", { classe: "primario", icone: "mais" })}</div></div>
         ${av.length ? `<div class="kpi-row">
           ${UI.kpi({ rotulo: "🟢 No caminho certo", valor: String(resumo.ok) })}
           ${UI.kpi({ rotulo: "🟡 Atenção", valor: String(resumo.atencao) })}

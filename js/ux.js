@@ -19,11 +19,15 @@
   const calmo = () => html.classList.contains("sem-animacao") || (global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   // ordem das telas no menu (para saber se a navegação vai "para frente" ou "para trás")
-  const ORDEM = ["dashboard", "alimentacao", "academia", "evolucao", "bemestar", "compras", "metas", "relatorios", "configuracoes"];
-  const SUBTELAS = { treino: "academia" };
+  // segue a ordem que a pessoa escolheu em Ajustes → Navegação
+  const SUBTELAS = { treino: "academia", ajuda: "configuracoes" };
+  function ordemAtual() {
+    const d = App().dados();
+    return global.Areas && d ? global.Areas.ordem(d) : App().MENU;
+  }
   function posicao(r) {
     if (!r) return -1;
-    const base = SUBTELAS[r.secao];
+    const ORDEM = ordemAtual(), base = SUBTELAS[r.secao];
     return base ? ORDEM.indexOf(base) + 0.5 : ORDEM.indexOf(r.secao);
   }
 

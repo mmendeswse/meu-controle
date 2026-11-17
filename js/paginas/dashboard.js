@@ -80,17 +80,18 @@
       const futuro = dia > hj, nota = futuro ? null : notaDoDia(d, dia);
       if (nota != null) { soma += nota; n++; if (nota >= 0.85) cheios++; }
       const p = nota == null ? 0 : nota * 100, r = 15, c = 2 * Math.PI * r;
-      return `<div class="sd-dia${dia === hj ? " hoje" : ""}${futuro ? " futuro" : ""}${nota != null && nota >= 0.85 ? " cheio" : ""}" title="${esc(UI.dataLonga(dia))}${nota != null ? " · " + Math.round(p) + "%" : ""}">
+      return `<button class="sd-dia${dia === hj ? " hoje" : ""}${futuro ? " futuro" : ""}${nota != null && nota >= 0.85 ? " cheio" : ""}" ${futuro ? "disabled" : `data-acao="dia-detalhe" data-data="${dia}"`} title="${esc(UI.dataLonga(dia))}${nota != null ? " · " + Math.round(p) + "%" : ""}${futuro ? "" : " — toque para ver o dia"}" aria-label="${esc(UI.dataLonga(dia))}${nota != null ? ", " + Math.round(p) + "% cumprido" : ""}">
         <span class="sd-letra">${LETRA[N.diaSemana(dia)]}</span>
         <span class="sd-anel"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="${r}" class="sd-trilho"/>${p ? `<circle cx="20" cy="20" r="${r}" class="sd-valor" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c - c * p / 100).toFixed(1)}"/>` : ""}</svg>
         <span class="sd-num">${Number(dia.slice(8, 10))}</span></span>
-      </div>`;
+      </button>`;
     }).join("");
     const media = n ? Math.round((soma / n) * 100) : null;
     return `<section class="card card-semana">
       <div class="sd-topo"><h2 class="titulo-sec">Sua semana</h2>
         <span class="sd-resumo">${media != null ? `média <b>${media}%</b> · ${cheios} ${UI.plural(cheios, "dia cheio", "dias cheios")}` : "comece registrando hoje"}</span></div>
       <div class="sd-dias">${html}</div>
+      <button class="link-acao sd-anteriores" data-acao="dia-detalhe" data-data="${N.addDias(dias[0], -1)}">‹ dias anteriores</button>
     </section>`;
   }
 
@@ -369,14 +370,11 @@
     return p.join(" · ");
   }
 
+  window.Hoje = { notaDoDia };
   window.App.registrarPagina("dashboard", {
     titulo: "Hoje",
     render(d) {
-      const u = d.usuarios[0];
-      const h = new Date().getHours();
-      const saud = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
       const f = frase(d);
-      const nome = u.nome && u.nome !== "Eu" ? u.nome.split(" ")[0] : "";
       const seqAtual = F.sequencias(d).atual;
       const dataExt = N.paraData(N.hoje(0)).toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
       const cab = `${semRegistros(d) && !d.demo ? boasVindas(d) : ""}
@@ -388,7 +386,8 @@
           ${P.avatarHTML(d)}</div>
         </header>
         ${window.Backup ? window.Backup.cartaoHoje(d) : ""}
-        ${AR.area(d, "jejum") ? bannerJejum(d) : ""}`;
+        ${AR.area(d, "jejum") ? bannerJejum(d) : ""}
+        ${window.Ajuda && !semRegistros(d) ? window.Ajuda.cartaoDica(d) : ""}`;
       // cartões na ordem escolhida em Ajustes → Tela Hoje. No computador, em duas
       // colunas equilibradas; no celular, uma coluna na ordem exata.
       const FAZ = { semana: semanaRotina, aneis: aneisDoDia, destaques, seudia: roteiro, insights, progresso };

@@ -27,7 +27,7 @@
   const UI = window.UI;
   const G = window.Graficos;
 
-  const VERSAO_APP = "3.8.0";
+  const VERSAO_APP = "4.0.0";
   let DADOS = null;
   let ROTA = { secao: "dashboard", param: null };
   const PAGINAS = {};
@@ -83,7 +83,8 @@
     UI.aposVoltar(() => {
       if (location.hash === hash) return;
       const atual = lerHash();
-      if (atual && atual.secao !== secao && !(opc && opc.substituir)) history.pushState(null, "", hash);
+      const empilhar = atual && (atual.secao !== secao || (opc && opc.empilhar) || (secao === "configuracoes" && param && !atual.param));
+      if (empilhar && !(opc && opc.substituir)) history.pushState(null, "", hash);
       else history.replaceState(null, "", hash);
     });
     UI.fecharModal();
@@ -190,7 +191,10 @@
   function montarItensFab() {
     const menu = document.getElementById("fabMenu");
     if (!menu || !DADOS) return;
-    const itens = RAPIDO.filter((r) => !window.Areas || window.Areas.rapidoVisivel(DADOS, r.acao));
+    let itens = RAPIDO.filter((r) => !window.Areas || window.Areas.rapidoVisivel(DADOS, r.acao));
+    if (window.Navegacao) itens = window.Navegacao.itensFab(DADOS, itens);
+    const fab = document.getElementById("fab");
+    if (fab) fab.hidden = !itens.length;
     const ass = itens.map((r) => r.acao).join(",");
     if (ass === assinaturaFab) return;
     assinaturaFab = ass;
@@ -425,13 +429,15 @@
     window.addEventListener("hashchange", seguirHash);
     window.addEventListener("popstate", () => setTimeout(seguirHash, 0));
     const h = lerHash();
-    ir(h && (PAGINAS[h.secao] || ALIAS[h.secao]) ? h.secao : "dashboard", h && h.param);
+    const temHash = h && (PAGINAS[h.secao] || ALIAS[h.secao]);
+    const inicial = !temHash && window.Navegacao ? window.Navegacao.telaInicial(DADOS) : null;
+    if (inicial) ir(inicial.secao, inicial.param); else ir(temHash ? h.secao : "dashboard", h && h.param);
     POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } });
     // a página pode ficar aberta de um dia para o outro: redesenha quando o dia muda
     let diaAberto = N.hoje(0);
     setInterval(() => { if (N.hoje(0) !== diaAberto) { diaAberto = N.hoje(0); renderizar(); POS_SALVAR.forEach((fn) => { try { fn(DADOS, true); } catch (e) { console.error(e); } }); } }, 60000);
   }
 
-  window.App = { VERSAO_APP, MENU, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, aoSalvar, aoRenderizar, fecharFab };
+  window.App = { VERSAO_APP, MENU, RAPIDO, estado, dados, salvar, comDesfazer, substituirDados, ir, rota, renderizar, registrarPagina, registrarAcoes, registrarMudancas, aoSalvar, aoRenderizar, fecharFab };
   document.addEventListener("DOMContentLoaded", iniciar);
 })();

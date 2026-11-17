@@ -84,19 +84,31 @@
     const b = document.querySelector(`#navPrincipal button[data-secao="${k}"] svg`);
     return b ? b.outerHTML : "";
   }
+  // ordem do menu escolhida em Ajustes → Navegação (Hoje sempre primeiro, Ajustes sempre por último)
+  function ordem(d) {
+    const pad = SECOES.map((s) => s.k), meio = pad.filter((k) => k !== "dashboard" && k !== "configuracoes");
+    const esc = ((d.config.navegacao || {}).ordemMenu || []).filter((k) => meio.indexOf(k) !== -1);
+    meio.forEach((k) => { if (esc.indexOf(k) === -1) esc.push(k); });
+    return ["dashboard"].concat(esc, ["configuracoes"]);
+  }
   let assinatura = "";
   function aplicarNavegacao(d) {
     const nav = document.getElementById("navPrincipal");
     if (!nav) return;
-    const visiveis = SECOES.filter((s) => secaoVisivel(d, s.k)).map((s) => s.k);
+    const ord = ordem(d);
+    const visiveis = ord.filter((k) => secaoVisivel(d, k));
     let abas = (d.config.abas || []).filter((k) => visiveis.indexOf(k) !== -1).slice(0, 4);
     visiveis.forEach((k) => { if (abas.length < 4 && abas.indexOf(k) === -1 && k !== "configuracoes") abas.push(k); });
+    // as abas do celular seguem a ordem do menu
+    abas.sort((a, b) => ord.indexOf(a) - ord.indexOf(b));
     const ass = visiveis.join(",") + "|" + abas.join(",");
     global.Areas.abasAtuais = abas;
     global.Areas.maisAtuais = visiveis.filter((k) => abas.indexOf(k) === -1);
     if (ass === assinatura) return;
     assinatura = ass;
-    nav.querySelectorAll("button[data-secao]").forEach((b) => { b.hidden = visiveis.indexOf(b.dataset.secao) === -1; });
+    const botoes = {};
+    nav.querySelectorAll("button[data-secao]").forEach((b) => { b.hidden = visiveis.indexOf(b.dataset.secao) === -1; botoes[b.dataset.secao] = b; });
+    ord.forEach((k) => { if (botoes[k]) nav.appendChild(botoes[k]); });
     const tab = document.getElementById("tabBar");
     if (tab) tab.innerHTML = abas.map((k) => { const s = SECOES.find((x) => x.k === k); return `<button data-secao="${k}" class="tab-${k}">${iconeDe(k)}<span>${esc(s.curto || s.r)}</span></button>`; }).join("") +
       `<button data-mais class="tab-mais" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg><span>Mais</span></button>`;
@@ -105,6 +117,7 @@
       const instalar = sheet.querySelector("[data-instalar]");
       sheet.innerHTML = `<div class="mais-alca"></div>` + global.Areas.maisAtuais.map((k) => { const s = SECOES.find((x) => x.k === k); return `<button data-secao="${k}" class="mais-item it-${k}"><i>${iconeDe(k)}</i><span><b>${esc(s.r)}</b><small>${esc(s.s)}</small></span></button>`; }).join("");
       if (instalar) sheet.insertBefore(instalar, sheet.querySelector(".it-configuracoes"));
+      sheet.insertAdjacentHTML("beforeend", `<div class="mais-extra"><button data-acao="busca-abrir"><i>${UI.svg("buscar")}</i>Buscar</button><button data-secao="ajuda"><i>?</i>Ajuda</button></div>`);
     }
   }
   // atalhos do botão + que dependem de cada área
@@ -146,9 +159,7 @@
       <div class="presets">${PRESETS.map((p) => `<button class="preset${atual === p.k ? " ativo" : ""}" data-acao="aplicar-perfil" data-k="${p.k}"><span class="pr-ic">${p.ic}</span><span><b>${esc(p.r)}</b><small>${esc(p.s)}</small></span></button>`).join("")}</div>
       <div class="ap-rot">Áreas</div>
       <div class="lista-interruptores areas-lista">${AREAS.map((a) => `<div class="${a.pai ? "area-filho" : ""}${a.pai && d.config.areas[a.pai] === false ? " desligado" : ""}">${P().interruptor("ar_" + a.k, a.r, d.config.areas[a.k] !== false, a.s, `data-mudar="area" data-k="${a.k}"${a.pai && d.config.areas[a.pai] === false ? " disabled" : ""}`)}</div>`).join("")}</div>
-      <div class="ap-rot">Abas da barra do celular</div>
-      <p class="ajuda" style="margin-top:0">Escolha 4. O resto fica em “Mais”.</p>
-      <div class="chips abas-escolha" id="abasEscolha">${SECOES.filter((s) => secaoVisivel(d, s.k)).map((s) => `<label class="chip"><input type="checkbox" value="${s.k}" data-mudar="abas"${(global.Areas.abasAtuais || d.config.abas).indexOf(s.k) !== -1 ? " checked" : ""}><span>${esc(s.r)}</span></label>`).join("")}</div>
+      <p class="rodape-card">As abas do celular, a ordem do menu e o botão + ficam em <button class="link-acao" data-acao="ir" data-secao="configuracoes" data-param="navegacao">Navegação</button>.</p>
     </div>` });
   }
   function cartaoHoje(d) {
@@ -164,6 +175,7 @@
       <div class="ap-rot">Cartões de destaque</div>
       <ul class="ordenaveis">${h.tiles.filter((k) => TILES[k]).map((k, i, l) => linha(k, TILES[k], i, l.length, h.tilesOcultos.indexOf(k) !== -1, "tile")).join("")}</ul>
       <div class="lista-interruptores" style="margin-top:14px">${P().interruptor("hj_rec", "Recolher o que já foi feito", h.recolherFeitos !== false, "No “Seu dia”, os itens concluídos ficam guardados num botão — a lista mostra só o que falta.", 'data-mudar="hoje-recolher"')}</div>
+      <div class="lista-interruptores">${P().interruptor("hj_dica", "Dica do dia", (d.config.dicas || {}).ativo !== false, "Um cartão pequeno com uma dica de uso por dia.", 'data-mudar="dica-ativo"')}</div>
       <p class="rodape-card"><button class="link-acao" data-acao="hoje-padrao">Voltar ao padrão</button></p>
     </div>` });
   }
@@ -210,6 +222,7 @@
     "abas": (el) => {
       const marcadas = UI.chips("abasEscolha");
       if (marcadas.length > 4) { el.checked = false; UI.toast("São 4 abas — desmarque uma antes."); return; }
+      if (!marcadas.length) { el.checked = true; UI.toast("Deixe pelo menos uma aba."); return; }
       App().dados().config.abas = marcadas;
       salvarCfg();
     },
@@ -223,5 +236,5 @@
     "hoje-recolher": (el) => { App().dados().config.hoje.recolherFeitos = el.checked; salvarCfg(); }
   });
 
-  global.Areas = { SECOES, AREAS, PRESETS, CARTOES, TILES, AREA_ALERTA, area, secaoVisivel, areaDaRota, aplicarNavegacao, rapidoVisivel, cartoesHoje, tilesHoje, cartaoAreas, cartaoHoje, aplicarPerfil, abasAtuais: null, maisAtuais: null };
+  global.Areas = { ordem, SECOES, AREAS, PRESETS, CARTOES, TILES, AREA_ALERTA, area, secaoVisivel, areaDaRota, aplicarNavegacao, rapidoVisivel, cartoesHoje, tilesHoje, cartaoAreas, cartaoHoje, aplicarPerfil, abasAtuais: null, maisAtuais: null };
 })(window);

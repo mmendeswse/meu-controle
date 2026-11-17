@@ -10,6 +10,28 @@ incluído no projeto para funcionar offline).
 mesma ideia de que **tudo que pode ser calculado é calculado**, nunca
 digitado.
 
+## Novidades da versão 4.0
+
+- **Busca em tudo** (`js/busca.js`): a lupa — ou `/` e `Ctrl + K` no computador — acha
+  telas, abas, ações, ajustes, tópicos de ajuda e os seus cadastros (alimentos, fichas,
+  hábitos, remédios, metas, itens da lista).
+- **Ajustes em categorias** (`js/paginas/configuracoes.js`): uma lista como a dos ajustes
+  do celular, com busca própria; no computador, lista e página lado a lado.
+- **Central de ajuda** (`js/ajuda.js`): “Como faço para…” com passo a passo e botão que
+  leva ao lugar, lista do que ainda vale configurar, glossário, atalhos e a **dica do
+  dia** na tela Hoje. O botão **?** de cada tela agora explica também cada aba.
+- **Um dia em detalhe** (`js/navegacao.js`): toque num dia de “Sua semana” para ver tudo
+  o que foi registrado nele e lançar o que faltou.
+- **Calculadora de metas** (`js/calculadora.js`): estima gasto diário (Mifflin-St Jeor) e
+  sugere metas de calorias, proteína, água, carboidratos e gorduras.
+- **Cronômetro de descanso** (`js/descanso.js`): no treino aberto, começa sozinho ao
+  marcar um exercício; vibra e apita no fim.
+- **Navegação do seu jeito** (Ajustes → Navegação): ordem do menu, abas do celular, tela
+  inicial, lado e atalhos do botão **+**, atalhos de teclado (`?` mostra todos). Tocar de
+  novo na aba atual volta ao topo.
+- **Mais aparência**: temas prontos, qualquer cor, tipo de letra (a fonte Nunito vem
+  junto, licença OFL), alto contraste e dois fundos novos. Estilos novos em `css/v4.css`.
+
 ## Como usar
 
 **No computador:** abra o arquivo `index.html` no navegador (duplo clique).

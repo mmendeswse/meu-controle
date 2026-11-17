@@ -30,19 +30,21 @@
       intro: "Tudo do seu dia num lugar só: comida, água, treino, remédios e hábitos.",
       passos: [
         { alvo: ".boas-vindas", titulo: "Primeiros passos", texto: "Enquanto o app está vazio, este cartão sugere por onde começar. Ele some sozinho quando você tiver registros.", opcional: true },
-        { alvo: "card:Sua semana", titulo: "Sua semana", texto: "Cada anel é um dia: quanto mais cheio, mais perto das suas metas você ficou.", opcional: true },
+        { alvo: "card:Sua semana", titulo: "Sua semana", texto: "Cada anel é um dia: quanto mais cheio, mais perto das suas metas você ficou. <b>Toque num dia</b> para ver tudo o que foi registrado nele.", opcional: true },
+        { alvo: ".dica-dia", titulo: "Dica do dia", texto: "Uma dica curta por dia para descobrir o app aos poucos. Dá para trocar, fechar ou desligar.", opcional: true },
         { alvo: "card:Resumo do dia", titulo: "Resumo do dia", texto: "Calorias, proteína e água de hoje comparadas com as suas metas. O botão de água soma um copo com um toque.", opcional: true },
         { alvo: "card:Seu dia", titulo: "Seu dia", texto: "Refeições, remédios e hábitos na ordem da sua rotina. Toque num item para marcar como feito.", opcional: true },
         { alvo: ".tiles-saude", titulo: "Seus números", texto: "Treinos, peso, sono e outros. Toque num cartão para abrir a tela dele.", opcional: true },
         { alvo: "#fab", titulo: "Registro rápido", texto: "O botão <b>+</b> aparece em todas as telas: registre refeição, água, peso, treino ou humor sem procurar o lugar certo." },
         { alvo: NAV, titulo: "Navegação", texto: navTexto },
+        { alvo: ["#btnBuscaTopo", "#btnBuscaLateral"], titulo: "Busca", texto: "A lupa encontra qualquer coisa: uma tela, um ajuste, um alimento, uma ação.", opcional: true },
         { alvo: [".cab-hoje .avatar", "#avatarBarra", "#perfilLateral"], titulo: "Seu avatar", texto: "Toque na sua foto para trocar: personagens de anime, emojis ou uma foto sua.", opcional: true },
         { alvo: "#btnNotificacoes", titulo: "Alertas", texto: "O sino avisa quando algo precisa de atenção: remédio acabando, meta fora do caminho, backup atrasado.", opcional: true },
-        { titulo: "Pronto!", texto: "Em cada tela, o botão <b class=\"tour-q\">?</b> ao lado do título mostra a explicação dela. Bom uso!" }
+        { titulo: "Pronto!", texto: "Em cada tela, o botão <b class=\"tour-q\">?</b> ao lado do título explica a aba em que você está. E a <b>Central de ajuda</b> (em Mais → Ajuda) tem o passo a passo de tudo." }
       ]
     },
     alimentacao: {
-      nome: "Alimentação", icone: "🍽️",
+      area: "alimentacao", nome: "Alimentação", icone: "🍽️",
       intro: "Aqui você registra o que come e acompanha calorias e proteína.",
       passos: [
         { alvo: ABAS, titulo: "Três abas", texto: "<b>Diário</b>: o que você comeu no dia. <b>Semana</b>: cardápio planejado e as compras dele. <b>Alimentos</b>: sua tabela com as calorias de cada alimento." },
@@ -53,7 +55,7 @@
       ]
     },
     academia: {
-      nome: "Treino", icone: "🏋️",
+      area: "academia", nome: "Treino", icone: "🏋️",
       intro: "Planeje e registre seus treinos, série por série.",
       passos: [
         { alvo: ABAS, titulo: "Quatro abas", texto: "<b>Treinos</b>: o de hoje e o histórico. <b>Fichas</b>: seus treinos A, B, C e o plano da semana. <b>Calendário</b> e <b>Carga</b>: como os pesos evoluem." },
@@ -63,7 +65,7 @@
       ]
     },
     bemestar: {
-      nome: "Bem-estar", icone: "💚",
+      area: "bemestar", nome: "Bem-estar", icone: "💚",
       intro: "Sono, humor, hábitos, remédios e jejum.",
       passos: [
         { alvo: ABAS, titulo: "As partes do Bem-estar", texto: "<b>Resumo</b>: check-in e gráficos. <b>Hábitos</b>: o que você quer fazer todo dia. <b>Remédios</b>: horários, lembretes e estoque. <b>Jejum</b>: cronômetro e histórico.", opcional: true },
@@ -74,7 +76,7 @@
       ]
     },
     compras: {
-      nome: "Compras", icone: "🛒",
+      area: "compras", nome: "Compras", icone: "🛒",
       intro: "Lista de compras, o que tem em casa e quanto você gasta com comida.",
       passos: [
         { alvo: ABAS, titulo: "Três abas", texto: "<b>Lista</b>: o que comprar no mês. <b>Em casa</b>: o estoque, com aviso quando algo está acabando. <b>Gastos</b>: quanto foi por mês, categoria e mercado." },
@@ -83,7 +85,7 @@
       ]
     },
     evolucao: {
-      nome: "Corpo", icone: "📈",
+      area: "evolucao", nome: "Corpo", icone: "📈",
       intro: "Peso, gordura, músculo e medidas ao longo do tempo.",
       passos: [
         { alvo: '[data-acao="rapido-peso"]', titulo: "Só o peso", texto: "Registre o peso em dois toques. Melhor de manhã, sempre no mesmo horário." },
@@ -93,16 +95,17 @@
       ]
     },
     metas: {
-      nome: "Metas", icone: "🎯",
+      area: "metas", nome: "Metas", icone: "🎯",
       intro: "Defina objetivos com prazo e veja se você está no caminho.",
       passos: [
         { alvo: ABAS, titulo: "Metas e Conquistas", texto: "Em <b>Conquistas</b> ficam as medalhas que você ganha registrando com constância." },
+        { alvo: '[data-acao="calc-metas"]', titulo: "Calculadora", texto: "Não sabe que números usar? Ela estima calorias, proteína e água para o seu objetivo e cria as metas.", opcional: true },
         { alvo: '[data-acao="nova-meta"]', titulo: "Nova meta", texto: "Peso, calorias, proteína, água, treinos por semana, sono… escolha o tipo, o valor e o prazo." },
         { alvo: ".kpi-row", titulo: "Como estão as metas", texto: "🟢 no caminho, 🟡 atenção, 🔴 fora. A conta usa a tendência dos seus registros, não só o último valor.", opcional: true }
       ]
     },
     relatorios: {
-      nome: "Relatórios", icone: "📊",
+      area: "relatorios", nome: "Relatórios", icone: "📊",
       intro: "Resumo da semana, do mês ou do trimestre comparado ao período anterior.",
       passos: [
         { alvo: [".barra-ferramentas:has([data-acao='rel-tipo'])", '[data-acao="rel-tipo"]'], titulo: "Período", texto: "Escolha semanal, mensal ou trimestral e navegue com as setas." },
@@ -114,13 +117,120 @@
       nome: "Ajustes", icone: "⚙️",
       intro: "Deixe o app com a sua cara e mantenha seus dados seguros.",
       passos: [
-        { alvo: ".atalhos-ajustes", titulo: "Atalhos", texto: "Vá direto para a parte que quer mudar." },
-        { alvo: "#sec-aparencia", titulo: "Aparência", texto: "Tema claro ou escuro, cor, tamanho da letra e o seu avatar." },
-        { alvo: "#sec-areas", titulo: "O que você usa", texto: "Desligue o que não usa: o app fica mais simples e as abas se ajustam." },
-        { alvo: "#sec-sync", titulo: "Sincronização", texto: "Use o app no celular e no computador com os mesmos dados: crie uma conta aqui e leia o QR code no outro aparelho.", opcional: true },
-        { alvo: "#sec-seguranca", titulo: "Segurança", texto: "Crie um PIN de 6 dígitos (com Face ID ou digital, se o aparelho tiver) para ninguém abrir o app se pegar o seu celular.", opcional: true },
-        { alvo: "#sec-backup", titulo: "Backup — importante!", texto: "Os dados ficam só neste aparelho. Ative o backup para não perder nada se trocar ou perder o celular." },
-        { alvo: "#sec-tutoriais", titulo: "Tutoriais", texto: "Reveja qualquer explicação quando quiser.", opcional: true }
+        { alvo: ".aj-lista .aj-busca", titulo: "Buscar nos ajustes", texto: "Não sabe onde fica? Digite o que procura: “tema”, “backup”, “abas”…" },
+        { alvo: ".aj-lista .aj-grupo:nth-of-type(1)", titulo: "Você", texto: "<b>Aparência</b> tem temas prontos, cores, tipo e tamanho da letra e o seu avatar." },
+        { alvo: ".aj-lista .aj-grupo:nth-of-type(2)", titulo: "O app do seu jeito", texto: "Desligue as áreas que não usa, mude a ordem do menu, as abas do celular, o botão <b>+</b> e os cartões da tela Hoje.", opcional: true },
+        { alvo: ".aj-lista .aj-grupo:nth-of-type(4)", titulo: "Seus dados — importante!", texto: "Os dados ficam só neste aparelho. Ative o <b>Backup</b> ou a <b>Sincronização</b> para não perder nada.", opcional: true },
+        { alvo: ".aj-lista .aj-grupo:nth-of-type(5)", titulo: "Ajuda", texto: "A <b>Central de ajuda</b> tem o passo a passo de tudo, e os tutoriais podem ser revistos quando quiser.", opcional: true }
+      ]
+    },
+
+    // ---- a tela de um treino aberto ----
+    treino: {
+      area: "academia", nome: "Durante o treino", icone: "⏱️",
+      intro: "A tela do treino aberto: marque as séries e descanse no tempo certo.",
+      passos: [
+        { alvo: ".tabela-series .rw", titulo: "Cada exercício", texto: "Ajuste séries, repetições e carga direto na linha. Embaixo do nome aparece o que você fez da última vez.", opcional: true },
+        { alvo: ".tabela-series .ex-status", titulo: "Marcar como feito", texto: "Toque no círculo ao terminar o exercício. Outro toque marca como pulado.", opcional: true },
+        { alvo: ".descanso", titulo: "Descanso", texto: "A contagem começa sozinha quando você marca um exercício. Toque nos tempos para trocar; no fim, o celular vibra e apita.", opcional: true },
+        { alvo: ".kpi-row", titulo: "Como está indo", texto: "Exercícios feitos, volume levantado (comparado com o treino anterior) e a duração.", opcional: true },
+        { alvo: '[data-acao="status-treino"][data-status="Realizado"]', titulo: "Concluir", texto: "No fim, toque em <b>Concluir treino</b>: ele conta para a sua semana e para a sequência 🔥.", opcional: true }
+      ]
+    },
+
+    // ---- abas (o botão "?" explica a aba aberta) ----
+    "alimentacao/semana": {
+      area: "alimentacao", nome: "Alimentação · Semana", icone: "🗓️",
+      intro: "Planeje o cardápio e descubra o que precisa comprar.",
+      passos: [
+        { alvo: "card:Cardápio da semana", titulo: "Cardápio", texto: "Um quadro com os dias e as refeições. Toque num espaço vazio para planejar; toque numa refeição para editar." },
+        { alvo: "card:Refeições favoritas", titulo: "Favoritas", texto: "Refeições que você salvou com a estrela. Use-as para preencher a semana em poucos toques.", opcional: true },
+        { alvo: "card:Compras para o cardápio", titulo: "O que falta comprar", texto: "O app compara o cardápio com o estoque e lista o que falta. Um toque manda para a lista de compras.", opcional: true }
+      ]
+    },
+    "alimentacao/alimentos": {
+      area: "alimentacao", nome: "Alimentação · Alimentos", icone: "🥦",
+      intro: "A sua tabela de alimentos: a base das refeições, do estoque e das compras.",
+      passos: [
+        { alvo: ['[data-acao="novo-alimento"]', '[data-acao="rapido-alimento"]'], titulo: "Novo alimento", texto: "Copie do rótulo a porção, as calorias e os macros. O preço é opcional e serve para estimar custos." },
+        { alvo: ".filtros-linha", titulo: "Buscar e filtrar", texto: "Procure pelo nome ou filtre por categoria.", opcional: true },
+        { titulo: "Dica", texto: "Não precisa cadastrar tudo antes: ao montar uma refeição, digite um nome novo e o app oferece o cadastro na hora." }
+      ]
+    },
+    "academia/fichas": {
+      area: "academia", nome: "Treino · Fichas e plano", icone: "📋",
+      intro: "Monte os treinos uma vez e deixe o app dizer qual é o de hoje.",
+      passos: [
+        { alvo: ["card:Fichas de treino", ".fichas", ".ficha"], titulo: "Fichas", texto: "Cada ficha é um treino (A, B, C…) com exercícios, séries e repetições. <b>Iniciar</b> começa o treino na hora." },
+        { alvo: "card:Plano semanal", titulo: "Plano da semana", texto: "Diga em que dia cai cada ficha — e os dias de descanso. O treino do dia aparece sozinho na tela Hoje.", opcional: true }
+      ]
+    },
+    "academia/calendario": {
+      area: "academia", nome: "Treino · Calendário", icone: "📆",
+      intro: "O mês inteiro: o que foi feito, o que faltou e o que vem.",
+      passos: [
+        { alvo: "card:Calendário", titulo: "Calendário", texto: "Verde = treino feito. Toque no número de um dia para registrar um treino nele — inclusive em dias passados." }
+      ]
+    },
+    "academia/carga": {
+      area: "academia", nome: "Treino · Carga", icone: "📈",
+      intro: "Veja se as cargas estão subindo.",
+      passos: [
+        { alvo: '[data-mudar="exercicio-carga"]', titulo: "Escolha o exercício", texto: "O gráfico mostra a carga usada em cada treino.", opcional: true },
+        { titulo: "Como ler", texto: "Linha subindo = você está ficando mais forte. Se ficar reta por semanas, tente aumentar um pouco a carga ou as repetições." }
+      ]
+    },
+    "bemestar/habitos": {
+      area: "habitos", nome: "Bem-estar · Hábitos", icone: "✅",
+      intro: "Pequenas coisas feitas todo dia — e desafios com prazo.",
+      passos: [
+        { alvo: ['[data-acao="habito-modelos"]', '[data-acao="novo-habito"]'], titulo: "Criar", texto: "Comece por um <b>modelo pronto</b> (água, leitura, alongamento…) ou crie o seu, com dias e horário." },
+        { alvo: ".hab-card", titulo: "Cada hábito", texto: "Toque para marcar o dia. O mapa mostra as últimas semanas e a sequência 🔥 de dias seguidos.", opcional: true },
+        { titulo: "Desafios", texto: "Dê uma <b>duração</b> ao hábito (ex.: 21 dias) e ele vira um desafio com contagem regressiva." }
+      ]
+    },
+    "bemestar/remedios": {
+      area: "remedios", nome: "Bem-estar · Remédios", icone: "💊",
+      intro: "Horários, doses e estoque dos remédios e suplementos.",
+      passos: [
+        { alvo: '[data-acao="novo-remedio"]', titulo: "Cadastrar", texto: "Nome, dose, horários, dias da semana e quantos você tem em casa." },
+        { alvo: "card:Hoje", titulo: "Doses de hoje", texto: "Toque para marcar como tomada. Cada dose marcada baixa o estoque.", opcional: true },
+        { alvo: ".rem-card", titulo: "Estoque", texto: "O app calcula para quantos dias ainda dá e avisa antes de acabar. <b>Repor</b> soma uma caixa nova.", opcional: true },
+        { titulo: "Para tocar na hora", texto: "Ligue os avisos em Ajustes → <b>Lembretes</b>. Para tocar com o app fechado, use Ajustes → <b>Google Agenda</b>." }
+      ]
+    },
+    "bemestar/jejum": {
+      area: "jejum", nome: "Bem-estar · Jejum", icone: "⏳",
+      intro: "Um cronômetro para o jejum intermitente.",
+      passos: [
+        { alvo: ".protocolos", titulo: "Começar", texto: "Escolha um protocolo (14 h, 16 h, 18 h…). O contador passa a aparecer no topo da tela Hoje.", opcional: true },
+        { alvo: '[data-acao="jejum-encerrar"]', titulo: "Encerrar", texto: "Toque ao fazer a próxima refeição. O jejum entra no histórico.", opcional: true },
+        { titulo: "Atenção", texto: "Jejum não é para todo mundo. Se você tem alguma condição de saúde, converse com um profissional antes." }
+      ]
+    },
+    "compras/estoque": {
+      area: "compras", nome: "Compras · Em casa", icone: "📦",
+      intro: "O que você tem na despensa e na geladeira.",
+      passos: [
+        { alvo: "card:Em casa", titulo: "Estoque", texto: "Quantidade de cada alimento e o <b>mínimo</b> que você quer manter. Abaixo do mínimo, o app avisa e põe na lista." },
+        { titulo: "Ele se atualiza sozinho", texto: "Item marcado como comprado <b>entra</b> no estoque; refeição marcada como feita <b>sai</b>. Dá para desligar isso em Ajustes → Integração." }
+      ]
+    },
+    "compras/gastos": {
+      area: "compras", nome: "Compras · Gastos", icone: "💰",
+      intro: "Para onde vai o dinheiro da comida.",
+      passos: [
+        { alvo: "card:Gasto por mês", titulo: "Mês a mês", texto: "Quanto você gastou em cada mês, a partir dos itens marcados como comprados (com o preço pago).", opcional: true },
+        { alvo: "card:Por categoria", titulo: "Por categoria e mercado", texto: "Veja o que pesa mais: carnes, frutas, suplementos… e em qual mercado.", opcional: true },
+        { alvo: "card:Histórico de preços", titulo: "Histórico de preços", texto: "Como o preço de cada item mudou ao longo do tempo.", opcional: true }
+      ]
+    },
+    "metas/conquistas": {
+      area: "metas", nome: "Conquistas", icone: "🏆",
+      intro: "Medalhas pela sua constância.",
+      passos: [
+        { alvo: ".cq-topo", titulo: "Seu placar", texto: "Quantas medalhas você já tem.", opcional: true },
+        { alvo: ".cq-grade", titulo: "Medalhas", texto: "As que estão <b>quase lá</b> aparecem primeiro, com a barra do quanto falta. Toque numa conquistada para compartilhar.", opcional: true }
       ]
     }
   };
@@ -190,9 +300,12 @@
       UI.aposVoltar(() => { if (ativo()) { try { history.pushState({ tour: true }, "", location.href); } catch (e) { /* sem histórico */ } } });
       mostrar();
     };
-    // abre na primeira aba da tela (é ela que os passos explicam)
-    const rota = App().rota ? App().rota() : null;
-    if (rota && rota.secao === k && rota.param && k !== "configuracoes") { App().ir(k); setTimeout(go, 380); } else go();
+    // vai para a tela (e a aba) que os passos explicam
+    const rota = App().rota(), partes = k.split("/"), tela = partes[0], aba = partes[1] || null;
+    if (k === "treino") {
+      if (rota.secao !== "treino") { UI.toast("Abra um treino (Treino → Iniciar) e toque no ? para ver este tutorial."); return; }
+      go();
+    } else if (rota.secao !== tela || (rota.param || null) !== aba) { App().ir(tela, aba); setTimeout(go, 400); } else go();
   }
 
   function mostrar() {
@@ -213,7 +326,8 @@
         <b class="tour-titulo">${esc(p.titulo)}</b><p>${texto}</p>
         <div class="tour-botoes">${ultimo ? "" : `<button class="btn fantasma tour-pular" data-acao="tour-fechar">Pular</button>`}
           ${n > 1 ? `<button class="btn" data-acao="tour-voltar">Voltar</button>` : ""}
-          <button class="btn primario" data-acao="tour-proximo">${ultimo ? "Entendi" : "Próximo"}</button></div>`;
+          <button class="btn primario" data-acao="tour-proximo">${ultimo ? "Entendi" : "Próximo"}</button></div>
+          ${ultimo ? `<button class="link-acao tour-mais" data-acao="tour-ajuda">Mais ajuda: como fazer cada coisa ›</button>` : ""}`;
     }
     st.el.querySelector(".tour-conteudo").innerHTML = html;
     st.alvo = p.convite || p.intro ? null : achar(p.alvo);
@@ -332,11 +446,14 @@
   }
   App().aoRenderizar((d, rota) => {
     const k = rota && rota.secao;
-    // botão "?" ao lado do título
-    if (TOURS[k]) {
+    // botão "?" ao lado do título: explica a aba aberta (ou a tela)
+    const kAba = rota && rota.param && TOURS[k + "/" + rota.param] ? k + "/" + rota.param : k;
+    if (TOURS[kAba] && k !== "configuracoes" || (k === "configuracoes" && TOURS[k])) {
       const lugar = document.querySelector("#conteudo .cabecalho-pagina h1, #conteudo .cab-hoje .cab-direita");
       if (lugar && !lugar.querySelector(".tour-ajuda")) {
-        const b = `<button class="tour-ajuda" data-acao="tour" data-k="${k}" aria-label="Como funciona esta tela" title="Como funciona esta tela">?</button>`;
+        const kBotao = k === "configuracoes" ? k : kAba;
+        const novo = kBotao !== k && !(d.config.tutoriais || {})[kBotao] && d.config.dicasAuto !== false;
+        const b = `<button class="tour-ajuda${novo ? " novo" : ""}" data-acao="tour" data-k="${kBotao}" aria-label="Como funciona esta ${kBotao !== k ? "aba" : "tela"}" title="Como funciona esta ${kBotao !== k ? "aba" : "tela"}">?</button>`;
         if (lugar.tagName === "H1") lugar.insertAdjacentHTML("beforeend", b); else lugar.insertAdjacentHTML("afterbegin", b);
       }
     }
@@ -358,17 +475,17 @@
   function cartaoAjustes(d) {
     const vistos = d.config.tutoriais || {};
     return UI.card({ titulo: "Tutoriais", sub: "o passo a passo de cada tela", id: "sec-tutoriais", corpo: `<div class="pad">
-      <div class="tour-lista">${Object.keys(TOURS).map((k) => `<button class="tour-item" data-acao="tour" data-k="${k}"><span class="tour-ic">${TOURS[k].icone}</span><span><b>${esc(TOURS[k].nome)}</b><small>${vistos[k] ? "✓ visto" : "não visto"}</small></span><i>›</i></button>`).join("")}</div>
+      <div class="tour-lista">${Object.keys(TOURS).filter((k) => k.indexOf("/") === -1 && k !== "treino" && (!TOURS[k].area || global.Areas.area(d, TOURS[k].area))).map((k) => `<button class="tour-item" data-acao="tour" data-k="${k}"><span class="tour-ic">${TOURS[k].icone}</span><span><b>${esc(TOURS[k].nome)}</b><small>${vistos[k] ? "✓ visto" : "não visto"}</small></span><i>›</i></button>`).join("")}</div>
       ${global.Personalizar.interruptor("tour_auto", "Mostrar ao abrir uma tela pela primeira vez", d.config.dicasAuto !== false, "Um convite rápido; dá para dizer “Agora não”.", 'data-mudar="tour-auto"')}
-      <div class="botoes-linha"><button class="btn pequeno" data-acao="tour-zerar">Mostrar todos de novo</button><button class="btn pequeno" data-acao="primeiro-uso">✨ Configuração inicial</button></div>
+      <p class="ajuda">Cada aba também tem o seu: toque no <b class="tour-q">?</b> ao lado do título. Todos ficam na <button class="link-acao" data-acao="ir" data-secao="ajuda" data-param="tutoriais">Central de ajuda</button>.</p>
+      <div class="botoes-linha"><button class="btn pequeno" data-acao="tour-zerar">Mostrar todos de novo</button><button class="btn pequeno" data-acao="primeiro-uso">✨ Configuração inicial</button><button class="btn pequeno" data-acao="novidades">🎉 O que há de novo</button></div>
     </div>` });
   }
 
   App().registrarAcoes({
-    "tour": (el) => {
-      const k = el.dataset.k;
-      if (App().rota().secao !== k) { App().ir(k); setTimeout(() => iniciar(k), 420); } else iniciar(k);
-    },
+    "tour": (el) => iniciar(el.dataset.k),
+    "tour-ajuda": () => { fechar(); UI.aposVoltar(() => App().ir("ajuda")); },
+    "novidades": () => abrirNovidades(),
     "tour-proximo": proximo,
     "tour-voltar": voltar,
     "tour-fechar": () => fechar(),
@@ -382,22 +499,23 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "3.8",
+    versao: "4.0",
     itens: [
-      ["🎨", "Mais jeitos de personalizar", "Em Ajustes → Aparência: seu nome, como o app te chama, o nome do próprio app, saudação, tema escuro suave, fundo degradê ou aurora, cantos e espaçamento."],
-      ["✨", "Transições entre as telas", "As telas deslizam ao navegar e, no celular, o título sobe para a barra do topo ao rolar — como nos apps de saúde."],
-      ["📅", "Google Agenda", "Em Ajustes → Google Agenda: remédios, treinos e jejum viram eventos com alerta na sua agenda — tocam mesmo com o app fechado, até no relógio."],
-      ["🔄", "Sincronização entre aparelhos", "Em Ajustes → Sincronização: celular, tablet e computador com os mesmos dados, guardados criptografados no seu GitHub. Um QR code liga cada aparelho."],
-      ["🔒", "Bloqueio com PIN", "Em Ajustes → Segurança: o app pede um PIN (ou Face ID/digital) ao abrir, para ninguém ver seus dados se pegar o seu celular."],
-      ["⚡", "Avatares abrem na hora", "A lista de personagens agora vem junto com o app — sem esperar o servidor de anime."],
-      ["❓", "Tutoriais em cada tela", "Na primeira visita a cada tela, um passo a passo mostra como ela funciona. O botão <b>?</b> ao lado do título mostra de novo."]
+      ["🔎", "Busca em tudo", "A lupa acha telas, ações, ajustes, alimentos, hábitos, remédios… No computador: <b>/</b> ou <b>Ctrl + K</b>."],
+      ["⚙️", "Ajustes organizados", "Em vez de uma página enorme, categorias — como nos ajustes do celular — com busca própria."],
+      ["💡", "Central de ajuda e dica do dia", "“Como faço para…” com o passo a passo e um botão que leva ao lugar. O <b>?</b> de cada tela agora explica também cada aba."],
+      ["📅", "Um dia em detalhe", "Na tela Hoje, toque num dia de <b>Sua semana</b> para ver tudo o que foi registrado nele e lançar o que faltou."],
+      ["🧮", "Calculadora de metas", "Em Metas: estima calorias, proteína e água para o seu objetivo e cria as metas."],
+      ["⏱️", "Cronômetro de descanso", "No treino, a contagem começa sozinha a cada exercício marcado."],
+      ["🎨", "Mais personalização", "Temas prontos, qualquer cor, tipo de letra, alto contraste, novos fundos, ordem do menu, tela inicial e botão <b>+</b> do seu jeito."],
+      ["⌨️", "Mais rápido de usar", "Tocar de novo na aba volta ao topo; atalhos de teclado no computador (tecle <b>?</b> para ver)."]
     ]
   };
   function abrirNovidades() {
     const d = App().dados();
     UI.abrirModal(`<div class="nov"><span class="nov-selo">Novidades · versão ${NOVIDADES.versao}</span><h3>O app ficou melhor 🎉</h3>
       <ul class="nov-lista">${NOVIDADES.itens.map((x) => `<li><span class="nov-ic">${x[0]}</span><span><b>${esc(x[1])}</b><small>${x[2]}</small></span></li>`).join("")}</ul>
-      <div class="pu-rodape"><button class="btn" data-acao="nov-fechar">Fechar</button><button class="btn primario" data-acao="nov-tour">Ver o tour da tela Hoje</button></div></div>`,
+      <div class="pu-rodape"><button class="btn" data-acao="nov-fechar">Fechar</button><button class="btn primario" data-acao="nov-ajuda">Abrir a Central de ajuda</button></div></div>`,
     { largo: true, semFoco: true, aoFechar: () => {
       d.config.novidadesVistas = NOVIDADES.versao; A.salvarDados(d, true, true);
       novidadesPendentes = false;
@@ -426,6 +544,7 @@
   App().registrarAcoes({
     // quem fechou já leu sobre o "?" — a tela Hoje não precisa do convite agora
     "nov-fechar": () => { UI.fecharModal(); marcarVisto("dashboard"); },
+    "nov-ajuda": () => { UI.fecharModal(); marcarVisto("dashboard"); App().ir("ajuda"); },
     "nov-tour": () => { UI.fecharModal(); App().ir("dashboard"); setTimeout(() => UI.aposVoltar(() => iniciar("dashboard")), 450); }
   });
 

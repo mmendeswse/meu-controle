@@ -31,14 +31,17 @@
       document.documentElement.setAttribute("data-tema", claro ? "claro" : "escuro");
       if (ap.tema === "suave") document.documentElement.classList.add("tema-suave");
       if (ap.fundo) document.documentElement.setAttribute("data-fundo", ap.fundo);
+      if (ap.letra) document.documentElement.setAttribute("data-letra", ap.letra);
+      if (ap.contraste) document.documentElement.classList.add("contraste");
       var z = { pequena: 0.92, grande: 1.1, extra: 1.22 }[ap.fonte];
       if (z) { document.documentElement.style.setProperty("--zoom", z); document.documentElement.classList.add("zoom-ativo"); }
     } catch (e) { /* segue com o padrão */ }
   })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=3.8.0">
-<link rel="stylesheet" href="css/saude.css?v=3.8.0">
-<link rel="stylesheet" href="css/extras.css?v=3.8.0">
+<link rel="stylesheet" href="css/style.css?v=4.0.0">
+<link rel="stylesheet" href="css/saude.css?v=4.0.0">
+<link rel="stylesheet" href="css/extras.css?v=4.0.0">
+<link rel="stylesheet" href="css/v4.css?v=4.0.0">
 <link rel="preconnect" href="https://s4.anilist.co">
 </head>
 <body>
@@ -53,6 +56,8 @@
       <div class="logo-txt"><b>Meu Controle</b><span>Vida & Fitness</span></div>
     </button>
 
+    <button class="busca-lateral" id="btnBuscaLateral" data-acao="busca-abrir" title="Buscar em tudo ( / )"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg><span>Buscar</span><kbd>/</kbd></button>
+
     <nav class="nav" id="navPrincipal" aria-label="Menu principal">
       <button data-secao="dashboard"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="2.5" width="6" height="6" rx="1.2"/><rect x="2.5" y="11.5" width="6" height="6" rx="1.2"/><rect x="11.5" y="11.5" width="6" height="6" rx="1.2"/></svg><span>Hoje</span></button>
       <button data-secao="evolucao"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l4.5-4.5L11 12l6-6"/><path d="M13 6h4v4"/></svg><span>Corpo</span></button>
@@ -66,6 +71,7 @@
     </nav>
     <div class="nav-ferramentas">
         <div class="status-vivo" id="statusVivo" title="Data e hora locais"><span class="dot-vivo"></span><span id="dataTopbar" class="data-topbar"></span><span id="relogioTopbar">--:--</span></div>
+        <button class="icon-btn" id="btnBuscaTopo" data-acao="busca-abrir" aria-label="Buscar" title="Buscar"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg></button>
         <button class="icon-btn" id="btnNotificacoes" aria-label="Notificações" title="Notificações" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a4 4 0 0 1 8 0c0 3.5 1.2 4.5 1.2 4.5H4.8S6 11.5 6 8z"/><path d="M8.3 15a1.8 1.8 0 0 0 3.4 0"/></svg>
           <span class="bolinha" id="badgeNotificacoes" style="display:none">0</span>
@@ -75,6 +81,8 @@
     </div>
 
     <button class="btn-instalar" data-instalar data-acao="instalar-app" hidden><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="10" height="15" rx="2.2"/><path d="M10 6v6M7.5 9.5L10 12l2.5-2.5"/><path d="M8.5 15h3"/></svg><span><b>Instalar app</b><small>ícone, tela cheia e offline</small></span></button>
+
+    <button class="ajuda-lateral" data-acao="ir" data-secao="ajuda" title="Central de ajuda"><i>?</i><span>Ajuda</span></button>
 
     <button class="perfil-lateral" id="perfilLateral" data-acao="av-abrir" title="Editar avatar"></button>
 
@@ -121,43 +129,48 @@
 <script src="js/vendor/chart.umd.min.js"></script>
 
 <!-- módulos do sistema — a ordem importa: regras → interface → páginas -->
-<script src="js/nucleo.js?v=3.8.0"></script>
-<script src="js/armazenamento.js?v=3.8.0"></script>
-<script src="js/demo.js?v=3.8.0"></script>
-<script src="js/alimentacao.js?v=3.8.0"></script>
-<script src="js/compras.js?v=3.8.0"></script>
-<script src="js/fitness.js?v=3.8.0"></script>
-<script src="js/bemestar.js?v=3.8.0"></script>
-<script src="js/metas.js?v=3.8.0"></script>
-<script src="js/insights.js?v=3.8.0"></script>
-<script src="js/conquistas.js?v=3.8.0"></script>
-<script src="js/relatorios.js?v=3.8.0"></script>
-<script src="js/graficos.js?v=3.8.0"></script>
-<script src="js/ui.js?v=3.8.0"></script>
-<script src="js/app.js?v=3.8.0"></script>
-<script src="js/personalizar.js?v=3.8.0"></script>
-<script src="js/areas.js?v=3.8.0"></script>
-<script src="js/instalar.js?v=3.8.0"></script>
-<script src="js/backup.js?v=3.8.0"></script>
-<script src="js/lembretes.js?v=3.8.0"></script>
-<script src="js/avatar.js?v=3.8.0"></script>
-<script src="js/primeiro-uso.js?v=3.8.0"></script>
-<script src="js/tutorial.js?v=3.8.0"></script>
-<script src="js/trava.js?v=3.8.0"></script>
-<script src="js/sync.js?v=3.8.0"></script>
-<script src="js/agenda.js?v=3.8.0"></script>
-<script src="js/ux.js?v=3.8.0"></script>
-<script src="js/formularios.js?v=3.8.0"></script>
-<script src="js/formularios-saude.js?v=3.8.0"></script>
-<script src="js/paginas/dashboard.js?v=3.8.0"></script>
-<script src="js/paginas/alimentacao.js?v=3.8.0"></script>
-<script src="js/paginas/compras.js?v=3.8.0"></script>
-<script src="js/paginas/academia.js?v=3.8.0"></script>
-<script src="js/paginas/bemestar.js?v=3.8.0"></script>
-<script src="js/paginas/evolucao.js?v=3.8.0"></script>
-<script src="js/paginas/metas.js?v=3.8.0"></script>
-<script src="js/paginas/relatorios.js?v=3.8.0"></script>
-<script src="js/paginas/configuracoes.js?v=3.8.0"></script>
+<script src="js/nucleo.js?v=4.0.0"></script>
+<script src="js/armazenamento.js?v=4.0.0"></script>
+<script src="js/demo.js?v=4.0.0"></script>
+<script src="js/alimentacao.js?v=4.0.0"></script>
+<script src="js/compras.js?v=4.0.0"></script>
+<script src="js/fitness.js?v=4.0.0"></script>
+<script src="js/bemestar.js?v=4.0.0"></script>
+<script src="js/metas.js?v=4.0.0"></script>
+<script src="js/insights.js?v=4.0.0"></script>
+<script src="js/conquistas.js?v=4.0.0"></script>
+<script src="js/relatorios.js?v=4.0.0"></script>
+<script src="js/graficos.js?v=4.0.0"></script>
+<script src="js/ui.js?v=4.0.0"></script>
+<script src="js/app.js?v=4.0.0"></script>
+<script src="js/personalizar.js?v=4.0.0"></script>
+<script src="js/areas.js?v=4.0.0"></script>
+<script src="js/instalar.js?v=4.0.0"></script>
+<script src="js/backup.js?v=4.0.0"></script>
+<script src="js/lembretes.js?v=4.0.0"></script>
+<script src="js/avatar.js?v=4.0.0"></script>
+<script src="js/primeiro-uso.js?v=4.0.0"></script>
+<script src="js/tutorial.js?v=4.0.0"></script>
+<script src="js/trava.js?v=4.0.0"></script>
+<script src="js/sync.js?v=4.0.0"></script>
+<script src="js/agenda.js?v=4.0.0"></script>
+<script src="js/ux.js?v=4.0.0"></script>
+<script src="js/navegacao.js?v=4.0.0"></script>
+<script src="js/busca.js?v=4.0.0"></script>
+<script src="js/ajuda.js?v=4.0.0"></script>
+<script src="js/calculadora.js?v=4.0.0"></script>
+<script src="js/descanso.js?v=4.0.0"></script>
+<script src="js/formularios.js?v=4.0.0"></script>
+<script src="js/formularios-saude.js?v=4.0.0"></script>
+<script src="js/paginas/dashboard.js?v=4.0.0"></script>
+<script src="js/paginas/alimentacao.js?v=4.0.0"></script>
+<script src="js/paginas/compras.js?v=4.0.0"></script>
+<script src="js/paginas/academia.js?v=4.0.0"></script>
+<script src="js/paginas/bemestar.js?v=4.0.0"></script>
+<script src="js/paginas/evolucao.js?v=4.0.0"></script>
+<script src="js/paginas/metas.js?v=4.0.0"></script>
+<script src="js/paginas/relatorios.js?v=4.0.0"></script>
+<script src="js/paginas/configuracoes.js?v=4.0.0"></script>
 <script>
   // registra o service worker (só funciona via http/https — no celular, depois de publicado)
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

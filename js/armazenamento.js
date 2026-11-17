@@ -101,6 +101,10 @@
     return { cartoes: ["semana", "aneis", "destaques", "seudia", "insights", "progresso"], ocultos: [],
       tiles: ["treinos", "peso", "sono", "gasto", "estoque", "conquistas"], tilesOcultos: [], recolherFeitos: true };
   }
+  // navegação: tela que abre, ordem do menu, botão + e atalhos de teclado
+  function navegacaoPadrao() {
+    return { telaInicial: "dashboard", ordemMenu: [], fabLado: "direita", fabOrdem: [], fabOcultos: [], teclado: true };
+  }
   function lembretesPadrao() {
     return { ativos: false, remedios: true, habitos: true, checkin: true, agua: false, aguaIntervalo: 2 };
   }
@@ -131,7 +135,10 @@
       jejumPadrao: 16,
       tutoriais: {},      // explicações de cada tela já vistas (tela → data)
       dicasAuto: true,    // mostrar a explicação na primeira visita a cada tela
-      novidadesVistas: null // última versão cujas novidades a pessoa já viu
+      novidadesVistas: null, // última versão cujas novidades a pessoa já viu
+      navegacao: navegacaoPadrao(),
+      dicas: { ativo: true, ocultaEm: null, salto: 0 }, // "dica do dia" na tela Hoje
+      descanso: { segundos: 60, auto: true, som: true } // cronômetro de descanso no treino
     };
   }
   function esquemaVazio() {
@@ -281,6 +288,10 @@
     d.config.backup = Object.assign({}, cfg.backup, (d.config && d.config.backup) || {});
     d.config.areas = Object.assign({}, cfg.areas, (d.config && d.config.areas) || {});
     if (!Array.isArray(d.config.abas) || !d.config.abas.length) d.config.abas = cfg.abas;
+    d.config.navegacao = Object.assign({}, cfg.navegacao, (d.config && d.config.navegacao) || {});
+    ["ordemMenu", "fabOrdem", "fabOcultos"].forEach((k) => { if (!Array.isArray(d.config.navegacao[k])) d.config.navegacao[k] = []; });
+    d.config.dicas = Object.assign({}, cfg.dicas, (d.config && d.config.dicas) || {});
+    d.config.descanso = Object.assign({}, cfg.descanso, (d.config && d.config.descanso) || {});
     if (!d.config.tutoriais || typeof d.config.tutoriais !== "object") d.config.tutoriais = {};
     const hj = (d.config && d.config.hoje) || {};
     d.config.hoje = Object.assign({}, cfg.hoje, hj);

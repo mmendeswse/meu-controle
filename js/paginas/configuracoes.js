@@ -41,7 +41,6 @@
       <div class="campo campo-inline"><label for="cfg_diasplan">Olhar o planejamento dos próximos</label><select id="cfg_diasplan" data-mudar="cfg-dias-plan">${UI.opcoes([3, 5, 7, 10, 14].map((v) => ({ v, r: String(v) })), i.diasPlanejamento)}</select> <span>dias</span></div>
       ${interruptor("in_comer", i.baixarEstoqueAoComer, "Refeição realizada desconta do estoque", "Ao marcar uma refeição como realizada, os alimentos saem do estoque (e voltam se desmarcar).", "integ-toggle", 'data-k="baixarEstoqueAoComer"')}
       ${interruptor("in_comprar", i.somarEstoqueAoComprar, "Item comprado entra no estoque", "Ao marcar um item da lista como comprado, a quantidade é somada ao estoque do alimento.", "integ-toggle", 'data-k="somarEstoqueAoComprar"')}
-      <div class="campo campo-inline"><label for="cfg_copo">Tamanho do copo de água</label><input id="cfg_copo" type="number" min="50" max="2000" step="50" value="${d.config.copoAgua || 250}" data-mudar="cfg-copo"> <span>ml</span></div>
     </div>` });
   }
 
@@ -64,35 +63,83 @@
         <p class="dim">Espaço usado: ${kb < 1024 ? UI.numAuto(kb, 0) + " KB" : UI.num(kb / 1024, 1) + " MB"} · versão ${App.VERSAO_APP} · dados v${d.versao}</p></div>` });
   }
 
+  // -------------------------------------------------------------------
+  // Ajustes em categorias: uma lista (como os Ajustes do celular) e, ao
+  // tocar, a página só daquele assunto. No computador, lista e página
+  // ficam lado a lado. Cada item tem palavras-chave para a busca.
+  // -------------------------------------------------------------------
+  const PZ = () => window.Personalizar, AR = () => window.Areas;
+  const GRUPOS = [
+    { r: "Você", itens: [
+      { k: "aparencia", ic: "🎨", r: "Aparência", s: "Temas, cores, letra, fundo e avatar", p: "tema claro escuro cor fonte letra tamanho fundo cantos avatar nome saudacao animacoes vibrar contraste copo", cartoes: (d) => [PZ().cartaoAparencia(d)] },
+      { k: "perfil", ic: "👤", r: "Meu perfil", s: "Nome, altura, objetivo e peso inicial", p: "nome altura objetivo imc peso inicial idade sexo", cartoes: (d) => [perfil(d)] }
+    ] },
+    { r: "O app do seu jeito", itens: [
+      { k: "areas", ic: "🧩", r: "O que você usa", s: "Ligue só as áreas que fazem sentido", p: "areas perfis prontos desligar esconder treino alimentacao compras remedios jejum crianca", cartoes: (d) => [AR().cartaoAreas(d)] },
+      { k: "navegacao", ic: "🧭", r: "Navegação", s: "Menu, abas, botão + e tela inicial", p: "menu ordem abas barra celular botao mais registro rapido tela inicial atalhos teclado esquerda canhoto", cartoes: (d) => [window.Navegacao.cartaoAjustes(d)] },
+      { k: "hoje", ic: "🏠", r: "Tela Hoje", s: "Quais cartões aparecem e em que ordem", p: "cartoes destaque ordem esconder dica do dia concluidos recolher", cartoes: (d) => [AR().cartaoHoje(d)] },
+      { k: "rotina", ic: "🕒", r: "Rotina do dia", s: "Horários, refeições e o roteiro", p: "horarios acordar dormir refeicoes pesagem roteiro seu dia", cartoes: (d) => [PZ().cartaoRotina(d)] }
+    ] },
+    { r: "Avisos", itens: [
+      { k: "lembretes", ic: "🔔", r: "Lembretes", s: "Notificações de remédios, hábitos e água", p: "notificacoes avisos remedio agua habito checkin calendario ics", cartoes: (d) => [window.Lembretes.cartaoAjustes(d)] },
+      { k: "alertas", ic: "🛎️", r: "Alertas do sino", s: "O que aparece nas notificações do app", p: "sino alertas estoque meta backup pesagem", cartoes: (d) => [alertas(d)] },
+      { k: "agenda", ic: "📅", r: "Google Agenda", s: "Alertas mesmo com o app fechado", p: "google calendario agenda eventos relogio", se: () => !!window.Agenda, cartoes: (d) => [window.Agenda.cartaoAjustes(d)] }
+    ] },
+    { r: "Seus dados", itens: [
+      { k: "backup", ic: "🛟", r: "Backup", s: "Cópia de segurança e restauração", p: "backup restaurar exportar importar planilha copia seguranca pasta", cartoes: (d) => [backup(d)] },
+      { k: "sync", ic: "🔄", r: "Sincronização", s: "Os mesmos dados em todos os aparelhos", p: "sincronizar aparelhos github qr code conta celular computador", se: () => !!window.Sync, cartoes: () => [window.Sync.cartaoAjustes()] },
+      { k: "seguranca", ic: "🔒", r: "Segurança", s: "Bloqueio com PIN, Face ID ou digital", p: "pin senha bloqueio face id digital biometria travar", se: () => !!window.Trava, cartoes: () => [window.Trava.cartaoAjustes()] },
+      { k: "integracao", ic: "🔗", r: "Integração", s: "Como comida, compras e estoque conversam", p: "lista automatica estoque planejamento desconta", cartoes: (d) => [integracao(d)] },
+      { k: "dados", ic: "🗑️", r: "Excluir dados e exemplo", s: "Apagar partes, resetar ou ver o exemplo", p: "excluir apagar reset zerar dados exemplo demo privacidade espaco", cartoes: (d) => [privacidade(d), exclusao(d)] }
+    ] },
+    { r: "Ajuda", itens: [
+      { k: "ajuda", ic: "💡", r: "Central de ajuda", s: "Como fazer cada coisa, dicas e glossário", p: "ajuda como faco duvidas perguntas glossario dicas", rota: "ajuda" },
+      { k: "tutoriais", ic: "❓", r: "Tutoriais", s: "O passo a passo de cada tela", p: "tutorial tour passo a passo configuracao inicial novidades", cartoes: (d) => [window.Tutorial.cartaoAjustes(d)] },
+      { k: "instalar", ic: "📲", r: "Instalar o app", s: "Ícone na tela de início e uso offline", p: "instalar pwa icone tela de inicio offline", se: () => !!window.Instalar, cartoes: () => [window.Instalar.cartaoAjustes()] }
+    ] }
+  ];
+  const itens = () => GRUPOS.reduce((l, g) => l.concat(g.itens.filter((i) => !i.se || i.se())), []);
+  // nomes antigos (links e alertas já salvos) → categoria atual
+  const APELIDOS = { exclusao: "dados", privacidade: "dados", abas: "navegacao", sincronizar: "sync" };
+  function itemDe(param) {
+    const k = APELIDOS[param] || param;
+    return itens().find((i) => i.k === k && !i.rota) || null;
+  }
+  const semAcento = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+  function lista(d, atual) {
+    return `<nav class="aj-lista" aria-label="Categorias de ajustes">
+      <label class="aj-busca">${UI.svg("buscar")}<input type="search" placeholder="Buscar nos ajustes" data-digitar="aj-busca" autocomplete="off" aria-label="Buscar nos ajustes"></label>
+      ${GRUPOS.map((g) => { const l = g.itens.filter((i) => !i.se || i.se()); return l.length ? `<div class="aj-grupo"><span class="aj-rot">${g.r}</span><div class="aj-itens">${l.map((i) => `<button class="aj-item${atual && atual.k === i.k ? " ativo" : ""}" data-acao="ir" data-secao="${i.rota || "configuracoes"}"${i.rota ? "" : ` data-param="${i.k}"`} data-p="${esc(semAcento(i.r + " " + i.s + " " + i.p))}"><span class="aj-ic">${i.ic}</span><span class="aj-txt"><b>${i.r}</b><small>${i.s}</small></span><i class="aj-seta">›</i></button>`).join("")}</div></div>` : ""; }).join("")}
+      <p class="aj-vazio" hidden>Nada encontrado nos ajustes. <button class="link-acao" data-acao="busca-abrir">Buscar no app todo</button></p>
+      <div class="aj-rodape"><button class="btn pequeno" data-acao="primeiro-uso">✨ Configuração inicial</button><span class="dim">Meu Controle v${App.VERSAO_APP}</span></div>
+    </nav>`;
+  }
+
   App.registrarPagina("configuracoes", {
     titulo: "Ajustes",
-    render(d) {
-      const PZ = window.Personalizar, LB = window.Lembretes, AR = window.Areas;
-      const atalhos = [["aparencia", "🎨 Aparência"], ["areas", "🧩 O que uso"], ["hoje", "🏠 Tela Hoje"], ["rotina", "🕒 Rotina"], ["sync", "🔄 Sincronizar"], ["agenda", "📅 Google Agenda"], ["backup", "🛟 Backup"], ["seguranca", "🔒 Segurança"], ["lembretes", "🔔 Lembretes"], ["instalar", "📲 Instalar"], ["tutoriais", "❓ Tutoriais"]];
-      return `<div class="cabecalho-pagina"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div>
-          <nav class="atalhos-ajustes"><button data-acao="primeiro-uso">✨ Configuração inicial</button>${atalhos.map((x) => `<button data-acao="ir" data-secao="configuracoes" data-param="${x[0]}">${x[1]}</button>`).join("")}</nav></div>
-        <div class="grid"><div class="c6">${PZ.cartaoAparencia(d)}</div><div class="c6">${AR.cartaoAreas(d)}</div></div>
-        <div class="grid"><div class="c6">${PZ.cartaoRotina(d)}</div><div class="c6">${AR.cartaoHoje(d)}</div></div>
-        ${window.Sync ? `<div class="grid"><div class="c7">${window.Sync.cartaoAjustes()}</div><div class="c5">${window.Agenda ? window.Agenda.cartaoAjustes(d) : ""}</div></div>` : ""}
-        <div class="grid"><div class="c7">${backup(d)}</div><div class="c5">${window.Trava ? window.Trava.cartaoAjustes() : ""}</div></div>
-        <div class="grid"><div class="c12">${LB.cartaoAjustes(d)}</div></div>
-        <div class="grid"><div class="c5">${perfil(d)}</div><div class="c7">${alertas(d)}</div></div>
-        ${window.Tutorial ? `<div class="grid"><div class="c12">${window.Tutorial.cartaoAjustes(d)}</div></div>` : ""}
-        <div class="grid"><div class="c7">${integracao(d)}</div><div class="c5">${privacidade(d)}</div></div>
-        <div class="grid"><div class="c7">${exclusao(d)}</div><div class="c5">${window.Instalar ? window.Instalar.cartaoAjustes() : ""}</div></div>`;
+    render(d, rota) {
+      const sel = rota.param ? itemDe(rota.param) : null;
+      const item = sel || itemDe("aparencia");
+      return `<div class="cabecalho-pagina cab-ajustes${sel ? " com-item" : ""}"><div><h1>Ajustes</h1><p class="sub">Deixe o app do seu jeito e mantenha seus dados seguros</p></div></div>
+        <div class="aj${sel ? " com-item" : " sem-item"}">
+          ${lista(d, sel || item)}
+          <section class="aj-detalhe" aria-label="${esc(item.r)}">
+            <button class="voltar aj-voltar" data-acao="ir" data-secao="configuracoes">${UI.svg("voltar")}Ajustes</button>
+            <h2 class="aj-titulo"><span>${item.ic}</span>${esc(item.r)}</h2>
+            <div class="aj-cartoes">${item.cartoes(d).join("")}</div>
+          </section>
+        </div>`;
     },
     depois(d, rota) {
       // deixa os personagens de anime prontos para quando abrir "Editar avatar"
       if (window.Avatar) setTimeout(() => window.Avatar.preaquecer(), 1500);
-      if (rota.param) {
-        const el = document.getElementById("sec-" + rota.param);
-        if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.classList.add("destaque"); setTimeout(() => el.classList.remove("destaque"), 1800); }
-        // rola uma vez só: os próximos redesenhos (a cada ajuste salvo) ficam onde estão
-        rota.param = null;
-        history.replaceState(null, "", "#/configuracoes");
-      }
+      // o item escolhido fica à vista na lista (computador)
+      const at = document.querySelector(".aj-item.ativo");
+      if (at && rota.param && at.scrollIntoView && window.matchMedia("(min-width: 861px)").matches) { try { at.scrollIntoView({ block: "nearest" }); } catch (e) { /* navegador antigo */ } }
     }
   });
+  window.Ajustes = { GRUPOS, itens, itemDe };
 
   App.registrarAcoes({
     "exportar-backup": () => window.Backup.backupAgora(),
@@ -131,6 +178,13 @@
       aoConfirmar: () => { App.substituirDados(A.resetCompleto()); App.ir("dashboard"); UI.toast("Sistema resetado."); setTimeout(() => window.PrimeiroUso && window.PrimeiroUso.abrir(), 400); } })
   });
   App.registrarMudancas({
+    "aj-busca": (el) => {
+      const q = semAcento(el.value.trim()).split(/\s+/).filter(Boolean);
+      let n = 0;
+      document.querySelectorAll(".aj-lista .aj-item").forEach((b) => { const ok = q.every((t) => b.dataset.p.indexOf(t) !== -1); b.hidden = !ok; if (ok) n++; });
+      document.querySelectorAll(".aj-lista .aj-grupo").forEach((g) => { g.hidden = !g.querySelector(".aj-item:not([hidden])"); });
+      const v = document.querySelector(".aj-lista .aj-vazio"); if (v) v.hidden = n > 0;
+    },
     "alerta-toggle": (el) => { App.dados().config.alertas[el.dataset.k] = el.checked; App.salvar(null, { semIntegracao: true }); },
     "integ-toggle": (el) => { App.dados().config.integracao[el.dataset.k] = el.checked; App.salvar(el.dataset.k === "listaAutomatica" ? (el.checked ? "Lista automática ligada." : "Lista automática desligada (itens automáticos pendentes continuam até você removê-los).") : "Configuração salva."); },
     "cfg-dias-peso": (el) => { App.dados().config.diasSemPesagem = Math.max(1, Number(el.value) || 7); App.salvar(null, { semIntegracao: true }); },
