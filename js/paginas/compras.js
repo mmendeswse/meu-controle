@@ -69,7 +69,7 @@
     const seg = c.status === "Cancelado" ? `<span class="selo-tag selo-ruim">CANCELADO</span> ${UI.botaoIcone("status-compra", "voltar", "Voltar para a lista", `data-id="${c.id}" data-status="Pendente"`)}`
       : `<span class="seg-compra" role="group" aria-label="Situação de ${esc(c.nome)}">${STATUS.map((x) => `<button class="${x.cls}${c.status === x.k ? " ativo" : ""}" data-acao="status-compra" data-id="${c.id}" data-status="${x.k}" aria-pressed="${c.status === x.k}" title="${x.r}">${x.curto}</button>`).join("")}</span>`;
     return `<div class="rw linha-compra st-${(STATUS.find((x) => x.k === c.status) || { cls: "cancelado" }).cls}" style="${GR}">
-      <button class="lc-nome" data-acao="editar-compra" data-id="${c.id}"><span class="nm">${AL.emojiAlimento(a || { categoria: c.categoria })} ${esc(c.nome)} ${tags.join("")}</span><span class="sub">${sub.join(" · ")}</span></button>
+      <button class="lc-nome" data-acao="editar-compra" data-id="${c.id}"><span class="nm">${AL.emojiAlimento(a || { categoria: c.categoria })} ${esc(c.nome)} ${tags.join("")}${window.Produtos && c.status !== "Comprado" && c.status !== "Cancelado" ? window.Produtos.etiqueta(d, c) : ""}</span><span class="sub">${sub.join(" · ")}</span></button>
       <div class="r lc-qtd">${N.qtdLegivel(c.quantidade, c.unidade)}</div>
       <div class="lc-seg">${seg}</div>
       <div class="dim celula-texto lc-mercado">${esc(c.mercado || "—")}</div>

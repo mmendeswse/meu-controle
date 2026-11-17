@@ -43,6 +43,9 @@
     { k: "buscar", a: "inicio", q: "Como acho uma tela, um ajuste ou um alimento?", p: "busca procurar encontrar lupa pesquisar",
       passos: ["Toque na <b>lupa</b> (no topo do celular ou no menu do computador).", "Digite o que procura: “backup”, “remédio”, “frango”, “tema”…", "Toque no resultado. No computador: <b>/</b> ou <b>Ctrl + K</b>."],
       b: ["Abrir a busca", "acao:busca-abrir"] },
+    { k: "gestos", a: "inicio", q: "Como navego mais rápido no celular?", p: "deslizar arrastar gesto lado menu logo swipe navegar",
+      passos: ["<b>Deslize para os lados</b> para ir à próxima aba ou tela (e para voltar, numa subtela).", "Toque na <b>logo</b>, no canto de cima, para abrir o menu com todas as telas. Na primeira tela, deslizar para a direita também abre.", "Tocar de novo na aba em que você já está volta ao topo.", "Não gosta do gesto? Desligue em Ajustes → Navegação."],
+      b: ["Abrir Navegação", "configuracoes/navegacao"] },
     { k: "tela-hoje", a: "inicio", q: "O que é a tela Hoje e como marco o que já fiz?", p: "roteiro seu dia marcar concluido aneis semana",
       passos: ["<b>Seu dia</b> lista refeições, remédios, hábitos e treino na ordem dos seus horários.", "Toque num item para marcar como feito. O que já foi feito fica recolhido.", "Em <b>Sua semana</b>, toque num dia para ver tudo o que foi registrado nele."],
       b: ["Ver o tutorial da tela Hoje", "acao:tour", { k: "dashboard" }] },
@@ -73,6 +76,10 @@
       passos: ["Abra a <b>Calculadora de metas</b>.", "Informe sexo, idade, altura, peso, nível de atividade e objetivo.", "Ela estima calorias, proteína e água e cria as metas para você. É uma estimativa — um nutricionista ajusta para o seu caso."],
       b: ["Abrir a calculadora", "acao:calc-metas"], crianca: false },
 
+    { k: "produtos", a: "alimentacao", q: "Como guardo as marcas e os rótulos dos produtos que compro?", p: "marca rotulo produto embalagem foto caderno preferido nao comprar",
+      passos: ["Alimentação → aba <b>Produtos</b> → <b>Produto</b>.", "Tire a <b>foto do rótulo</b>, escreva a marca, a embalagem, o preço e onde achou. Marque como ⭐ preferido, 👍 bom ou 🚫 não comprar.", "Ligue o produto a um <b>alimento do cadastro</b>: a marca preferida passa a aparecer ao lado dele na lista de compras — toque nela para ver o rótulo.", "<b>Lista</b> põe o produto na lista de compras do mês."],
+      b: ["Abrir Produtos", "alimentacao/produtos"] },
+
     // treino
     { k: "montar-ficha", a: "academia", q: "Como monto minhas fichas de treino?", p: "ficha treino a b c exercicios series repeticoes",
       passos: ["Treino → aba <b>Fichas e plano</b> → <b>Nova ficha</b>.", "Dê um nome (ex.: “A — Peito e tríceps”) e adicione exercícios com séries e repetições.", "No <b>Plano semanal</b>, diga em que dia cai cada ficha — o treino do dia aparece sozinho na tela Hoje."],
@@ -91,6 +98,9 @@
     { k: "peso", a: "evolucao", q: "Como registro peso e medidas?", p: "peso balanca medidas cintura bioimpedancia", area: "evolucao",
       passos: ["Botão <b>+</b> → <b>Peso e medidas</b>.", "Só o peso já serve. Medidas e bioimpedância são opcionais.", "Pese sempre no mesmo horário (de manhã, em jejum) para o gráfico ficar confiável."],
       b: ["Registrar peso", "acao:rapido-peso"], crianca: false },
+    { k: "fotos", a: "evolucao", q: "Como registro fotos da minha evolução?", p: "foto antes depois evolucao corpo shape comparar", area: "evolucao", crianca: false,
+      passos: ["Corpo → aba <b>Fotos</b> → <b>Foto</b>: tire na hora ou escolha da galeria, com data e pose (frente, lado, costas).", "Com duas fotos ou mais, <b>Antes e depois</b> mostra as duas lado a lado, com o peso de cada data.", "Use sempre o mesmo lugar, a mesma luz e a mesma distância.", "As fotos ficam <b>só neste aparelho</b>: não vão para a sincronização nem para o backup. Use <b>Exportar fotos</b> para guardar uma cópia."],
+      b: ["Abrir Fotos", "evolucao/fotos"] },
     { k: "criar-meta", a: "evolucao", q: "Como crio uma meta e sei se estou no caminho?", p: "meta objetivo prazo progresso status verde amarelo vermelho", area: "metas",
       passos: ["Metas → <b>Nova meta</b>: escolha o tipo, o valor e o prazo.", "🟢 no caminho · 🟡 atenção · 🔴 fora da meta.", "A avaliação olha a <b>tendência</b> dos registros, não só o último valor — um dia ruim não muda a cor."],
       b: ["Criar meta", "acao:nova-meta"] },
@@ -195,6 +205,7 @@
     add(u.nome && u.nome !== "Eu", "Dizer o seu nome", "O app passa a te chamar pelo nome.", ["Aparência", "configuracoes/aparencia"]);
     if (usa("evolucao")) add(d.pesagens.length, "Registrar o primeiro peso", "O ponto de partida dos gráficos.", ["Registrar", "acao:rapido-peso"]);
     if (usa("metas")) add(d.metas.length, "Criar uma meta", "Peso, água, treinos por semana, sono…", ["Criar meta", "acao:nova-meta"]);
+    if (usa("evolucao") && d.config.perfilUso !== "crianca") add((d.fotos || []).length, "Guardar a primeira foto de evolução", "Para comparar o antes e o depois.", ["Adicionar foto", "acao:nova-foto"]);
     if (usa("alimentacao")) add(d.refeicoes.length, "Registrar uma refeição", "Para acompanhar calorias e proteína.", ["Registrar", "acao:rapido-refeicao"]);
     if (usa("academia")) add(d.fichas.length, "Montar uma ficha de treino", "Depois é só tocar em Iniciar.", ["Nova ficha", "acao:nova-ficha"]);
     if (usa("habitos")) add(d.habitos.length, "Criar um hábito", "Algo pequeno para fazer todo dia.", ["Modelos", "acao:habito-modelos"]);
@@ -290,6 +301,9 @@
     { t: "Refeição que se repete? Toque na <b>estrela</b> dela e, da próxima vez, ela entra com um toque.", b: ["Abrir o diário", "alimentacao"], area: "alimentacao" },
     { t: "No treino, o <b>cronômetro de descanso</b> começa sozinho quando você marca uma série.", b: ["Ir para Treino", "academia"], area: "academia" },
     { t: "Tocar de novo na aba em que você já está <b>volta ao topo</b> da tela.", },
+    { t: "No celular, <b>deslize para os lados</b> para trocar de aba e de tela. A <b>logo</b> abre o menu completo." },
+    { t: "Guarde uma <b>foto por mês</b> em Corpo → Fotos: o “antes e depois” mostra o que a balança não mostra.", b: ["Abrir Fotos", "evolucao/fotos"], area: "evolucao", crianca: false },
+    { t: "Achou uma marca boa? Fotografe o <b>rótulo</b> em Alimentação → Produtos: ela aparece na lista de compras.", b: ["Abrir Produtos", "alimentacao/produtos"], area: "alimentacao" },
     { t: "O botão <b>+</b> pode ficar à esquerda e mostrar só os atalhos que você usa.", b: ["Personalizar", "configuracoes/navegacao"] },
     { t: "Escolha um <b>tema pronto</b> — Oceano, Floresta, Pôr do sol… — ou monte o seu com qualquer cor.", b: ["Ver temas", "configuracoes/aparencia"] },
     { t: "O botão <b>?</b> ao lado do título explica a aba em que você está, passo a passo." },

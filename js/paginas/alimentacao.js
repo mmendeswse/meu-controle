@@ -11,7 +11,7 @@
   const N = window.Nucleo, UI = window.UI, AL = window.Alimentacao, C = window.Compras, G = window.Graficos, App = window.App;
   const esc = UI.esc;
   const st = App.estado.alimentacao = { data: N.hoje(0), semana: N.inicioSemana(), busca: "", cat: "" };
-  const ABAS = [{ k: "diario", r: "Diário" }, { k: "semana", r: "Semana" }, { k: "alimentos", r: "Alimentos" }];
+  const ABAS = [{ k: "diario", r: "Diário" }, { k: "semana", r: "Semana" }, { k: "alimentos", r: "Alimentos" }, { k: "produtos", r: "Produtos" }];
 
   // ------------------------------------------------------------------
   // diário
@@ -222,9 +222,9 @@
     titulo: "Alimentação",
     render(d, rota) {
       const aba = ABAS.some((x) => x.k === rota.param) ? rota.param : "diario";
-      const corpo = aba === "semana" ? semana(d) : aba === "alimentos" ? `<div class="grid"><div class="c12">${alimentos(d)}</div></div>` : diario(d);
-      return `<div class="cabecalho-pagina"><div><h1>Alimentação</h1><p class="sub">Diário de hoje, cardápio da semana e cadastro de alimentos</p></div>
-        ${UI.abas(ABAS.map((x) => x.k === "alimentos" ? Object.assign({ n: d.alimentos.length }, x) : x), aba, "aba-alimentacao")}</div>${corpo}`;
+      const corpo = aba === "produtos" ? window.Produtos.aba(d) : aba === "semana" ? semana(d) : aba === "alimentos" ? `<div class="grid"><div class="c12">${alimentos(d)}</div></div>` : diario(d);
+      return `<div class="cabecalho-pagina"><div><h1>Alimentação</h1><p class="sub">Diário, cardápio da semana, alimentos e as marcas que você compra</p></div>
+        ${UI.abas(ABAS.map((x) => x.k === "alimentos" ? Object.assign({ n: d.alimentos.length }, x) : x.k === "produtos" && d.produtos.length ? Object.assign({ n: d.produtos.length }, x) : x), aba, "aba-alimentacao")}</div>${corpo}`;
     },
     depois(d) {
       if (document.getElementById("graf-macros")) {

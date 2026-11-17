@@ -174,8 +174,8 @@
       UI.confirmar({ titulo: "Excluir " + g.rotulo.toLowerCase(), texto: `Isso apaga ${n} ${UI.plural(n, "registro", "registros")} (${g.ajuda.toLowerCase()}) e não pode ser desfeito depois que você sair desta tela. Exporte um backup antes se quiser guardar.`, rotulo: "Excluir",
         aoConfirmar: () => App.comDesfazer(g.rotulo + " excluídos.", () => A.apagarGrupo(d, el.dataset.k)) });
     },
-    "reset-completo": () => UI.confirmar({ titulo: "Resetar o sistema", html: "Isso apaga <b>TODOS</b> os dados deste navegador: perfil, registros, metas e configurações. Não há como desfazer. Faça um backup antes se quiser guardar alguma coisa.", rotulo: "Apagar tudo", digitar: "APAGAR",
-      aoConfirmar: () => { App.substituirDados(A.resetCompleto()); App.ir("dashboard"); UI.toast("Sistema resetado."); setTimeout(() => window.PrimeiroUso && window.PrimeiroUso.abrir(), 400); } })
+    "reset-completo": () => UI.confirmar({ titulo: "Resetar o sistema", html: "Isso apaga <b>TODOS</b> os dados deste navegador: perfil, registros, metas, fotos e configurações. Não há como desfazer. Faça um backup antes se quiser guardar alguma coisa.", rotulo: "Apagar tudo", digitar: "APAGAR",
+      aoConfirmar: () => { if (window.Imagens) window.Imagens.limparTudo(); App.substituirDados(A.resetCompleto()); App.ir("dashboard"); UI.toast("Sistema resetado."); setTimeout(() => window.PrimeiroUso && window.PrimeiroUso.abrir(), 400); } })
   });
   App.registrarMudancas({
     "aj-busca": (el) => {

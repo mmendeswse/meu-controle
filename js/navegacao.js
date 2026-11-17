@@ -91,7 +91,8 @@
       <div class="linha-campos">${P.seg("fab-lado", [{ k: "direita", r: "À direita" }, { k: "esquerda", r: "À esquerda" }], c.fabLado || "direita")}</div>
       <p class="ajuda">Escolha os atalhos e a ordem — o primeiro da lista fica mais perto do dedo.</p>
       <ul class="ordenaveis">${fab.map((r, i, l) => linhaFab(r, i, l.length)).join("")}</ul>
-      <div class="lista-interruptores" style="margin-top:14px">${P.interruptor("nav_tecl", "Atalhos de teclado", c.teclado !== false, "No computador: <b>/</b> busca, <b>N</b> novo registro, <b>1–9</b> telas, <b>?</b> mostra todos.", 'data-mudar="nav-teclado"')}</div>
+      <div class="lista-interruptores" style="margin-top:14px">${P.interruptor("nav_desl", "Deslizar para trocar de tela", c.deslizar !== false, "No celular: arraste para a esquerda ou direita para ir à próxima aba ou tela. Na primeira tela, arrastar para a direita abre o menu.", 'data-mudar="nav-deslizar"')}
+        ${P.interruptor("nav_tecl", "Atalhos de teclado", c.teclado !== false, "No computador: <b>/</b> busca, <b>N</b> novo registro, <b>1–9</b> telas, <b>?</b> mostra todos.", 'data-mudar="nav-teclado"')}</div>
       <p class="rodape-card"><button class="link-acao" data-acao="nav-padrao">Voltar ao padrão</button> · <button class="link-acao" data-acao="atalhos-teclado">Ver atalhos de teclado</button></p>
     </div>` });
   }
@@ -124,6 +125,7 @@
   App().registrarMudancas({
     "nav-inicial": (el) => { cfg(App().dados()).telaInicial = el.value; salvarCfg("Pronto: vale a partir da próxima vez que abrir o app."); },
     "nav-teclado": (el) => { cfg(App().dados()).teclado = el.checked; salvarCfg(); },
+    "nav-deslizar": (el) => { cfg(App().dados()).deslizar = el.checked; salvarCfg(); },
     "fab-mostrar": (el) => {
       const c = cfg(App().dados()), i = c.fabOcultos.indexOf(el.dataset.k);
       if (el.checked && i !== -1) c.fabOcultos.splice(i, 1);
@@ -135,12 +137,14 @@
   // ---------------------------------------------------------------------
   // tocar de novo na aba atual: volta ao topo; já no topo, vai à 1ª aba
   // ---------------------------------------------------------------------
+  const celular = () => global.matchMedia("(max-width: 860px)").matches;
   const rolagem = () => global.scrollY || document.documentElement.scrollTop || 0;
   const calmo = () => document.documentElement.classList.contains("sem-animacao");
   function subirAoTopo() { global.scrollTo({ top: 0, behavior: calmo() ? "auto" : "smooth" }); }
   document.addEventListener("click", (e) => {
     const b = e.target.closest("#tabBar button[data-secao], #navPrincipal button[data-secao], #btnLogo");
     if (!b) return;
+    if (b.id === "btnLogo" && celular()) { e.stopPropagation(); e.preventDefault(); abrirGaveta(); return; }
     const r = App().rota(), secao = b.dataset.secao || "dashboard";
     const pag = r.secao === "treino" ? "academia" : r.secao === "ajuda" ? "configuracoes" : r.secao;
     if (pag !== secao || r.secao !== secao) return; // outra tela (ou subtela): navega normalmente
@@ -148,7 +152,7 @@
   }, true);
   // no celular, tocar na barra do topo (fora dos botões) também sobe — como a barra de status do iPhone
   document.addEventListener("click", (e) => {
-    if (!e.target.closest("#sidebar") || e.target.closest("button, a, input, .dropdown") || !global.matchMedia("(max-width: 860px)").matches) return;
+    if (!e.target.closest("#sidebar") || e.target.closest("button, a, input, .dropdown") || !celular()) return;
     if (rolagem() > 60) subirAoTopo();
   });
 
@@ -256,5 +260,105 @@
   });
   App().registrarMudancas({ "dia-detalhe-data": (el) => { if (el.value) abrirDia(el.value); } });
 
-  global.Navegacao = { telaInicial, itensFab, cartaoAjustes, abrirDia, abrirAtalhos, ATALHOS, subirAoTopo };
+  // ---------------------------------------------------------------------
+  // menu lateral do celular (abre pela logo ou arrastando a 1ª tela para a direita)
+  // ---------------------------------------------------------------------
+  function gavetaAberta() { return document.body.classList.contains("gaveta-aberta"); }
+  function fecharGaveta() { document.body.classList.remove("gaveta-aberta"); const b = document.getElementById("btnLogo"); if (b) b.setAttribute("aria-expanded", "false"); }
+  function abrirGaveta() {
+    const d = App().dados();
+    if (!d || UI.modalAberto() || document.body.classList.contains("tour-on")) return;
+    let g = document.getElementById("gaveta");
+    if (!g) {
+      const sc = document.createElement("div"); sc.id = "gavetaFundo"; sc.className = "gaveta-fundo"; sc.addEventListener("click", fecharGaveta);
+      g = document.createElement("aside"); g.id = "gaveta"; g.className = "gaveta"; g.setAttribute("aria-label", "Menu");
+      document.body.appendChild(sc); document.body.appendChild(g);
+      g.addEventListener("click", (e) => { if (e.target.closest("button")) setTimeout(fecharGaveta, 0); });
+      // arrastar o menu para a esquerda fecha
+      let x0 = null;
+      g.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+      g.addEventListener("touchend", (e) => { if (x0 != null && e.changedTouches[0].clientX - x0 < -60) fecharGaveta(); x0 = null; }, { passive: true });
+    }
+    const P = global.Personalizar, r = App().rota(), u = d.usuarios[0];
+    const atual = r.secao === "treino" ? "academia" : r.secao === "ajuda" ? "ajuda" : r.secao;
+    const icone = (k) => { const b = document.querySelector(`#navPrincipal button[data-secao="${k}"] svg`); return b ? b.outerHTML : ""; };
+    const secoes = AR().ordem(d).filter((k) => AR().secaoVisivel(d, k));
+    const claro = P.temaEfetivo(d.config.aparencia) === "claro";
+    g.innerHTML = `<button class="gv-perfil" data-acao="av-abrir">${P.avatarHTML(d, "", 'tabindex="-1"').replace("<button", "<span").replace("</button>", "</span>")}<span><b>${esc(u.nome && u.nome !== "Eu" ? u.nome : "Seu perfil")}</b><small>Editar avatar</small></span></button>
+      <button class="gv-busca" data-acao="busca-abrir">${UI.svg("buscar")}<span>Buscar</span></button>
+      <nav class="gv-nav">${secoes.map((k) => { const sx = AR().SECOES.find((x) => x.k === k); return `<button class="gv-item it-${k}${atual === k ? " ativo" : ""}" data-acao="ir" data-secao="${k}"><i>${icone(k)}</i><span>${esc(sx.r)}</span></button>`; }).join("")}</nav>
+      <div class="gv-rodape"><button class="gv-item${atual === "ajuda" ? " ativo" : ""}" data-acao="ir" data-secao="ajuda"><i class="gv-q">?</i><span>Ajuda</span></button>
+        <button class="gv-item" data-acao="tema-alternar"><i class="gv-q">${claro ? "🌙" : "☀️"}</i><span>Tema ${claro ? "escuro" : "claro"}</span></button>
+        <small class="gv-versao">${esc(P.nomeApp(d))} v${App().VERSAO_APP}</small></div>`;
+    App().fecharFab(); document.body.classList.remove("mais-aberto");
+    requestAnimationFrame(() => document.body.classList.add("gaveta-aberta"));
+    const b = document.getElementById("btnLogo"); if (b) b.setAttribute("aria-expanded", "true");
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharGaveta(); });
+  App().aoRenderizar(() => { fecharGaveta(); const b = document.getElementById("btnLogo"); if (b) b.title = celular() ? "Abrir o menu" : "Ir para Hoje"; });
+
+  // ---------------------------------------------------------------------
+  // deslizar para os lados (celular): próxima aba; na última aba, próxima tela.
+  // Em subtelas (um treino aberto, Ajuda, uma categoria de Ajustes), deslizar
+  // para a direita volta.
+  // ---------------------------------------------------------------------
+  function irParaLado(dir) { // dir: +1 = próxima (dedo para a esquerda), -1 = anterior
+    const d = App().dados(), r = App().rota();
+    const voltar = document.querySelector("#conteudo .voltar");
+    if (r.secao === "treino" || r.secao === "ajuda" || (r.secao === "configuracoes" && r.param)) { if (dir < 0 && voltar) voltar.click(); return; }
+    const abas = Array.from(document.querySelectorAll("#conteudo .cabecalho-pagina .abas[role=tablist] button"));
+    const i = abas.findIndex((b) => b.classList.contains("ativo"));
+    if (abas.length && i !== -1 && abas[i + dir]) { abas[i + dir].click(); return; }
+    const ordem = AR().ordem(d).filter((k) => AR().secaoVisivel(d, k)), j = ordem.indexOf(r.secao);
+    if (j === -1) return;
+    if (!ordem[j + dir]) { if (dir < 0) abrirGaveta(); return; }
+    App().ir(ordem[j + dir]);
+    // voltando, cai na última aba da tela anterior (a ordem fica contínua)
+    if (dir < 0) { const l = document.querySelectorAll("#conteudo .cabecalho-pagina .abas[role=tablist] button"); if (l.length > 1) l[l.length - 1].click(); }
+  }
+  (function () {
+    let x0 = 0, y0 = 0, t0 = 0, ativo = false, travado = null;
+    const cont = () => document.getElementById("conteudo");
+    const rolaDeLado = (el) => {
+      for (; el && el !== document.body; el = el.parentElement) {
+        if (el.matches && el.matches("input, textarea, select, canvas, [data-sem-deslize], .abas, .chips-filtro, .seg-opcoes, .atalhos-ajustes, .ordenaveis, [contenteditable]")) return true;
+        if (el.scrollWidth > el.clientWidth + 6) { const o = getComputedStyle(el).overflowX; if (o === "auto" || o === "scroll") return true; }
+      }
+      return false;
+    };
+    document.addEventListener("touchstart", (e) => {
+      ativo = false;
+      const d = App().dados();
+      if (!d || cfg(d).deslizar === false || !celular() || e.touches.length !== 1) return;
+      if (UI.modalAberto() || gavetaAberta() || document.body.classList.contains("tour-on") || document.body.classList.contains("fab-aberto") || document.body.classList.contains("mais-aberto") || document.body.classList.contains("av-aberta") || document.documentElement.classList.contains("travado")) return;
+      const t = e.touches[0];
+      // as bordas são do gesto de "voltar" do próprio sistema
+      if (t.clientX < 22 || t.clientX > global.innerWidth - 22) return;
+      if (!e.target.closest("#conteudo") || rolaDeLado(e.target)) return;
+      x0 = t.clientX; y0 = t.clientY; t0 = Date.now(); ativo = true; travado = null;
+    }, { passive: true });
+    document.addEventListener("touchmove", (e) => {
+      if (!ativo) return;
+      const t = e.touches[0], dx = t.clientX - x0, dy = t.clientY - y0;
+      if (travado == null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) travado = Math.abs(dx) > Math.abs(dy) * 1.5 ? "x" : "y";
+      if (travado === "y") { ativo = false; const c = cont(); if (c) c.style.transform = ""; return; }
+      // o gesto é do app: o navegador não deve usá-lo para "voltar/avançar" página
+      if (travado === "x" && e.cancelable) e.preventDefault();
+      if (travado === "x" && !calmo()) { const c = cont(); if (c) { c.style.transition = "none"; c.style.transform = `translateX(${Math.max(-60, Math.min(60, dx * 0.3))}px)`; } }
+    }, { passive: false });
+    const fim = (e) => {
+      const c = cont();
+      if (c && c.style.transform) { c.style.transition = "transform .18s ease"; c.style.transform = ""; setTimeout(() => { c.style.transition = ""; }, 200); }
+      if (!ativo) return;
+      ativo = false;
+      if (travado !== "x" || !e.changedTouches || !e.changedTouches.length) return;
+      const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0, dt = Date.now() - t0;
+      if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8 || dt > 800) return;
+      irParaLado(dx < 0 ? 1 : -1);
+    };
+    document.addEventListener("touchend", fim, { passive: true });
+    document.addEventListener("touchcancel", () => { ativo = false; const c = cont(); if (c) c.style.transform = ""; }, { passive: true });
+  })();
+
+  global.Navegacao = { abrirGaveta, fecharGaveta, irParaLado, telaInicial, itensFab, cartaoAjustes, abrirDia, abrirAtalhos, ATALHOS, subirAoTopo };
 })(window);

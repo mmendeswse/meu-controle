@@ -197,7 +197,7 @@
           <label class="ap-cor ap-cor-livre${ap.cor === "custom" ? " ativo" : ""}" style="--c:${esc(HEX.test(ap.corCustom || "") ? ap.corCustom : "#888888")}" title="Escolher qualquer cor"><input type="color" value="${esc(HEX.test(ap.corCustom || "") ? ap.corCustom : corDoApp(ap))}" data-mudar="ap-cor-custom" aria-label="Escolher qualquer cor"><span>+</span></label></div>
         ${interruptor("ap_unica", "Mesma cor em todas as telas", ap.corUnica, "Desligado, cada área tem a sua cor (Treino verde, Alimentação laranja…).", 'data-mudar="ap-cor-unica"')}
       </div>
-      <div class="ap-bloco">${interruptor("ap_abertura", "Abertura com o seu avatar", ap.abertura !== false, "Ao abrir o app, seu avatar e um “olá” aparecem por um instante, como nos apps de streaming.", 'data-mudar="ap-abertura"')}</div>
+      <div class="ap-bloco">${interruptor("ap_abertura", "Abertura com o seu avatar", ap.abertura !== false, "Seu avatar e um “olá” por um instante — só quando você abre o app, não ao recarregar.", 'data-mudar="ap-abertura"')}</div>
       <div class="ap-bloco ap-dupla"><div><span class="ap-rot">Tipo de letra</span>${seg("ap-letra", LETRAS, ap.letra || "sistema")}</div>
         <div><span class="ap-rot">Tamanho da letra</span>${seg("ap-fonte", FONTES, ap.fonte)}</div></div>
       <div class="ap-bloco">${interruptor("ap_contraste", "Alto contraste", !!ap.contraste, "Textos mais fortes e contorno nos cartões — mais fácil de ler no sol ou com a vista cansada.", 'data-mudar="ap-contraste"')}</div>

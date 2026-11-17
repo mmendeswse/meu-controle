@@ -227,9 +227,9 @@
     const semBanco = new Promise((ok) => {
       if (!global.indexedDB) { ok(); return; }
       let n = 0;
-      ["meu-controle-backup", "meu-controle-sync"].forEach((nome) => {
+      ["meu-controle-backup", "meu-controle-sync", "meu-controle-imagens"].forEach((nome) => {
         const r = indexedDB.deleteDatabase(nome);
-        r.onsuccess = r.onerror = r.onblocked = () => { if (++n === 2) ok(); };
+        r.onsuccess = r.onerror = r.onblocked = () => { if (++n === 3) ok(); };
       });
       setTimeout(ok, 2500);
     });

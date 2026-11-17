@@ -536,6 +536,8 @@
     const ap = d.config.aparencia || {}, u = d.usuarios[0];
     if (ap.abertura === false || !d.config.onboardingFeito && (u.nome || "Eu") === "Eu") return;
     if (/[?&]acao=/.test(location.search)) return; // atalho do ícone: vai direto ao ponto
+    // só ao abrir o app: recarregar a página (ou puxar para atualizar) não repete a abertura
+    try { if (sessionStorage.getItem("meuControle:abriu")) return; sessionStorage.setItem("meuControle:abriu", "1"); } catch (e) { /* sem sessionStorage: mostra */ }
     if (document.documentElement.classList.contains("travado")) return; // a tela do PIN já cumprimenta
     const nome = global.Personalizar.primeiroNome(d);
     const h = new Date().getHours(), saud = h < 5 ? "Boa noite" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";

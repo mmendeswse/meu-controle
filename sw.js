@@ -1,10 +1,10 @@
 /* Service worker — deixa o app abrir sem internet no celular/tablet.
    Arquivos do app: cache primeiro; a página: rede primeiro (cai no cache offline). */
-const CACHE = "meu-controle-v24";
+const CACHE = "meu-controle-v25";
 // a imagem do avatar escolhido (quando é um endereço) — o próprio app guarda aqui
 const CACHE_IMG = "meu-controle-avatar";
-const V = "?v=4.0.0";
-const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "tutorial", "trava", "sync", "agenda", "ux", "navegacao", "busca", "ajuda", "calculadora", "descanso", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
+const V = "?v=4.1.0";
+const MODULOS = ["nucleo", "armazenamento", "demo", "alimentacao", "compras", "fitness", "bemestar", "metas", "insights", "conquistas", "relatorios", "graficos", "ui", "app", "imagens", "personalizar", "areas", "instalar", "backup", "lembretes", "avatar", "primeiro-uso", "tutorial", "trava", "sync", "agenda", "ux", "navegacao", "busca", "ajuda", "calculadora", "descanso", "fotos", "produtos", "formularios", "formularios-saude", "paginas/dashboard", "paginas/alimentacao", "paginas/compras", "paginas/academia", "paginas/bemestar", "paginas/evolucao", "paginas/metas", "paginas/relatorios", "paginas/configuracoes"];
 const ARQUIVOS = [
   "./", "./index.html", "./css/style.css" + V, "./css/saude.css" + V, "./css/extras.css" + V, "./css/v4.css" + V, "./assets/fonts/nunito.woff2", "./manifest.json", "./favicon.svg", "./favicon-32.png",
   "./js/vendor/chart.umd.min.js",

@@ -81,9 +81,13 @@
 
   App.registrarPagina("evolucao", {
     titulo: "Corpo",
-    render(d) {
+    render(d, rota) {
+      const FT = window.Fotos, temFotos = FT && FT.disponivel(d);
+      const abas = temFotos ? UI.abas([{ k: "medidas", r: "Medidas" }, { k: "fotos", r: "Fotos", n: d.fotos.length || null }], rota.param === "fotos" ? "fotos" : "medidas", "aba-evolucao") : "";
+      if (temFotos && rota.param === "fotos") return `<div class="cabecalho-pagina"><div><h1>Corpo</h1><p class="sub">Fotos de evolução: o antes e o depois</p></div>
+        <div class="cab-acoes">${abas}${UI.botao("nova-foto", "Foto", { classe: "primario", icone: "mais" })}</div></div>${FT.aba(d)}`;
       return `<div class="cabecalho-pagina"><div><h1>Corpo</h1><p class="sub">Peso, composição corporal e medidas</p></div>
-        <div class="acoes-cab">${UI.botao("rapido-peso", "Peso", { icone: "mais" })}${UI.botao("rapido-medida", "Medição completa", { classe: "primario", icone: "mais" })}</div></div>
+        <div class="cab-acoes">${abas}<div class="acoes-cab">${UI.botao("rapido-peso", "Peso", { icone: "mais" })}${UI.botao("rapido-medida", "Medição completa", { classe: "primario", icone: "mais" })}</div></div></div>
         <div class="grid"><div class="c12">${comparacao(d)}</div></div>
         <div class="grid"><div class="c12">${grafico(d)}</div></div>
         <div class="grid"><div class="c12">${historico(d)}</div></div>
@@ -104,6 +108,7 @@
   });
 
   App.registrarAcoes({
+    "aba-evolucao": (el) => App.ir("evolucao", el.dataset.k === "fotos" ? "fotos" : null, { manterRolagem: true }),
     "metrica-evo": (el) => { st.metrica = el.dataset.k; App.renderizar(); },
     "periodo-evo": (el) => { st.periodo = el.dataset.k; App.renderizar(); }
   });

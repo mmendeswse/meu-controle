@@ -27,6 +27,8 @@
     ["alimentacao", "Alimentação · Diário", "refeicoes calorias macros comer dieta agua", "alimentacao", "🍽️"],
     ["alimentacao/semana", "Alimentação · Semana", "cardapio planejamento favoritas planejar", "alimentacao", "🗓️"],
     ["alimentacao/alimentos", "Alimentação · Alimentos", "tabela cadastro nutricional calorias preco", "alimentacao", "🥦"],
+    ["alimentacao/produtos", "Alimentação · Produtos", "marcas rotulos produtos embalagem caderno comprar", "alimentacao", "🏷️"],
+    ["evolucao/fotos", "Corpo · Fotos", "fotos evolucao antes depois shape progresso", "evolucao", "📸"],
     ["academia", "Treino · Treinos", "academia musculacao treino de hoje historico", "academia", "🏋️"],
     ["academia/fichas", "Treino · Fichas e plano", "ficha exercicios plano semanal abc", "academia", "📋"],
     ["academia/calendario", "Treino · Calendário", "mes dias treinados frequencia", "academia", "📆"],
@@ -55,6 +57,8 @@
     ["rapido-jejum", "Começar ou encerrar jejum", "jejum intermitente", "jejum", "⏳"],
     ["rapido-compra", "Adicionar item à lista de compras", "comprar mercado", "compras", "🛒"],
     ["rapido-alimento", "Cadastrar alimento", "novo alimento tabela nutricional", "alimentacao", "🥦"],
+    ["nova-foto", "Adicionar foto de evolução", "foto corpo antes depois shape camera", "evolucao", "📸"],
+    ["novo-produto", "Adicionar produto (marca e rótulo)", "produto marca rotulo embalagem foto", "alimentacao", "🏷️"],
     ["nova-meta", "Criar meta", "objetivo nova meta", "metas", "🎯"],
     ["calc-metas", "Calcular minhas metas (calorias, proteína, água)", "calculadora tmb gasto calorico tdee quanto comer deficit", "alimentacao", "🧮"],
     ["novo-habito", "Criar hábito", "novo habito desafio", "habitos", "✅"],
@@ -85,6 +89,7 @@
     if (global.Ajuda) global.Ajuda.topicos(d).forEach((t) => add("Ajuda", { id: "h:" + t.k, t: t.q, p: t.p, ic: "💡", rota: "ajuda/" + t.k }));
     // cadastros
     if (usa("alimentacao")) d.alimentos.forEach((a) => add("Alimentos", { id: "al:" + a.id, t: a.nome, s: (a.categoria || "") + (a.kcal != null ? " · " + Math.round(a.kcal) + " kcal" : ""), ic: N.EMOJI_CATEGORIA[a.categoria] || "🥦", acao: "editar-alimento", dados: { id: a.id } }));
+    if (usa("alimentacao")) (d.produtos || []).forEach((p) => add("Produtos e marcas", { id: "pr:" + p.id, t: p.nome, s: [p.marca, p.mercado].filter(Boolean).join(" · "), p: p.obs || "", ic: p.avaliacao === "evitar" ? "🚫" : p.avaliacao === "preferido" ? "⭐" : "🏷️", acao: "produto-ver", dados: { id: p.id } }));
     if (usa("academia")) d.fichas.forEach((f) => add("Fichas de treino", { id: "fi:" + f.id, t: f.nome, p: (d.exercicios || []).filter((e) => e.fichaId === f.id).map((e) => e.nome).join(" "), ic: "📋", acao: "editar-ficha", dados: { id: f.id } }));
     if (usa("habitos")) d.habitos.forEach((h) => add("Hábitos", { id: "ha:" + h.id, t: h.nome, ic: h.emoji || "✅", acao: "editar-habito", dados: { id: h.id } }));
     if (usa("remedios")) d.remedios.forEach((r) => add("Remédios", { id: "re:" + r.id, t: r.nome, s: r.dose || "", ic: "💊", acao: "editar-remedio", dados: { id: r.id } }));
@@ -105,7 +110,7 @@
     if (o.tn === q) p += 10;
     return p;
   }
-  const ORDEM_GRUPOS = ["Ações", "Telas", "Ajustes", "Alimentos", "Fichas de treino", "Hábitos", "Remédios", "Metas", "Lista de compras", "Ajuda"];
+  const ORDEM_GRUPOS = ["Ações", "Telas", "Ajustes", "Alimentos", "Produtos e marcas", "Fichas de treino", "Hábitos", "Remédios", "Metas", "Lista de compras", "Ajuda"];
 
   // ---------------------------------------------------------------------
   // recentes (neste aparelho)

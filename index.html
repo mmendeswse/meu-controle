@@ -38,10 +38,10 @@
     } catch (e) { /* segue com o padrão */ }
   })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=4.0.0">
-<link rel="stylesheet" href="css/saude.css?v=4.0.0">
-<link rel="stylesheet" href="css/extras.css?v=4.0.0">
-<link rel="stylesheet" href="css/v4.css?v=4.0.0">
+<link rel="stylesheet" href="css/style.css?v=4.1.0">
+<link rel="stylesheet" href="css/saude.css?v=4.1.0">
+<link rel="stylesheet" href="css/extras.css?v=4.1.0">
+<link rel="stylesheet" href="css/v4.css?v=4.1.0">
 <link rel="preconnect" href="https://s4.anilist.co">
 </head>
 <body>
@@ -51,7 +51,7 @@
   <div class="scrim-menu" id="scrimMenu"></div>
 
   <aside class="sidebar" id="sidebar">
-    <button class="logo" id="btnLogo" title="Ir para Hoje" data-secao="dashboard">
+    <button class="logo" id="btnLogo" title="Ir para Hoje" data-secao="dashboard" aria-haspopup="true">
       <div class="logo-mark"><img src="favicon.svg?v=2" alt="" width="38" height="38"></div>
       <div class="logo-txt"><b>Meu Controle</b><span>Vida & Fitness</span></div>
     </button>
@@ -129,48 +129,51 @@
 <script src="js/vendor/chart.umd.min.js"></script>
 
 <!-- módulos do sistema — a ordem importa: regras → interface → páginas -->
-<script src="js/nucleo.js?v=4.0.0"></script>
-<script src="js/armazenamento.js?v=4.0.0"></script>
-<script src="js/demo.js?v=4.0.0"></script>
-<script src="js/alimentacao.js?v=4.0.0"></script>
-<script src="js/compras.js?v=4.0.0"></script>
-<script src="js/fitness.js?v=4.0.0"></script>
-<script src="js/bemestar.js?v=4.0.0"></script>
-<script src="js/metas.js?v=4.0.0"></script>
-<script src="js/insights.js?v=4.0.0"></script>
-<script src="js/conquistas.js?v=4.0.0"></script>
-<script src="js/relatorios.js?v=4.0.0"></script>
-<script src="js/graficos.js?v=4.0.0"></script>
-<script src="js/ui.js?v=4.0.0"></script>
-<script src="js/app.js?v=4.0.0"></script>
-<script src="js/personalizar.js?v=4.0.0"></script>
-<script src="js/areas.js?v=4.0.0"></script>
-<script src="js/instalar.js?v=4.0.0"></script>
-<script src="js/backup.js?v=4.0.0"></script>
-<script src="js/lembretes.js?v=4.0.0"></script>
-<script src="js/avatar.js?v=4.0.0"></script>
-<script src="js/primeiro-uso.js?v=4.0.0"></script>
-<script src="js/tutorial.js?v=4.0.0"></script>
-<script src="js/trava.js?v=4.0.0"></script>
-<script src="js/sync.js?v=4.0.0"></script>
-<script src="js/agenda.js?v=4.0.0"></script>
-<script src="js/ux.js?v=4.0.0"></script>
-<script src="js/navegacao.js?v=4.0.0"></script>
-<script src="js/busca.js?v=4.0.0"></script>
-<script src="js/ajuda.js?v=4.0.0"></script>
-<script src="js/calculadora.js?v=4.0.0"></script>
-<script src="js/descanso.js?v=4.0.0"></script>
-<script src="js/formularios.js?v=4.0.0"></script>
-<script src="js/formularios-saude.js?v=4.0.0"></script>
-<script src="js/paginas/dashboard.js?v=4.0.0"></script>
-<script src="js/paginas/alimentacao.js?v=4.0.0"></script>
-<script src="js/paginas/compras.js?v=4.0.0"></script>
-<script src="js/paginas/academia.js?v=4.0.0"></script>
-<script src="js/paginas/bemestar.js?v=4.0.0"></script>
-<script src="js/paginas/evolucao.js?v=4.0.0"></script>
-<script src="js/paginas/metas.js?v=4.0.0"></script>
-<script src="js/paginas/relatorios.js?v=4.0.0"></script>
-<script src="js/paginas/configuracoes.js?v=4.0.0"></script>
+<script src="js/nucleo.js?v=4.1.0"></script>
+<script src="js/armazenamento.js?v=4.1.0"></script>
+<script src="js/demo.js?v=4.1.0"></script>
+<script src="js/alimentacao.js?v=4.1.0"></script>
+<script src="js/compras.js?v=4.1.0"></script>
+<script src="js/fitness.js?v=4.1.0"></script>
+<script src="js/bemestar.js?v=4.1.0"></script>
+<script src="js/metas.js?v=4.1.0"></script>
+<script src="js/insights.js?v=4.1.0"></script>
+<script src="js/conquistas.js?v=4.1.0"></script>
+<script src="js/relatorios.js?v=4.1.0"></script>
+<script src="js/graficos.js?v=4.1.0"></script>
+<script src="js/ui.js?v=4.1.0"></script>
+<script src="js/app.js?v=4.1.0"></script>
+<script src="js/imagens.js?v=4.1.0"></script>
+<script src="js/personalizar.js?v=4.1.0"></script>
+<script src="js/areas.js?v=4.1.0"></script>
+<script src="js/instalar.js?v=4.1.0"></script>
+<script src="js/backup.js?v=4.1.0"></script>
+<script src="js/lembretes.js?v=4.1.0"></script>
+<script src="js/avatar.js?v=4.1.0"></script>
+<script src="js/primeiro-uso.js?v=4.1.0"></script>
+<script src="js/tutorial.js?v=4.1.0"></script>
+<script src="js/trava.js?v=4.1.0"></script>
+<script src="js/sync.js?v=4.1.0"></script>
+<script src="js/agenda.js?v=4.1.0"></script>
+<script src="js/ux.js?v=4.1.0"></script>
+<script src="js/navegacao.js?v=4.1.0"></script>
+<script src="js/busca.js?v=4.1.0"></script>
+<script src="js/ajuda.js?v=4.1.0"></script>
+<script src="js/calculadora.js?v=4.1.0"></script>
+<script src="js/descanso.js?v=4.1.0"></script>
+<script src="js/fotos.js?v=4.1.0"></script>
+<script src="js/produtos.js?v=4.1.0"></script>
+<script src="js/formularios.js?v=4.1.0"></script>
+<script src="js/formularios-saude.js?v=4.1.0"></script>
+<script src="js/paginas/dashboard.js?v=4.1.0"></script>
+<script src="js/paginas/alimentacao.js?v=4.1.0"></script>
+<script src="js/paginas/compras.js?v=4.1.0"></script>
+<script src="js/paginas/academia.js?v=4.1.0"></script>
+<script src="js/paginas/bemestar.js?v=4.1.0"></script>
+<script src="js/paginas/evolucao.js?v=4.1.0"></script>
+<script src="js/paginas/metas.js?v=4.1.0"></script>
+<script src="js/paginas/relatorios.js?v=4.1.0"></script>
+<script src="js/paginas/configuracoes.js?v=4.1.0"></script>
 <script>
   // registra o service worker (só funciona via http/https — no celular, depois de publicado)
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

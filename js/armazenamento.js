@@ -103,7 +103,7 @@
   }
   // navegação: tela que abre, ordem do menu, botão + e atalhos de teclado
   function navegacaoPadrao() {
-    return { telaInicial: "dashboard", ordemMenu: [], fabLado: "direita", fabOrdem: [], fabOcultos: [], teclado: true };
+    return { telaInicial: "dashboard", ordemMenu: [], fabLado: "direita", fabOrdem: [], fabOcultos: [], teclado: true, deslizar: true };
   }
   function lembretesPadrao() {
     return { ativos: false, remedios: true, habitos: true, checkin: true, agua: false, aguaIntervalo: 2 };
@@ -149,15 +149,15 @@
       alimentos: [], refeicoes: [], refeicaoItens: [], favoritas: [], agua: [],
       compras: [], estoque: [],
       fichas: [], exercicios: [], treinos: [], series: [], planoSemanal: [],
-      pesagens: [], medidas: [],
-      metas: [],
+      pesagens: [], medidas: [], fotos: [],
+      metas: [], produtos: [],
       bemEstar: [], habitos: [], habitoRegistros: [], remedios: [], doses: [], jejuns: [],
       notificacoes: [],
       config: configPadrao(),
       atualizadoEm: null
     };
   }
-  const COLECOES = ["alimentos", "refeicoes", "refeicaoItens", "favoritas", "agua", "compras", "estoque", "fichas", "exercicios", "treinos", "series", "planoSemanal", "pesagens", "medidas", "metas", "bemEstar", "habitos", "habitoRegistros", "remedios", "doses", "jejuns", "notificacoes"];
+  const COLECOES = ["alimentos", "refeicoes", "refeicaoItens", "favoritas", "agua", "compras", "estoque", "fichas", "exercicios", "treinos", "series", "planoSemanal", "pesagens", "medidas", "fotos", "produtos", "metas", "bemEstar", "habitos", "habitoRegistros", "remedios", "doses", "jejuns", "notificacoes"];
 
   function perfil(d) { return d.usuarios[0]; }
 
@@ -383,6 +383,8 @@
     treinos: { rotulo: "Treinos realizados", colecoes: ["treinos", "series"], ajuda: "Sessões de treino e cargas registradas." },
     fichas: { rotulo: "Fichas e plano semanal", colecoes: ["fichas", "exercicios", "planoSemanal"], ajuda: "Fichas de treino e o calendário semanal." },
     corpo: { rotulo: "Peso e medidas", colecoes: ["pesagens", "medidas"], ajuda: "Pesagens, composição corporal e medidas." },
+    fotos: { rotulo: "Fotos de evolução", colecoes: ["fotos"], ajuda: "As fotos do corpo guardadas neste aparelho." },
+    produtos: { rotulo: "Produtos e marcas", colecoes: ["produtos"], ajuda: "O caderno de marcas e as fotos dos rótulos." },
     metas: { rotulo: "Metas", colecoes: ["metas"], ajuda: "Todas as metas cadastradas." },
     alimentos: { rotulo: "Cadastro de alimentos", colecoes: ["alimentos", "refeicaoItens", "favoritas", "estoque"], ajuda: "Os alimentos e tudo que depende deles (itens das refeições, favoritas e estoque)." },
     bemEstar: { rotulo: "Sono, humor e passos", colecoes: ["bemEstar"], ajuda: "Os check-ins diários de sono, humor, energia, estresse e passos." },

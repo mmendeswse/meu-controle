@@ -37,6 +37,7 @@
         { alvo: ".tiles-saude", titulo: "Seus números", texto: "Treinos, peso, sono e outros. Toque num cartão para abrir a tela dele.", opcional: true },
         { alvo: "#fab", titulo: "Registro rápido", texto: "O botão <b>+</b> aparece em todas as telas: registre refeição, água, peso, treino ou humor sem procurar o lugar certo." },
         { alvo: NAV, titulo: "Navegação", texto: navTexto },
+        { alvo: "#btnLogo", titulo: "Menu e gestos", texto: () => celular() ? "Toque na <b>logo</b> para abrir o menu com todas as telas. E <b>deslize para os lados</b> para passar para a próxima aba ou tela." : "A logo leva de volta à tela Hoje.", opcional: true },
         { alvo: ["#btnBuscaTopo", "#btnBuscaLateral"], titulo: "Busca", texto: "A lupa encontra qualquer coisa: uma tela, um ajuste, um alimento, uma ação.", opcional: true },
         { alvo: [".cab-hoje .avatar", "#avatarBarra", "#perfilLateral"], titulo: "Seu avatar", texto: "Toque na sua foto para trocar: personagens de anime, emojis ou uma foto sua.", opcional: true },
         { alvo: "#btnNotificacoes", titulo: "Alertas", texto: "O sino avisa quando algo precisa de atenção: remédio acabando, meta fora do caminho, backup atrasado.", opcional: true },
@@ -47,7 +48,7 @@
       area: "alimentacao", nome: "Alimentação", icone: "🍽️",
       intro: "Aqui você registra o que come e acompanha calorias e proteína.",
       passos: [
-        { alvo: ABAS, titulo: "Três abas", texto: "<b>Diário</b>: o que você comeu no dia. <b>Semana</b>: cardápio planejado e as compras dele. <b>Alimentos</b>: sua tabela com as calorias de cada alimento." },
+        { alvo: ABAS, titulo: "Quatro abas", texto: "<b>Diário</b>: o que você comeu no dia. <b>Semana</b>: cardápio planejado e as compras dele. <b>Alimentos</b>: sua tabela com as calorias de cada alimento. <b>Produtos</b>: as marcas e os rótulos do que você compra." },
         { alvo: ".barra-ferramentas", titulo: "Escolher o dia", texto: "Use as setas para ver ou registrar outros dias.", opcional: true },
         { alvo: "card:Resumo do dia", titulo: "Resumo do dia", texto: "Quanto você já comeu de calorias, proteína, carboidratos e gorduras.", opcional: true },
         { alvo: '[data-acao="nova-refeicao"]', titulo: "Nova refeição", texto: "Adicione café, almoço, jantar… e escolha os alimentos. A refeição que se repete pode virar favorita e entra depois com um toque." },
@@ -90,6 +91,7 @@
       passos: [
         { alvo: '[data-acao="rapido-peso"]', titulo: "Só o peso", texto: "Registre o peso em dois toques. Melhor de manhã, sempre no mesmo horário." },
         { alvo: '[data-acao="rapido-medida"]', titulo: "Medição completa", texto: "Peso, bioimpedância (gordura, músculo, água) e medidas como cintura e braço." },
+        { alvo: ".cabecalho-pagina .abas", titulo: "Medidas e Fotos", texto: "Na aba <b>Fotos</b>, guarde fotos de evolução e compare o antes e o depois.", opcional: true },
         { alvo: "card:Evolução corporal", titulo: "Comparação", texto: "A primeira medição comparada com a mais recente.", opcional: true },
         { alvo: "card:Gráficos", titulo: "Gráficos", texto: "Escolha o que ver e o período. A linha da meta aparece quando você cria uma em Metas.", opcional: true }
       ]
@@ -155,6 +157,24 @@
         { alvo: ['[data-acao="novo-alimento"]', '[data-acao="rapido-alimento"]'], titulo: "Novo alimento", texto: "Copie do rótulo a porção, as calorias e os macros. O preço é opcional e serve para estimar custos." },
         { alvo: ".filtros-linha", titulo: "Buscar e filtrar", texto: "Procure pelo nome ou filtre por categoria.", opcional: true },
         { titulo: "Dica", texto: "Não precisa cadastrar tudo antes: ao montar uma refeição, digite um nome novo e o app oferece o cadastro na hora." }
+      ]
+    },
+    "alimentacao/produtos": {
+      area: "alimentacao", nome: "Alimentação · Produtos", icone: "🏷️",
+      intro: "O seu caderno de marcas: o que comprar — e o que não comprar de novo.",
+      passos: [
+        { alvo: '[data-acao="novo-produto"]', titulo: "Adicionar produto", texto: "Fotografe o rótulo e anote marca, embalagem, preço e onde achou. Avalie: ⭐ preferido, 👍 bom ou 🚫 não comprar." },
+        { alvo: ".pd-card", titulo: "Cada produto", texto: "Toque para ver o rótulo em tamanho grande. <b>Lista</b> põe o produto na lista de compras do mês.", opcional: true },
+        { titulo: "Na hora da compra", texto: "Ligue o produto a um alimento do cadastro: a marca preferida aparece ao lado dele na <b>lista de compras</b>. Toque nela para conferir o rótulo na prateleira." }
+      ]
+    },
+    "evolucao/fotos": {
+      area: "evolucao", nome: "Corpo · Fotos", icone: "📸",
+      intro: "Fotos de evolução: o que a balança não mostra.",
+      passos: [
+        { alvo: '[data-acao="nova-foto"]', titulo: "Adicionar foto", texto: "Tire na hora ou escolha da galeria. Informe a data e a pose: frente, lado ou costas." },
+        { alvo: ".card-fotos-comp", titulo: "Antes e depois", texto: "Escolha duas fotos e veja lado a lado, com o tempo entre elas e a diferença de peso.", opcional: true },
+        { alvo: ".ft-aviso", titulo: "Privacidade", texto: "As fotos ficam <b>só neste aparelho</b> — não vão para a sincronização nem para o backup. <b>Exportar fotos</b> gera uma cópia para guardar.", opcional: true }
       ]
     },
     "academia/fichas": {
@@ -499,16 +519,14 @@
   // "O que há de novo": aparece uma vez depois de uma atualização
   // ---------------------------------------------------------------------
   const NOVIDADES = {
-    versao: "4.0",
+    versao: "4.1",
     itens: [
-      ["🔎", "Busca em tudo", "A lupa acha telas, ações, ajustes, alimentos, hábitos, remédios… No computador: <b>/</b> ou <b>Ctrl + K</b>."],
-      ["⚙️", "Ajustes organizados", "Em vez de uma página enorme, categorias — como nos ajustes do celular — com busca própria."],
-      ["💡", "Central de ajuda e dica do dia", "“Como faço para…” com o passo a passo e um botão que leva ao lugar. O <b>?</b> de cada tela agora explica também cada aba."],
-      ["📅", "Um dia em detalhe", "Na tela Hoje, toque num dia de <b>Sua semana</b> para ver tudo o que foi registrado nele e lançar o que faltou."],
-      ["🧮", "Calculadora de metas", "Em Metas: estima calorias, proteína e água para o seu objetivo e cria as metas."],
-      ["⏱️", "Cronômetro de descanso", "No treino, a contagem começa sozinha a cada exercício marcado."],
-      ["🎨", "Mais personalização", "Temas prontos, qualquer cor, tipo de letra, alto contraste, novos fundos, ordem do menu, tela inicial e botão <b>+</b> do seu jeito."],
-      ["⌨️", "Mais rápido de usar", "Tocar de novo na aba volta ao topo; atalhos de teclado no computador (tecle <b>?</b> para ver)."]
+      ["📸", "Fotos de evolução", "Em Corpo → <b>Fotos</b>: guarde fotos com data e pose e compare o antes e o depois, com o peso de cada data. Ficam só neste aparelho."],
+      ["🏷️", "Produtos, marcas e rótulos", "Em Alimentação → <b>Produtos</b>: fotografe o rótulo, anote marca, preço e onde achou. A marca preferida aparece na lista de compras."],
+      ["👆", "Deslizar para os lados", "No celular, arraste para a esquerda ou direita para trocar de aba e de tela."],
+      ["☰", "Menu pela logo", "Toque na logo, no canto de cima, para abrir o menu com todas as telas, a busca, a ajuda e o tema."],
+      ["⚡", "Abertura mais discreta", "A tela com o seu avatar aparece só ao abrir o app — não a cada recarregada."],
+      ["🔎", "Da versão 4.0", "Busca em tudo, Ajustes em categorias, Central de ajuda, um dia em detalhe, calculadora de metas, cronômetro de descanso e temas prontos."]
     ]
   };
   function abrirNovidades() {

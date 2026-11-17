@@ -10,6 +10,20 @@ incluído no projeto para funcionar offline).
 mesma ideia de que **tudo que pode ser calculado é calculado**, nunca
 digitado.
 
+## Novidades da versão 4.1
+
+- **Fotos de evolução** (`js/fotos.js`, Corpo → Fotos): fotos com data e pose, “antes e
+  depois” lado a lado com o peso de cada data e linha do tempo por mês.
+- **Produtos, marcas e rótulos** (`js/produtos.js`, Alimentação → Produtos): foto do
+  rótulo, marca, embalagem, preço (com preço por kg/L), onde comprar e avaliação
+  (⭐ preferido, 👍 bom, 🚫 não comprar). A marca preferida aparece na lista de compras.
+- **Onde ficam as fotos** (`js/imagens.js`): no IndexedDB **deste aparelho**, reduzidas
+  para JPEG. Não entram na sincronização nem no backup em JSON; “Exportar fotos” /
+  “Importar fotos” (em Corpo → Fotos) fazem a cópia delas.
+- **Gestos no celular**: deslizar para os lados troca de aba e de tela; a logo abre o menu
+  com todas as telas (Ajustes → Navegação desliga o gesto).
+- **Abertura** com o avatar só ao abrir o app, não a cada recarregada.
+
 ## Novidades da versão 4.0
 
 - **Busca em tudo** (`js/busca.js`): a lupa — ou `/` e `Ctrl + K` no computador — acha
